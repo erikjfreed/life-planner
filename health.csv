@@ -1,0 +1,11 @@
+Kaiser Medicare Advantage,,,,,,
+PART,monthly,OOP-MAX,YR MIN,YR MAX, LIFE ,
+part a, free , $ -   , $ -   , $ -   , $ -   ,medicare 'hospital and skilled nursing'
+part b, $ 370 , $ -   ," $ 4,440 "," $ 4,440 "," $ 133,200 ",medicare  'doctor in and out'
+kaiser advantage, $ -   ," $ 5,300 ", $ -   ," $ 5,300 "," $ 159,000 ",kaiser medicare with prescriptions
+part d, $ -   , $ -   , $ 200 ," $ 2,000 "," $ 60,000 ",kaiser  prescriptions
+kaiser plus, $ 44 ," $ 5,300 ", $ 528 ," $ 5,828 "," $ 174,840 ",kaiser dental/vision
+TOTAL EACH, $ 414 ,," $ 5,168 "," $ 17,568 "," $ 527,040 ",per person
+TOTAL BOTH, $ 828 ,," $ 9,936 "," $ 35,136 "," $ 1,054,080 ",per couple
+scenario,45%,scenario total,," $ 21,276 ", per couple ,
+"DEBBIE IS ON ACA FOR ANOTHER YEAR OR SO, THIS TAB ASSUMES SHE IS ON MEDICARE",,,,,,
