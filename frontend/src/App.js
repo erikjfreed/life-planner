@@ -11,12 +11,16 @@ import TravelPage from './features/nav/TravelPage';
 import LivingPage from './features/nav/LivingPage';
 import RealEstatePage from './features/nav/RealEstatePage';
 import { fetchEvents } from './features/events/eventsSlice';
+import { fetchEntities } from './features/entities/entitiesSlice';
 
 function App() {
   const [view, setView] = useState('dashboard');
   const dispatch = useDispatch();
 
-  useEffect(() => { dispatch(fetchEvents()); }, [dispatch]);
+  useEffect(() => {
+    dispatch(fetchEvents());
+    dispatch(fetchEntities());
+  }, [dispatch]);
 
   const renderView = () => {
     if (view === 'dashboard')   return <Dashboard />;

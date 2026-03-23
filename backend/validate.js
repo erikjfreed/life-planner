@@ -27,26 +27,46 @@ const params = {
   investmentBalanceBase: 3823105,
 };
 
+const entities = [
+  {
+    id: 1, type: 'real_estate', name: 'Orcas', appreciation_rate: 0.05, mortgage_rate: 0.03125, term_years: 30, tax_yearly: 12038, insurance_yearly: 1016,
+    services_json: JSON.stringify([
+      { label: 'Internet (Starlink)', monthly: 120, yearly: 1440 },
+      { label: 'HOA (SHWSOA)',        monthly: 225, yearly: 2700 },
+      { label: 'Electricity',         monthly: 200, yearly: 2400 },
+      { label: 'Water',               monthly:  21, yearly:  250 },
+      { label: 'Cleaning',            monthly:  83, yearly: 1000 },
+      { label: 'Septic',              monthly:  21, yearly:  250 },
+      { label: 'Pest Control',        monthly:  50, yearly:  600 },
+      { label: 'Landscape',           monthly:  83, yearly: 1000 },
+      { label: 'Propane',             monthly:  33, yearly:  400 },
+    ]),
+  },
+  {
+    id: 2, type: 'real_estate', name: 'Portland', appreciation_rate: 0.05, mortgage_rate: 0.0275, term_years: 30, tax_yearly: 14968, insurance_yearly: 1039,
+    services_json: JSON.stringify([
+      { label: 'Internet (CenturyLink)', monthly:  65, yearly:  780 },
+      { label: 'Garbage',                monthly:  87, yearly: 1044 },
+      { label: 'Cleaning',               monthly: 500, yearly: 6000 },
+      { label: 'Sewage',                 monthly:  30, yearly:  360 },
+      { label: 'Electricity',            monthly: 200, yearly: 2400 },
+      { label: 'Water',                  monthly:  38, yearly:  456 },
+      { label: 'Gas',                    monthly:  38, yearly:  456 },
+      { label: 'Gardening',              monthly: 383, yearly: 4590 },
+    ]),
+  },
+];
+
 const events = [
-  {
-    type: 're_buy', year: 2026, name: 'Orcas',
-    purchase_price: 2000000, principal_balance: 449764, mortgage_rate: 0.03125,
-    term_years: 30, monthly_payment: 2186, appreciation_rate: 0.05, expense_base: 23094,
-    tax_yearly: null, insurance_yearly: null,
-  },
-  {
-    type: 're_buy', year: 2026, name: 'Portland',
-    purchase_price: 950000, principal_balance: 264655, mortgage_rate: 0.0275,
-    term_years: 30, monthly_payment: 1235, appreciation_rate: 0.05, expense_base: 32093,
-    tax_yearly: null, insurance_yearly: null,
-  },
+  { type: 're_buy',   year: 2026, entity_id: 1, purchase_price: 2000000, principal_balance: 449764, monthly_payment: 2186 },
+  { type: 're_buy',   year: 2026, entity_id: 2, purchase_price: 950000,  principal_balance: 264655, monthly_payment: 1235 },
   { type: 'death',    year: 2055, name: 'Erik' },
   { type: 'death',    year: 2055, name: 'Deb'  },
   { type: 'ss_start', year: 2027, name: 'Erik', monthly_payment: 5215 },
   { type: 'ss_start', year: 2032, name: 'Deb',  monthly_payment: 5392 },
 ];
 
-const rows = computeTimeline(params, events);
+const rows = computeTimeline(params, events, entities);
 
 // real_estate 2026 = (2,000,000 - 449,764) + (950,000 - 264,655) = 1,550,236 + 685,345 = 2,235,581
 // invest_plus_re 2026 = 3,823,105 + 2,235,581 = 6,058,686

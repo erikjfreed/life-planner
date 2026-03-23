@@ -3,7 +3,7 @@
  * Accepts params and events array. Events drive property state and death years.
  */
 
-function computeTimeline(params, events = []) {
+function computeTimeline(params, events = [], entities = []) {
   const {
     erikDOB,
     debDOB,
@@ -62,17 +62,22 @@ function computeTimeline(params, events = []) {
   // Build initial property state from re_buy events with year <= startYear
   // Each property: { name, value, principal, rate, payment, appreciationRate, expenseBase, yearBought, active }
   const initialBuys = events.filter(e => e.type === 're_buy' && e.year <= startYear);
-  const properties = initialBuys.map(e => ({
-    name: e.name,
-    value: e.purchase_price,
-    principal: e.principal_balance,
-    rate: e.mortgage_rate,
-    payment: e.monthly_payment,
-    appreciationRate: e.appreciation_rate,
-    expenseBase: e.expense_base,
-    yearBought: e.year,
-    active: true,
-  }));
+  const properties = initialBuys.map(e => {
+    const entity = entities.find(en => en.id === e.entity_id) ?? {};
+    const services = entity.services_json ? JSON.parse(entity.services_json) : [];
+    const expenseBase = services.reduce((s, i) => s + i.yearly, 0) + (entity.tax_yearly ?? 0) + (entity.insurance_yearly ?? 0);
+    return {
+      name: entity.name ?? e.name,
+      value: e.purchase_price,
+      principal: e.principal_balance,
+      rate: entity.mortgage_rate,
+      payment: e.monthly_payment,
+      appreciationRate: entity.appreciation_rate,
+      expenseBase,
+      yearBought: e.year,
+      active: true,
+    };
+  });
 
   let investmentBalance = investmentBalanceBase;
 
@@ -87,14 +92,17 @@ function computeTimeline(params, events = []) {
     if (year > startYear) {
       const newBuys = events.filter(e => e.type === 're_buy' && e.year === year);
       for (const e of newBuys) {
+        const entity = entities.find(en => en.id === e.entity_id) ?? {};
+        const services = entity.services_json ? JSON.parse(entity.services_json) : [];
+        const expenseBase = services.reduce((s, i) => s + i.yearly, 0) + (entity.tax_yearly ?? 0) + (entity.insurance_yearly ?? 0);
         properties.push({
-          name: e.name,
+          name: entity.name ?? e.name,
           value: e.purchase_price,
           principal: e.principal_balance,
-          rate: e.mortgage_rate,
+          rate: entity.mortgage_rate,
           payment: e.monthly_payment,
-          appreciationRate: e.appreciation_rate,
-          expenseBase: e.expense_base,
+          appreciationRate: entity.appreciation_rate,
+          expenseBase,
           yearBought: e.year,
           active: true,
         });

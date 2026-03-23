@@ -3,6 +3,7 @@ import undoable, { includeAction } from 'redux-undo';
 import timelineReducer from '../features/timeline/timelineSlice';
 import parametersReducer from '../features/parameters/parametersSlice';
 import eventsReducer from '../features/events/eventsSlice';
+import entitiesReducer from '../features/entities/entitiesSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,5 +13,6 @@ export const store = configureStore({
       limit: 50,
     }),
     events: eventsReducer,
+    entities: entitiesReducer,
   },
 });

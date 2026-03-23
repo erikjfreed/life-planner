@@ -51,55 +51,103 @@ db.exec(`
     portland_principal REAL,
     portland_equity REAL
   );
+`);
+
+db.exec('DROP TABLE IF EXISTS events');
+db.exec('DROP TABLE IF EXISTS entities');
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS entities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    appreciation_rate REAL,
+    services_json TEXT,
+    tax_yearly REAL,
+    insurance_yearly REAL,
+    mortgage_rate REAL,
+    term_years INTEGER,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
 
   CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,
     year INTEGER NOT NULL,
+    entity_id INTEGER REFERENCES entities(id),
     name TEXT,
     purchase_price REAL,
     down_payment REAL,
     principal_balance REAL,
-    mortgage_rate REAL,
-    term_years INTEGER,
     monthly_payment REAL,
-    appreciation_rate REAL,
-    expense_base REAL,
-    tax_yearly REAL,
-    insurance_yearly REAL,
     sale_price REAL,
     selling_costs_pct REAL,
-    useful_life_years INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  )
+  );
 `);
 
-// Seed initial events if the events table is empty
-const eventCount = db.prepare('SELECT COUNT(*) AS cnt FROM events').get();
-if (eventCount.cnt === 0) {
-  const insertEvent = db.prepare(`
-    INSERT INTO events (type, year, name, purchase_price, principal_balance, mortgage_rate, term_years, monthly_payment, appreciation_rate, expense_base)
-    VALUES (@type, @year, @name, @purchase_price, @principal_balance, @mortgage_rate, @term_years, @monthly_payment, @appreciation_rate, @expense_base)
+// Seed entities and events if entities table is empty
+const entityCount = db.prepare('SELECT COUNT(*) AS cnt FROM entities').get();
+if (entityCount.cnt === 0) {
+  const insertEntity = db.prepare(`
+    INSERT INTO entities (type, name, appreciation_rate, services_json, tax_yearly, insurance_yearly, mortgage_rate, term_years)
+    VALUES (@type, @name, @appreciation_rate, @services_json, @tax_yearly, @insurance_yearly, @mortgage_rate, @term_years)
   `);
-  const insertSimple = db.prepare('INSERT INTO events (type, year, name, monthly_payment) VALUES (@type, @year, @name, @monthly_payment)');
-  const seedAll = db.transaction(() => {
-    insertEvent.run({ type: 're_buy', year: 2026, name: 'Orcas',    purchase_price: 2000000, principal_balance: 449764, mortgage_rate: 0.03125, term_years: 30, monthly_payment: 2186, appreciation_rate: 0.05, expense_base: 23094 });
-    insertEvent.run({ type: 're_buy', year: 2026, name: 'Portland', purchase_price: 950000,  principal_balance: 264655, mortgage_rate: 0.0275,  term_years: 30, monthly_payment: 1235, appreciation_rate: 0.05, expense_base: 32093 });
-    insertSimple.run({ type: 'death',    year: 2055, name: 'Erik', monthly_payment: null });
-    insertSimple.run({ type: 'death',    year: 2055, name: 'Deb',  monthly_payment: null });
-    insertSimple.run({ type: 'ss_start', year: 2027, name: 'Erik', monthly_payment: 5215 });
-    insertSimple.run({ type: 'ss_start', year: 2032, name: 'Deb',  monthly_payment: 5392 });
-  });
-  seedAll();
-}
+  const insertEvent = db.prepare(`
+    INSERT INTO events (type, year, entity_id, name, purchase_price, down_payment, principal_balance, monthly_payment, sale_price, selling_costs_pct)
+    VALUES (@type, @year, @entity_id, @name, @purchase_price, @down_payment, @principal_balance, @monthly_payment, @sale_price, @selling_costs_pct)
+  `);
 
-// Seed ss_start events if missing (migration for existing DBs)
-const ssCount = db.prepare("SELECT COUNT(*) AS cnt FROM events WHERE type = 'ss_start'").get();
-if (ssCount.cnt === 0) {
-  const insertSS = db.prepare('INSERT INTO events (type, year, name, monthly_payment) VALUES (@type, @year, @name, @monthly_payment)');
   db.transaction(() => {
-    insertSS.run({ type: 'ss_start', year: 2027, name: 'Erik', monthly_payment: 5215 });
-    insertSS.run({ type: 'ss_start', year: 2032, name: 'Deb',  monthly_payment: 5392 });
+    const orcasResult = insertEntity.run({
+      type: 'real_estate',
+      name: 'Orcas',
+      appreciation_rate: 0.05,
+      services_json: JSON.stringify([
+        { label: 'Internet (Starlink)', monthly: 120, yearly: 1440 },
+        { label: 'HOA (SHWSOA)',        monthly: 225, yearly: 2700 },
+        { label: 'Electricity',         monthly: 200, yearly: 2400 },
+        { label: 'Water',               monthly:  21, yearly:  250 },
+        { label: 'Cleaning',            monthly:  83, yearly: 1000 },
+        { label: 'Septic',              monthly:  21, yearly:  250 },
+        { label: 'Pest Control',        monthly:  50, yearly:  600 },
+        { label: 'Landscape',           monthly:  83, yearly: 1000 },
+        { label: 'Propane',             monthly:  33, yearly:  400 },
+      ]),
+      tax_yearly: 12038,
+      insurance_yearly: 1016,
+      mortgage_rate: 0.03125,
+      term_years: 30,
+    });
+    const orcasId = orcasResult.lastInsertRowid;
+
+    const portlandResult = insertEntity.run({
+      type: 'real_estate',
+      name: 'Portland',
+      appreciation_rate: 0.05,
+      services_json: JSON.stringify([
+        { label: 'Internet (CenturyLink)', monthly:  65, yearly:  780 },
+        { label: 'Garbage',                monthly:  87, yearly: 1044 },
+        { label: 'Cleaning',               monthly: 500, yearly: 6000 },
+        { label: 'Sewage',                 monthly:  30, yearly:  360 },
+        { label: 'Electricity',            monthly: 200, yearly: 2400 },
+        { label: 'Water',                  monthly:  38, yearly:  456 },
+        { label: 'Gas',                    monthly:  38, yearly:  456 },
+        { label: 'Gardening',              monthly: 383, yearly: 4590 },
+      ]),
+      tax_yearly: 14968,
+      insurance_yearly: 1039,
+      mortgage_rate: 0.0275,
+      term_years: 30,
+    });
+    const portlandId = portlandResult.lastInsertRowid;
+
+    insertEvent.run({ type: 're_buy',   year: 2026, entity_id: orcasId,    name: null, purchase_price: 2000000, down_payment: null, principal_balance: 449764, monthly_payment: 2186, sale_price: null, selling_costs_pct: null });
+    insertEvent.run({ type: 're_buy',   year: 2026, entity_id: portlandId, name: null, purchase_price: 950000,  down_payment: null, principal_balance: 264655, monthly_payment: 1235, sale_price: null, selling_costs_pct: null });
+    insertEvent.run({ type: 'death',    year: 2055, entity_id: null, name: 'Erik', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null,  sale_price: null, selling_costs_pct: null });
+    insertEvent.run({ type: 'death',    year: 2055, entity_id: null, name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null,  sale_price: null, selling_costs_pct: null });
+    insertEvent.run({ type: 'ss_start', year: 2027, entity_id: null, name: 'Erik', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5215, sale_price: null, selling_costs_pct: null });
+    insertEvent.run({ type: 'ss_start', year: 2032, entity_id: null, name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5392, sale_price: null, selling_costs_pct: null });
   })();
 }
 
