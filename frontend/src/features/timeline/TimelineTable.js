@@ -43,15 +43,14 @@ const COLUMNS = [
   { key: 'year', label: 'Year', format: (v) => v },
   { key: 'erik_age', label: 'Erik', format: (v) => v },
   { key: 'deb_age', label: 'Deb', format: (v) => v },
-  { key: 'loans', label: 'Loans', format: fmt },
-  { key: 'health', label: 'Health', format: fmt },
-  { key: 'dogs', label: 'Dogs', format: fmt },
-  { key: 'cars', label: 'Cars', format: fmt },
-  { key: 'travel', label: 'Travel', format: fmt },
-  { key: 'living', label: 'Living', format: fmt },
+  { key: 'loans', label: 'Loans', group: 'Real Estate', format: fmt },
+  { key: 're_costs', label: 'Costs', group: 'Real Estate', format: fmt, compute: (r) => (r.orcas || 0) + (r.portland || 0) },
+  { key: 'health', label: 'Health', group: 'Lifestyle', format: fmt },
+  { key: 'dogs', label: 'Dogs', group: 'Lifestyle', format: fmt },
+  { key: 'cars', label: 'Cars', group: 'Lifestyle', format: fmt },
+  { key: 'travel', label: 'Travel', group: 'Lifestyle', format: fmt },
+  { key: 'living', label: 'General', group: 'Lifestyle', format: fmt },
   { key: 'allowance', label: 'Allowance', format: fmt },
-  { key: 'orcas', label: 'Orcas', format: fmt },
-  { key: 'portland', label: 'Portland', format: fmt },
   { key: 'ltc', label: 'LTC', format: fmt },
   { key: 'total_expenses', label: 'Total Exp', format: fmt },
   { key: 'ss_net', label: 'SS Net', format: fmt },
@@ -79,12 +78,35 @@ export default function TimelineTable() {
       <table style={{ borderCollapse: 'collapse', fontSize: '11px', whiteSpace: 'nowrap' }}>
         <thead>
           <tr style={{ background: '#d1d5db', color: '#111827' }}>
-            {COLUMNS.map((col) => (
-              <th key={col.key} style={{ padding: '4px 8px', textAlign: 'right', borderBottom: '2px solid #d1d5db' }}>
+            {(() => {
+              const cells = [];
+              let i = 0;
+              while (i < COLUMNS.length) {
+                const col = COLUMNS[i];
+                if (col.group) {
+                  let span = 1;
+                  while (i + span < COLUMNS.length && COLUMNS[i + span].group === col.group) span++;
+                  cells.push(
+                    <th key={col.group} colSpan={span} style={{ padding: '2px 8px', textAlign: 'center', border: '1px solid #999', fontSize: 10, fontWeight: 700 }}>
+                      {col.group}
+                    </th>
+                  );
+                  i += span;
+                } else {
+                  cells.push(<th key={col.key} rowSpan={2} style={{ padding: '4px 8px', textAlign: 'right', borderBottom: '2px solid #d1d5db' }}>{col.label}</th>);
+                  i++;
+                }
+              }
+              cells.push(<th key="event" rowSpan={2} style={{ padding: '4px 8px', textAlign: 'left', borderBottom: '2px solid #d1d5db' }}>Event</th>);
+              return cells;
+            })()}
+          </tr>
+          <tr style={{ background: '#d1d5db', color: '#111827' }}>
+            {COLUMNS.filter(c => c.group).map(col => (
+              <th key={col.key} style={{ padding: '2px 8px', textAlign: 'right', border: '1px solid #999', fontSize: 10 }}>
                 {col.label}
               </th>
             ))}
-            <th style={{ padding: '4px 8px', textAlign: 'left', borderBottom: '2px solid #d1d5db' }}>Event</th>
           </tr>
         </thead>
         <tbody>
@@ -99,7 +121,7 @@ export default function TimelineTable() {
               <tr key={row.year} style={{ background: i % 2 === 0 ? '#f9f9f9' : '#fff', outline }}>
                 {COLUMNS.map((col) => (
                   <td key={col.key} style={{ padding: '2px 8px', textAlign: 'right', borderBottom: '1px solid #eee' }}>
-                    {col.format(row[col.key])}
+                    {col.format(col.compute ? col.compute(row) : row[col.key])}
                   </td>
                 ))}
                 <td style={{ padding: '2px 8px', textAlign: 'left', borderBottom: '1px solid #eee', color: eventColor, fontWeight: event ? 600 : undefined }}>
