@@ -10,8 +10,10 @@ import CarsPage from './features/nav/CarsPage';
 import TravelPage from './features/nav/TravelPage';
 import LivingPage from './features/nav/LivingPage';
 import RealEstatePage from './features/nav/RealEstatePage';
+import EventsPage from './features/nav/EventsPage';
 import { fetchEvents } from './features/events/eventsSlice';
 import { fetchEntities } from './features/entities/entitiesSlice';
+import { fetchParameters } from './features/parameters/parametersSlice';
 
 function App() {
   const [view, setView] = useState('dashboard');
@@ -20,6 +22,7 @@ function App() {
   useEffect(() => {
     dispatch(fetchEvents());
     dispatch(fetchEntities());
+    dispatch(fetchParameters());
   }, [dispatch]);
 
   const renderView = () => {
@@ -31,6 +34,7 @@ function App() {
     if (view === 'travel')      return <TravelPage />;
     if (view === 'living')      return <LivingPage />;
     if (view === 'real-estate') return <RealEstatePage />;
+    if (view === 'events')      return <EventsPage />;
     return <CategoryPage category={view} />;
   };
 

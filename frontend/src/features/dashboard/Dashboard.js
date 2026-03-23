@@ -26,6 +26,7 @@ export default function Dashboard() {
   const debDeathYear  = events.find(e => e.type === 'death' && e.name === 'Deb')?.year;
   const erikBirthYear = params?.erikDOB ? new Date(params.erikDOB).getFullYear() : null;
   const debBirthYear  = params?.debDOB  ? new Date(params.debDOB).getFullYear()  : null;
+  const ssEvents      = events.filter(e => e.type === 'ss_start');
 
   return (
     <div style={styles.container}>
@@ -47,6 +48,7 @@ export default function Dashboard() {
                 debDeathYear={debDeathYear}
                 erikBirthYear={erikBirthYear}
                 debBirthYear={debBirthYear}
+                ssEvents={ssEvents}
                 minYear={minYear}
                 maxYear={maxYear}
                 stripHeight={24}

@@ -5,6 +5,17 @@ const MONTHLY_OPTIONS = Array.from({ length: 41 }, (_, i) => i * 500); // 0 to 2
 
 const TAX_OPTIONS = Array.from({ length: 41 }, (_, i) => i); // 0 to 40
 
+const fmt = v => `$${Math.round(v).toLocaleString()}`;
+
+function DisplayRow({ label, value }) {
+  return (
+    <div style={styles.row}>
+      <div style={styles.label}>{label}</div>
+      <div style={{ ...styles.control, fontSize: 12, color: '#111827' }}>{value}</div>
+    </div>
+  );
+}
+
 function TaxRow({ label, value, onChange }) {
   return (
     <div style={styles.row}>
@@ -91,24 +102,40 @@ function Section({ title, children }) {
 export default function ParametersPanel() {
   const dispatch = useDispatch();
   const params = useSelector(s => s.parameters.present.values);
+  const rows   = useSelector(s => s.timeline.rows);
 
   if (!params || Object.keys(params).length === 0) return <p>Loading...</p>;
 
   const update = (key) => (value) => dispatch(updateParameters({ [key]: value }));
 
+  const firstRow = rows[0];
+  const lastRow  = rows[rows.length - 1];
+  const totalCapSpend = rows.reduce((sum, r) => sum + (r.capital_spend ?? 0), 0);
+  const yearsSpan = lastRow && firstRow ? lastRow.year - firstRow.year : 0;
+  const endWealthPastDollars = lastRow && params.generalInflation
+    ? lastRow.invest_plus_re / Math.pow(1 + params.generalInflation, yearsSpan)
+    : 0;
+
   return (
     <div style={styles.panel}>
       <h2 style={styles.heading}>Parameters</h2>
 
-      <Section title="Economic">
-        <ParamRow label="General Inflation"    value={params.generalInflation}       onChange={update('generalInflation')}       type="slider" min={0} max={10} step={0.1} />
-        <ParamRow label="Investment ROI"       value={params.investmentROI}          onChange={update('investmentROI')}          type="slider" min={0} max={15} step={0.1} />
-        <ParamRow label="RE Appreciation"      value={params.realEstateAppreciation} onChange={update('realEstateAppreciation')} type="slider" min={0} max={10} step={0.1} />
-        <ParamRow label="SS COLA"              value={params.ssCoLA}                 onChange={update('ssCoLA')}                 type="slider" min={0} max={5}  step={0.1} />
+      <Section title="Investments">
+        <ParamRow label="Investment ROI"  value={params.investmentROI} onChange={update('investmentROI')} type="slider" min={0} max={15} step={0.1} />
+        {firstRow && <>
+          <DisplayRow label="Portfolio Balance" value={fmt(firstRow.investment_balance)} />
+          <DisplayRow label="Start Wealth"      value={fmt(firstRow.invest_plus_re)} />
+          <DisplayRow label="Capital Spend"     value={fmt(totalCapSpend)} />
+          <DisplayRow label="End Wealth"        value={fmt(lastRow.invest_plus_re)} />
+          <DisplayRow label="End Wealth (2026$)" value={fmt(endWealthPastDollars)} />
+        </>}
       </Section>
 
-      <Section title="Healthcare">
-        <ParamRow label="HC Inflation"         value={params.healthcareInflation}    onChange={update('healthcareInflation')}    type="slider" min={0} max={15} step={0.1} />
+      <Section title="Inflation">
+        <ParamRow label="General"         value={params.generalInflation}       onChange={update('generalInflation')}       type="slider" min={0} max={10} step={0.1} />
+        <ParamRow label="Real Estate"     value={params.realEstateAppreciation} onChange={update('realEstateAppreciation')} type="slider" min={0} max={10} step={0.1} />
+        <ParamRow label="Healthcare"      value={params.healthcareInflation}    onChange={update('healthcareInflation')}    type="slider" min={0} max={15} step={0.1} />
+        <ParamRow label="Social Security" value={params.ssCoLA}                 onChange={update('ssCoLA')}                 type="slider" min={0} max={5}  step={0.1} />
       </Section>
 
       <Section title="Taxes">
@@ -116,13 +143,6 @@ export default function ParametersPanel() {
         <TaxRow label="Draw State Tax" value={params.drawStateTaxRate} onChange={update('drawStateTaxRate')} />
         <TaxRow label="SS Fed Tax"     value={params.ssFedTaxRate}     onChange={update('ssFedTaxRate')}     />
         <TaxRow label="SS State Tax"   value={params.ssStateTaxRate}   onChange={update('ssStateTaxRate')}   />
-      </Section>
-
-      <Section title="Social Security">
-        <ParamRow label="Erik Monthly ($)"     value={params.ssErikMonthly}          onChange={update('ssErikMonthly')}          type="dollars" />
-        <ParamRow label="Debbie Monthly ($)"   value={params.ssDebbieMonthly}        onChange={update('ssDebbieMonthly')}        type="dollars" />
-        <ParamRow label="Erik Start Year"      value={params.ssErikStartYear}        onChange={update('ssErikStartYear')}        type="year" />
-        <ParamRow label="Debbie Start Year"    value={params.ssDebbieStartYear}      onChange={update('ssDebbieStartYear')}      type="year" />
       </Section>
 
       <Section title="Allowance">

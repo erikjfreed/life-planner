@@ -11,19 +11,20 @@ function xPixel(year, minYear, maxYear, containerWidth) {
   return PLOT_OFFSET + ((year - minYear) / (maxYear - minYear)) * plotWidth;
 }
 
-function DeathLine({ x, name, age, color, height, stripHeight }) {
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function EventLine({ x, label, color, height, labelOffset = 0 }) {
+  const labelWidth = label.length * 6 + 8;
   return (
     <g>
-      {/* vertical line — full height */}
-      <line x1={x} y1={0} x2={x} y2={height} stroke={color} strokeWidth={1} strokeDasharray="4 3" />
-      {/* label at top of strip */}
-      <rect x={x - 22} y={1} width={44} height={16} fill="white" fillOpacity={0.9} stroke={color} strokeWidth={1} rx={2} />
-      <text x={x} y={13} textAnchor="middle" fontSize={10} fill={color}>{name} {age}</text>
+      <line x1={x} y1={0} x2={x} y2={height} stroke={color} strokeWidth={1} strokeDasharray="4 3" clipPath="url(#plotAreaClip)" />
+      <rect x={x - labelWidth / 2} y={1 + labelOffset} width={labelWidth} height={16} fill="white" fillOpacity={0.9} stroke={color} strokeWidth={1} rx={2} />
+      <text x={x} y={13 + labelOffset} textAnchor="middle" fontSize={10} fill={color}>{label}</text>
     </g>
   );
 }
 
-export function DeathLinesOverlay({ erikDeathYear, debDeathYear, erikBirthYear, debBirthYear, minYear, maxYear, stripHeight = 50 }) {
+export function DeathLinesOverlay({ erikDeathYear, debDeathYear, erikBirthYear, debBirthYear, ssEvents, minYear, maxYear, stripHeight = 50 }) {
   const ref = useRef(null);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
@@ -46,16 +47,39 @@ export function DeathLinesOverlay({ erikDeathYear, debDeathYear, erikBirthYear, 
     <div ref={ref} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
       {width > 0 && (
         <svg width={width} height={height} style={{ position: 'absolute', top: 0, left: 0 }}>
+          <defs>
+            <clipPath id="plotAreaClip">
+              <rect x={PLOT_OFFSET} y={0} width={width - PLOT_OFFSET - MARGIN_RIGHT} height={height} />
+            </clipPath>
+          </defs>
+          {(ssEvents ?? []).map((ev, i) => {
+            const label = `SS ${ev.name}${ev.month ? ' ' + MONTHS[ev.month - 1] : ''}`;
+            const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
+            return (
+              <EventLine
+                key={ev.name}
+                x={xPixel(fractionalYear, minYear, maxYear, width)}
+                label={label}
+                color="#2563eb"
+                height={height}
+                labelOffset={i * 18}
+              />
+            );
+          })}
           {erikDeathYear && erikAge && (
-            <DeathLine
+            <EventLine
               x={xPixel(erikDeathYear, minYear, maxYear, width)}
-              name="Erik" age={erikAge} color="#ef4444" height={height} stripHeight={stripHeight}
+              label={`Erik ${erikAge}`}
+              color="#ef4444"
+              height={height}
             />
           )}
           {debDeathYear && debAge && (
-            <DeathLine
+            <EventLine
               x={xPixel(debDeathYear, minYear, maxYear, width)}
-              name="Deb" age={debAge} color="#8b5cf6" height={height} stripHeight={stripHeight}
+              label={`Deb ${debAge}`}
+              color="#8b5cf6"
+              height={height}
             />
           )}
         </svg>

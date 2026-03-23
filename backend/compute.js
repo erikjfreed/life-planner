@@ -41,11 +41,17 @@ function computeTimeline(params, events = [], entities = []) {
 
   const startYear = 2026;
 
-  // Extract death years from events
+  // Extract death years from events (age-based or explicit year)
+  const erikBirthYear = new Date(erikDOB).getFullYear();
+  const debBirthYear  = new Date(debDOB).getFullYear();
   const erikDeathEvent = events.find(e => e.type === 'death' && e.name === 'Erik');
   const debDeathEvent  = events.find(e => e.type === 'death' && e.name === 'Deb');
-  const erikDeathYear  = erikDeathEvent ? erikDeathEvent.year : 2060;
-  const debDeathYear   = debDeathEvent  ? debDeathEvent.year  : 2060;
+  const erikDeathYear  = erikDeathEvent
+    ? (erikDeathEvent.age != null ? erikBirthYear + erikDeathEvent.age : erikDeathEvent.year)
+    : 2060;
+  const debDeathYear   = debDeathEvent
+    ? (debDeathEvent.age  != null ? debBirthYear  + debDeathEvent.age  : debDeathEvent.year)
+    : 2060;
   const endOfGameYear  = Math.max(erikDeathYear, debDeathYear);
 
   // SS events
@@ -168,10 +174,23 @@ function computeTimeline(params, events = [], entities = []) {
     const totalExpenses = loans + health + dogs + cars + travel + living + allowance + orcas + portland;
 
     // -- SOCIAL SECURITY --
-    const ssErik   = alive && ssErikEvent   && year >= ssErikEvent.year
-      ? inf(ssErikEvent.monthly_payment   * 12, ssCoLA, year - ssErikEvent.year)   : 0;
+    // In the start year, prorate by months remaining (13 - startMonth)
+    const ssErik = alive && ssErikEvent && year >= ssErikEvent.year
+      ? (() => {
+          const full = inf(ssErikEvent.monthly_payment * 12, ssCoLA, year - ssErikEvent.year);
+          if (year === ssErikEvent.year && ssErikEvent.month) {
+            return ssErikEvent.monthly_payment * (13 - ssErikEvent.month);
+          }
+          return full;
+        })() : 0;
     const ssDebbie = alive && ssDebbieEvent && year >= ssDebbieEvent.year
-      ? inf(ssDebbieEvent.monthly_payment * 12, ssCoLA, year - ssDebbieEvent.year) : 0;
+      ? (() => {
+          const full = inf(ssDebbieEvent.monthly_payment * 12, ssCoLA, year - ssDebbieEvent.year);
+          if (year === ssDebbieEvent.year && ssDebbieEvent.month) {
+            return ssDebbieEvent.monthly_payment * (13 - ssDebbieEvent.month);
+          }
+          return full;
+        })() : 0;
     const ssSubtotal = ssErik + ssDebbie;
     const ssTax      = ssSubtotal * 0.85 * ssTaxRate;
     const ssNet      = ssSubtotal - ssTax;

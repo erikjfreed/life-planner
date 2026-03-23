@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 
 const fmt  = v => `$${Math.round(v).toLocaleString()}`;
@@ -29,8 +30,6 @@ function PropertyPanel({ entity, buyEvent }) {
 
   return (
     <div style={styles.propertyPanel}>
-      <h3 style={styles.propTitle}>{entity.name}</h3>
-
       {/* Summary */}
       <div style={styles.summaryRow}>
         <div style={styles.summaryCell}><div style={styles.summaryLabel}>Market Value</div><div style={styles.summaryValue}>{fmt(buyEvent.purchase_price)}</div></div>
@@ -113,28 +112,45 @@ function PropertyPanel({ entity, buyEvent }) {
 
 export default function RealEstatePage() {
   const entities = useSelector(s => s.entities.items);
-  const events = useSelector(s => s.events.items);
+  const events   = useSelector(s => s.events.items);
 
-  const reEntities = entities.filter(e => e.type === 'real_estate');
+  const reEntities = entities.filter(e => e.type === 'real_estate').filter(entity =>
+    events.some(ev => ev.type === 're_buy' && ev.entity_id === entity.id)
+  );
+
+  const [activeId, setActiveId] = useState(null);
+  const selected = reEntities.find(e => e.id === activeId) ?? reEntities[0];
+
+  if (reEntities.length === 0) {
+    return <div style={styles.page}><p style={{ color: '#6b7280', fontSize: 13 }}>No real estate entities with a buy event.</p></div>;
+  }
+
+  const buyEvent = events.find(ev => ev.type === 're_buy' && ev.entity_id === selected?.id);
 
   return (
     <div style={styles.page}>
-      <div style={styles.columns}>
-        {reEntities.map(entity => {
-          const buyEvent = events.find(ev => ev.type === 're_buy' && ev.entity_id === entity.id);
-          if (!buyEvent) return null;
-          return <PropertyPanel key={entity.id} entity={entity} buyEvent={buyEvent} />;
-        })}
+      <div style={styles.subtabs}>
+        {reEntities.map(entity => (
+          <button
+            key={entity.id}
+            onClick={() => setActiveId(entity.id)}
+            style={{ ...styles.subtab, ...(entity.id === selected?.id ? styles.subtabActive : {}) }}
+          >
+            {entity.street_address || entity.name}
+          </button>
+        ))}
       </div>
+      {selected && buyEvent && <PropertyPanel entity={selected} buyEvent={buyEvent} />}
     </div>
   );
 }
 
 const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
-  columns: { display: 'flex', gap: 32, alignItems: 'flex-start' },
-  propertyPanel: { flex: 1, minWidth: 0 },
-  propTitle: { margin: '0 0 12px', fontSize: 16, fontWeight: 700, color: '#111827' },
+  subtabs: { display: 'flex', gap: 2, borderBottom: '1px solid #e5e7eb', marginBottom: 20 },
+  subtab: { padding: '6px 16px', fontSize: 13, fontWeight: 500, border: 'none', borderBottom: '2px solid transparent', background: 'none', cursor: 'pointer', color: '#6b7280', marginBottom: -1 },
+  subtabActive: { color: '#111827', borderBottom: '2px solid #2563eb', fontWeight: 600 },
+  propertyPanel: { maxWidth: 600 },
   summaryRow: { display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
   summaryCell: { background: '#f3f4f6', borderRadius: 6, padding: '8px 12px', minWidth: 100 },
   summaryLabel: { fontSize: 10, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },

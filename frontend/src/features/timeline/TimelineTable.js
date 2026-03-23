@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTimeline } from './timelineSlice';
 
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
 function getRowEvent(row, events, params) {
   const erikDeathEvent = events.find(e => e.type === 'death' && e.name === 'Erik');
   const debDeathEvent  = events.find(e => e.type === 'death' && e.name === 'Deb');
@@ -21,6 +23,11 @@ function getRowEvent(row, events, params) {
     ? Math.max(erikDeathEvent.year, debDeathEvent.year) + 2
     : null;
   if (endOfGameYear && row.year === endOfGameYear) return { label: 'EndGame', type: 'eog' };
+
+  const ssLabels = events
+    .filter(e => e.type === 'ss_start' && e.year === row.year)
+    .map(e => `SS ${e.name}${e.month ? ' ' + MONTHS[e.month - 1] : ''}`);
+  if (ssLabels.length > 0) return { label: ssLabels.join(', '), type: 'ss' };
 
   return null;
 }
@@ -85,8 +92,9 @@ export default function TimelineTable() {
             const event = getRowEvent(row, events, params);
             const isDeath = event?.type === 'death';
             const isEog   = event?.type === 'eog';
-            const outline = isDeath ? '1.5px solid #ef4444' : isEog ? '1.5px solid #16a34a' : undefined;
-            const eventColor = isDeath ? '#ef4444' : isEog ? '#16a34a' : undefined;
+            const isSS    = event?.type === 'ss';
+            const outline = isDeath ? '1.5px solid #ef4444' : isEog ? '1.5px solid #16a34a' : isSS ? '1.5px solid #2563eb' : undefined;
+            const eventColor = isDeath ? '#ef4444' : isEog ? '#16a34a' : isSS ? '#2563eb' : undefined;
             return (
               <tr key={row.year} style={{ background: i % 2 === 0 ? '#f9f9f9' : '#fff', outline }}>
                 {COLUMNS.map((col) => (
