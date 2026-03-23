@@ -74,7 +74,7 @@ export default function TimelineTable() {
   if (status === 'failed') return <p>Error: {error}</p>;
 
   return (
-    <div style={{ overflowX: 'auto', paddingTop: 12 }}>
+    <div style={{ overflowX: 'auto', paddingTop: 12, paddingLeft: 16 }}>
       <table style={{ borderCollapse: 'collapse', fontSize: '11px', whiteSpace: 'nowrap' }}>
         <thead>
           <tr style={{ background: '#d1d5db', color: '#111827' }}>
