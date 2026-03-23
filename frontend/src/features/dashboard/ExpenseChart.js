@@ -32,7 +32,7 @@ export default function ExpenseChart({ rows, params }) {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 4, right: 20, left: 10, bottom: 0 }}>
           <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9 }} angle={-45} textAnchor="end" height={30} interval={0} />
-          <YAxis tick={{ fontSize: 11 }} tickFormatter={v => v % 200 === 0 ? `$${v}K` : ''} ticks={yTicks} domain={[0, yMax]} interval={0} />
+          <YAxis width={52} tick={{ fontSize: 11 }} tickFormatter={v => v % 200 === 0 ? `$${v}K` : ''} ticks={yTicks} domain={[0, yMax]} interval={0} />
           <CartesianGrid vertical={false} stroke="#e5e7eb" strokeWidth={1} />
           <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
@@ -40,8 +40,6 @@ export default function ExpenseChart({ rows, params }) {
             <Area key={c.key} type="monotone" dataKey={c.label} stackId="1"
               stroke={c.color} fill={c.color} fillOpacity={0.75} />
           ))}
-          {params?.erikDeathYear && <DeathReferenceLine x={params.erikDeathYear} name="Erik" age={params.erikDeathYear - new Date(params.erikDOB).getFullYear()} color="#ef4444" />}
-          {params?.debDeathYear && <DeathReferenceLine x={params.debDeathYear} name="Deb" age={params.debDeathYear - new Date(params.debDOB).getFullYear()} color="#8b5cf6" />}
         </AreaChart>
       </ResponsiveContainer>
     </div>

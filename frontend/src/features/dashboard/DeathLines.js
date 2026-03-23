@@ -1,35 +1,68 @@
-import { ReferenceLine } from 'recharts';
+import { useRef, useEffect, useState } from 'react';
 
-function BgText({ x, y, anchor, color, children }) {
-  const w = String(children).length * 6 + 6;
-  const rx = anchor === 'end' ? x - w : x;
+// Chart layout constants — must match all three charts
+const MARGIN_LEFT = 10;
+const MARGIN_RIGHT = 20;
+const YAXIS_WIDTH = 52;
+const PLOT_OFFSET = MARGIN_LEFT + YAXIS_WIDTH; // left edge of plot area
+
+function xPixel(year, minYear, maxYear, containerWidth) {
+  const plotWidth = containerWidth - PLOT_OFFSET - MARGIN_RIGHT;
+  return PLOT_OFFSET + ((year - minYear) / (maxYear - minYear)) * plotWidth;
+}
+
+function DeathLine({ x, name, age, color, height, stripHeight }) {
   return (
     <g>
-      <rect x={rx} y={y - 11} width={w} height={14} fill="white" fillOpacity={0.85} rx={2} />
-      <text x={x} y={y} textAnchor={anchor} fontSize={10} fill={color}>{children}</text>
+      {/* vertical line — full height */}
+      <line x1={x} y1={0} x2={x} y2={height} stroke={color} strokeWidth={1} strokeDasharray="4 3" />
+      {/* label at top of strip */}
+      <rect x={x - 22} y={1} width={44} height={16} fill="white" fillOpacity={0.9} stroke={color} strokeWidth={1} rx={2} />
+      <text x={x} y={13} textAnchor="middle" fontSize={10} fill={color}>{name} {age}</text>
     </g>
   );
 }
 
-function DeathLabel({ name, age, color, viewBox }) {
-  const { x, y } = viewBox;
-  return (
-    <g>
-      <BgText x={x - 4} y={y + 12} anchor="end"   color={color}>{name}</BgText>
-      <BgText x={x + 4} y={y + 12} anchor="start" color={color}>Dies</BgText>
-      <BgText x={x - 4} y={y + 24} anchor="end"   color={color}>Age</BgText>
-      <BgText x={x + 4} y={y + 24} anchor="start" color={color}>{age}</BgText>
-    </g>
-  );
-}
+export function DeathLinesOverlay({ params, minYear, maxYear, stripHeight = 50 }) {
+  const ref = useRef(null);
+  const [width, setWidth] = useState(0);
+  const [height, setHeight] = useState(0);
 
-export function DeathReferenceLine({ x, name, age, color }) {
+  useEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(entries => {
+      const e = entries[0].contentRect;
+      setWidth(e.width);
+      setHeight(e.height);
+    });
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const erikBirthYear = params?.erikDOB ? new Date(params.erikDOB).getFullYear() : null;
+  const erikDeathYear = params?.erikDeathYear;
+  const debDeathYear  = params?.debDeathYear;
+  const erikAge = erikBirthYear && erikDeathYear ? erikDeathYear - erikBirthYear : null;
+  const debAge  = erikBirthYear && debDeathYear  ? debDeathYear  - new Date(params.debDOB).getFullYear() : null;
+
   return (
-    <ReferenceLine
-      x={x}
-      stroke={color}
-      strokeDasharray="4 3"
-      label={(props) => <DeathLabel name={name} age={age} color={color} {...props} />}
-    />
+    <div ref={ref} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+      {width > 0 && (
+        <svg width={width} height={height} style={{ position: 'absolute', top: 0, left: 0 }}>
+          {erikDeathYear && erikAge && (
+            <DeathLine
+              x={xPixel(erikDeathYear, minYear, maxYear, width)}
+              name="Erik" age={erikAge} color="#ef4444" height={height} stripHeight={stripHeight}
+            />
+          )}
+          {debDeathYear && debAge && (
+            <DeathLine
+              x={xPixel(debDeathYear, minYear, maxYear, width)}
+              name="Deb" age={debAge} color="#8b5cf6" height={height} stripHeight={stripHeight}
+            />
+          )}
+        </svg>
+      )}
+    </div>
   );
 }
