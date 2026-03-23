@@ -16,11 +16,6 @@ const params = {
   ssFedTaxRate: 0.16,
   ssStateTaxRate: 0.00,
 
-  ssErikMonthly: 5215,
-  ssErikStartYear: 2027,
-  ssDebbieMonthly: 5392,
-  ssDebbieStartYear: 2032,
-
   allowancePerPersonPerMonth: 3000,
 
   healthBase: 21276,
@@ -45,8 +40,10 @@ const events = [
     term_years: 30, monthly_payment: 1235, appreciation_rate: 0.05, expense_base: 32093,
     tax_yearly: null, insurance_yearly: null,
   },
-  { type: 'death', year: 2055, name: 'Erik' },
-  { type: 'death', year: 2055, name: 'Deb' },
+  { type: 'death',    year: 2055, name: 'Erik' },
+  { type: 'death',    year: 2055, name: 'Deb'  },
+  { type: 'ss_start', year: 2027, name: 'Erik', monthly_payment: 5215 },
+  { type: 'ss_start', year: 2032, name: 'Deb',  monthly_payment: 5392 },
 ];
 
 const rows = computeTimeline(params, events);

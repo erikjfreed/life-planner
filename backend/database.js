@@ -78,27 +78,29 @@ db.exec(`
 const eventCount = db.prepare('SELECT COUNT(*) AS cnt FROM events').get();
 if (eventCount.cnt === 0) {
   const insertEvent = db.prepare(`
-    INSERT INTO events (type, year, name, purchase_price, principal_balance, mortgage_rate, term_years, monthly_payment, appreciation_rate, expense_base, tax_yearly, insurance_yearly)
-    VALUES (@type, @year, @name, @purchase_price, @principal_balance, @mortgage_rate, @term_years, @monthly_payment, @appreciation_rate, @expense_base, @tax_yearly, @insurance_yearly)
+    INSERT INTO events (type, year, name, purchase_price, principal_balance, mortgage_rate, term_years, monthly_payment, appreciation_rate, expense_base)
+    VALUES (@type, @year, @name, @purchase_price, @principal_balance, @mortgage_rate, @term_years, @monthly_payment, @appreciation_rate, @expense_base)
   `);
-  const insertDeath = db.prepare('INSERT INTO events (type, year, name) VALUES (@type, @year, @name)');
+  const insertSimple = db.prepare('INSERT INTO events (type, year, name, monthly_payment) VALUES (@type, @year, @name, @monthly_payment)');
   const seedAll = db.transaction(() => {
-    insertEvent.run({
-      type: 're_buy', year: 2026, name: 'Orcas',
-      purchase_price: 2000000, principal_balance: 449764, mortgage_rate: 0.03125,
-      term_years: 30, monthly_payment: 2186, appreciation_rate: 0.05, expense_base: 23094,
-      tax_yearly: null, insurance_yearly: null,
-    });
-    insertEvent.run({
-      type: 're_buy', year: 2026, name: 'Portland',
-      purchase_price: 950000, principal_balance: 264655, mortgage_rate: 0.0275,
-      term_years: 30, monthly_payment: 1235, appreciation_rate: 0.05, expense_base: 32093,
-      tax_yearly: null, insurance_yearly: null,
-    });
-    insertDeath.run({ type: 'death', year: 2055, name: 'Erik' });
-    insertDeath.run({ type: 'death', year: 2055, name: 'Deb' });
+    insertEvent.run({ type: 're_buy', year: 2026, name: 'Orcas',    purchase_price: 2000000, principal_balance: 449764, mortgage_rate: 0.03125, term_years: 30, monthly_payment: 2186, appreciation_rate: 0.05, expense_base: 23094 });
+    insertEvent.run({ type: 're_buy', year: 2026, name: 'Portland', purchase_price: 950000,  principal_balance: 264655, mortgage_rate: 0.0275,  term_years: 30, monthly_payment: 1235, appreciation_rate: 0.05, expense_base: 32093 });
+    insertSimple.run({ type: 'death',    year: 2055, name: 'Erik', monthly_payment: null });
+    insertSimple.run({ type: 'death',    year: 2055, name: 'Deb',  monthly_payment: null });
+    insertSimple.run({ type: 'ss_start', year: 2027, name: 'Erik', monthly_payment: 5215 });
+    insertSimple.run({ type: 'ss_start', year: 2032, name: 'Deb',  monthly_payment: 5392 });
   });
   seedAll();
+}
+
+// Seed ss_start events if missing (migration for existing DBs)
+const ssCount = db.prepare("SELECT COUNT(*) AS cnt FROM events WHERE type = 'ss_start'").get();
+if (ssCount.cnt === 0) {
+  const insertSS = db.prepare('INSERT INTO events (type, year, name, monthly_payment) VALUES (@type, @year, @name, @monthly_payment)');
+  db.transaction(() => {
+    insertSS.run({ type: 'ss_start', year: 2027, name: 'Erik', monthly_payment: 5215 });
+    insertSS.run({ type: 'ss_start', year: 2032, name: 'Deb',  monthly_payment: 5392 });
+  })();
 }
 
 module.exports = db;

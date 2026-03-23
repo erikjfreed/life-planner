@@ -19,11 +19,6 @@ function computeTimeline(params, events = []) {
     ssFedTaxRate,
     ssStateTaxRate,
 
-    ssErikMonthly,
-    ssErikStartYear,
-    ssDebbieMonthly,
-    ssDebbieStartYear,
-
     allowancePerPersonPerMonth,
 
     healthBase,
@@ -52,6 +47,10 @@ function computeTimeline(params, events = []) {
   const erikDeathYear  = erikDeathEvent ? erikDeathEvent.year : 2060;
   const debDeathYear   = debDeathEvent  ? debDeathEvent.year  : 2060;
   const endOfGameYear  = Math.max(erikDeathYear, debDeathYear);
+
+  // SS events
+  const ssErikEvent   = events.find(e => e.type === 'ss_start' && e.name === 'Erik');
+  const ssDebbieEvent = events.find(e => e.type === 'ss_start' && e.name === 'Deb');
 
   const rows = [];
   const drawTaxRate = drawFedTaxRate + drawStateTaxRate;
@@ -161,10 +160,10 @@ function computeTimeline(params, events = []) {
     const totalExpenses = loans + health + dogs + cars + travel + living + allowance + orcas + portland;
 
     // -- SOCIAL SECURITY --
-    const ssErik   = alive && year >= ssErikStartYear
-      ? inf(ssErikMonthly * 12, ssCoLA, year - ssErikStartYear) : 0;
-    const ssDebbie = alive && year >= ssDebbieStartYear
-      ? inf(ssDebbieMonthly * 12, ssCoLA, year - ssDebbieStartYear) : 0;
+    const ssErik   = alive && ssErikEvent   && year >= ssErikEvent.year
+      ? inf(ssErikEvent.monthly_payment   * 12, ssCoLA, year - ssErikEvent.year)   : 0;
+    const ssDebbie = alive && ssDebbieEvent && year >= ssDebbieEvent.year
+      ? inf(ssDebbieEvent.monthly_payment * 12, ssCoLA, year - ssDebbieEvent.year) : 0;
     const ssSubtotal = ssErik + ssDebbie;
     const ssTax      = ssSubtotal * 0.85 * ssTaxRate;
     const ssNet      = ssSubtotal - ssTax;

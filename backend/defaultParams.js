@@ -14,11 +14,6 @@ const DEFAULT_PARAMS = {
   ssFedTaxRate: 0.16,
   ssStateTaxRate: 0.00,
 
-  ssErikMonthly: 5215,
-  ssErikStartYear: 2027,
-  ssDebbieMonthly: 5392,
-  ssDebbieStartYear: 2032,
-
   allowancePerPersonPerMonth: 3000,
 
   healthBase: 21276,
