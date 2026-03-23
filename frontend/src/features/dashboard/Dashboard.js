@@ -40,8 +40,8 @@ export default function Dashboard() {
 const styles = {
   container: {
     display: 'flex',
-    height: '100vh',
-    width: '100vw',
+    height: '100%',
+    width: '100%',
     overflow: 'hidden',
     fontFamily: 'sans-serif',
     boxSizing: 'border-box',
@@ -64,8 +64,8 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    padding: '8px 16px',
-    gap: 8,
+    padding: '4px 12px',
+    gap: 4,
   },
   chartSlot: {
     flex: 1,

@@ -161,7 +161,7 @@ const styles = {
     borderRight: '1px solid #e5e7eb',
     padding: '6px 8px',
     overflowY: 'hidden',
-    height: '100vh',
+    height: '100%',
     boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
