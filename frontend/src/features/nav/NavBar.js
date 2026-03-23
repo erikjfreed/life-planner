@@ -3,6 +3,7 @@ import { ActionCreators } from 'redux-undo';
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard' },
+  { id: 'timeline',  label: 'Timeline' },
   { id: 'health',    label: 'Health' },
   { id: 'dogs',      label: 'Dogs' },
   { id: 'cars',      label: 'Cars' },

@@ -2,6 +2,26 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTimeline } from './timelineSlice';
 
+function getRowEvent(row, params) {
+  const deathEvents = [];
+  if (params?.erikDeathYear && row.year === params.erikDeathYear) {
+    const age = params.erikDOB ? params.erikDeathYear - new Date(params.erikDOB).getFullYear() : '';
+    deathEvents.push(`Erik ${age}`);
+  }
+  if (params?.debDeathYear && row.year === params.debDeathYear) {
+    const age = params.debDOB ? params.debDeathYear - new Date(params.debDOB).getFullYear() : '';
+    deathEvents.push(`Deb ${age}`);
+  }
+  if (deathEvents.length > 0) return { label: deathEvents.join(', '), type: 'death' };
+
+  const endOfGameYear = params?.erikDeathYear && params?.debDeathYear
+    ? Math.max(params.erikDeathYear, params.debDeathYear) + 2
+    : null;
+  if (endOfGameYear && row.year === endOfGameYear) return { label: 'EndGame', type: 'eog' };
+
+  return null;
+}
+
 const fmt = (val) =>
   val == null || val === 0
     ? '—'
@@ -34,6 +54,7 @@ const COLUMNS = [
 export default function TimelineTable() {
   const dispatch = useDispatch();
   const { rows, status, error } = useSelector((state) => state.timeline);
+  const params = useSelector((s) => s.parameters.present.values);
 
   useEffect(() => {
     if (status === 'idle') dispatch(fetchTimeline());
@@ -44,26 +65,37 @@ export default function TimelineTable() {
 
   return (
     <div style={{ overflowX: 'auto' }}>
-      <table style={{ borderCollapse: 'collapse', fontSize: '13px', whiteSpace: 'nowrap' }}>
+      <table style={{ borderCollapse: 'collapse', fontSize: '11px', whiteSpace: 'nowrap' }}>
         <thead>
           <tr style={{ background: '#1a1a2e', color: '#fff' }}>
             {COLUMNS.map((col) => (
-              <th key={col.key} style={{ padding: '8px 12px', textAlign: 'right', borderBottom: '2px solid #444' }}>
+              <th key={col.key} style={{ padding: '4px 8px', textAlign: 'right', borderBottom: '2px solid #444' }}>
                 {col.label}
               </th>
             ))}
+            <th style={{ padding: '4px 8px', textAlign: 'left', borderBottom: '2px solid #444' }}>Event</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, i) => (
-            <tr key={row.year} style={{ background: i % 2 === 0 ? '#f9f9f9' : '#fff' }}>
-              {COLUMNS.map((col) => (
-                <td key={col.key} style={{ padding: '6px 12px', textAlign: 'right', borderBottom: '1px solid #eee' }}>
-                  {col.format(row[col.key])}
+          {rows.map((row, i) => {
+            const event = getRowEvent(row, params);
+            const isDeath = event?.type === 'death';
+            const isEog   = event?.type === 'eog';
+            const outline = isDeath ? '1.5px solid #ef4444' : isEog ? '1.5px solid #16a34a' : undefined;
+            const eventColor = isDeath ? '#ef4444' : isEog ? '#16a34a' : undefined;
+            return (
+              <tr key={row.year} style={{ background: i % 2 === 0 ? '#f9f9f9' : '#fff', outline }}>
+                {COLUMNS.map((col) => (
+                  <td key={col.key} style={{ padding: '2px 8px', textAlign: 'right', borderBottom: '1px solid #eee' }}>
+                    {col.format(row[col.key])}
+                  </td>
+                ))}
+                <td style={{ padding: '2px 8px', textAlign: 'left', borderBottom: '1px solid #eee', color: eventColor, fontWeight: event ? 600 : undefined }}>
+                  {event?.label || ''}
                 </td>
-              ))}
-            </tr>
-          ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
