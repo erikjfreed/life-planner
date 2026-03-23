@@ -50,14 +50,14 @@ const COLUMNS = [
   { key: 'cars', label: 'Cars', group: 'Lifestyle', format: fmt },
   { key: 'travel', label: 'Travel', group: 'Lifestyle', format: fmt },
   { key: 'living', label: 'General', group: 'Lifestyle', format: fmt },
-  { key: 'allowance', label: 'Allowance', format: fmt },
-  { key: 'ltc', label: 'LTC', format: fmt },
+  { key: 'allowance', label: 'Allowance', group: 'Lifestyle', format: fmt },
+  { key: 'ltc', label: 'LTC', group: 'Lifestyle', format: fmt },
   { key: 'total_expenses', label: 'Total Exp', format: fmt },
-  { key: 'ss_net', label: 'SS Net', format: fmt },
-  { key: 'net_draw', label: 'Draw', format: fmt },
-  { key: 'draw_rate', label: 'Rate', format: pct },
-  { key: 'investment_balance', label: 'Investments', format: fmt },
-  { key: 'invest_plus_re', label: 'Total Wealth', format: fmt },
+  { key: 'ss_net', label: 'SS Net', group: 'Income', format: fmt },
+  { key: 'net_draw', label: 'Draw', group: 'Income', format: fmt },
+  { key: 'draw_rate', label: 'Rate', group: 'Income', format: pct },
+  { key: 'investment_balance', label: 'Investments', group: 'Wealth', format: fmt },
+  { key: 'invest_plus_re', label: 'W/RE', group: 'Wealth', format: fmt },
 ];
 
 export default function TimelineTable() {
@@ -93,7 +93,7 @@ export default function TimelineTable() {
                   );
                   i += span;
                 } else {
-                  cells.push(<th key={col.key} rowSpan={2} style={{ padding: '4px 8px', textAlign: 'right', borderBottom: '2px solid #d1d5db' }}>{col.label}</th>);
+                  cells.push(<th key={col.key} rowSpan={2} style={{ padding: '4px 8px', textAlign: 'center', borderBottom: '2px solid #d1d5db' }}>{col.label}</th>);
                   i++;
                 }
               }
@@ -103,7 +103,7 @@ export default function TimelineTable() {
           </tr>
           <tr style={{ background: '#d1d5db', color: '#111827' }}>
             {COLUMNS.filter(c => c.group).map(col => (
-              <th key={col.key} style={{ padding: '2px 8px', textAlign: 'right', border: '1px solid #999', fontSize: 10 }}>
+              <th key={col.key} style={{ padding: '2px 8px', textAlign: 'center', border: '1px solid #999', fontSize: 10 }}>
                 {col.label}
               </th>
             ))}
