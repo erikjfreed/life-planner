@@ -64,16 +64,16 @@ export default function TimelineTable() {
   if (status === 'failed') return <p>Error: {error}</p>;
 
   return (
-    <div style={{ overflowX: 'auto' }}>
+    <div style={{ overflowX: 'auto', paddingTop: 12 }}>
       <table style={{ borderCollapse: 'collapse', fontSize: '11px', whiteSpace: 'nowrap' }}>
         <thead>
-          <tr style={{ background: '#1a1a2e', color: '#fff' }}>
+          <tr style={{ background: '#d1d5db', color: '#111827' }}>
             {COLUMNS.map((col) => (
-              <th key={col.key} style={{ padding: '4px 8px', textAlign: 'right', borderBottom: '2px solid #444' }}>
+              <th key={col.key} style={{ padding: '4px 8px', textAlign: 'right', borderBottom: '2px solid #d1d5db' }}>
                 {col.label}
               </th>
             ))}
-            <th style={{ padding: '4px 8px', textAlign: 'left', borderBottom: '2px solid #444' }}>Event</th>
+            <th style={{ padding: '4px 8px', textAlign: 'left', borderBottom: '2px solid #d1d5db' }}>Event</th>
           </tr>
         </thead>
         <tbody>
