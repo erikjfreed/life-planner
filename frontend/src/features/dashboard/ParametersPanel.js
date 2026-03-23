@@ -7,29 +7,24 @@ const TAX_OPTIONS = Array.from({ length: 41 }, (_, i) => i); // 0 to 40
 
 const fmt = v => `$${Math.round(v).toLocaleString()}`;
 
-function DisplayRow({ label, value }) {
+function DisplayRow({ label, value, color }) {
   return (
     <div style={styles.row}>
       <div style={styles.label}>{label}</div>
-      <div style={{ ...styles.control, fontSize: 12, color: '#111827' }}>{value}</div>
+      <div style={{ fontSize: 11, color: color || '#111827', textAlign: 'right', minWidth: 68 }}>{value}</div>
     </div>
   );
 }
 
-function TaxRow({ label, value, onChange }) {
+function TaxCell({ value, onChange }) {
   return (
-    <div style={styles.row}>
-      <div style={styles.label}>{label}</div>
-      <div style={styles.control}>
-        <select
-          value={Math.round(value * 100)}
-          onChange={e => onChange(parseFloat(e.target.value) / 100)}
-          style={styles.input}
-        >
-          {TAX_OPTIONS.map(v => <option key={v} value={v}>{v}%</option>)}
-        </select>
-      </div>
-    </div>
+    <select
+      value={Math.round(value * 100)}
+      onChange={e => onChange(parseFloat(e.target.value) / 100)}
+      style={styles.input}
+    >
+      {TAX_OPTIONS.map(v => <option key={v} value={v}>{v}%</option>)}
+    </select>
   );
 }
 
@@ -42,7 +37,7 @@ function ParamRow({ label, value, onChange, type, min, max, step }) {
           <select
             value={value}
             onChange={e => onChange(parseFloat(e.target.value))}
-            style={styles.input}
+            style={{ ...styles.input, width: 68 }}
           >
             {MONTHLY_OPTIONS.map(v => (
               <option key={v} value={v}>${v.toLocaleString()}</option>
@@ -66,7 +61,7 @@ function ParamRow({ label, value, onChange, type, min, max, step }) {
           <select
             value={currentPct}
             onChange={e => onChange(parseFloat(e.target.value) / 100)}
-            style={styles.input}
+            style={{ ...styles.input, width: 58 }}
           >
             {options.map(v => <option key={v} value={v}>{v.toFixed(1)}%</option>)}
           </select>
@@ -125,7 +120,7 @@ export default function ParametersPanel() {
         {firstRow && <>
           <DisplayRow label="Portfolio Balance" value={fmt(firstRow.investment_balance)} />
           <DisplayRow label="Start Wealth"      value={fmt(firstRow.invest_plus_re)} />
-          <DisplayRow label="Capital Spend"     value={fmt(totalCapSpend)} />
+          <DisplayRow label="Capital Spend"     value={fmt(totalCapSpend)} color="#ef4444" />
           <DisplayRow label="End Wealth"        value={fmt(lastRow.invest_plus_re)} />
           <DisplayRow label="End Wealth (2026$)" value={fmt(endWealthPastDollars)} />
         </>}
@@ -139,10 +134,17 @@ export default function ParametersPanel() {
       </Section>
 
       <Section title="Taxes">
-        <TaxRow label="Draw Fed Tax"   value={params.drawFedTaxRate}   onChange={update('drawFedTaxRate')}   />
-        <TaxRow label="Draw State Tax" value={params.drawStateTaxRate} onChange={update('drawStateTaxRate')} />
-        <TaxRow label="SS Fed Tax"     value={params.ssFedTaxRate}     onChange={update('ssFedTaxRate')}     />
-        <TaxRow label="SS State Tax"   value={params.ssStateTaxRate}   onChange={update('ssStateTaxRate')}   />
+        <div style={styles.taxGrid}>
+          <div />
+          <div style={styles.taxHeader}>Federal</div>
+          <div style={styles.taxHeader}>State</div>
+          <div style={styles.taxLabel}>Draw</div>
+          <TaxCell value={params.drawFedTaxRate}   onChange={update('drawFedTaxRate')} />
+          <TaxCell value={params.drawStateTaxRate}  onChange={update('drawStateTaxRate')} />
+          <div style={styles.taxLabel}>SS</div>
+          <TaxCell value={params.ssFedTaxRate}      onChange={update('ssFedTaxRate')} />
+          <TaxCell value={params.ssStateTaxRate}     onChange={update('ssStateTaxRate')} />
+        </div>
       </Section>
 
       <Section title="Allowance">
@@ -174,5 +176,8 @@ const styles = {
   label: { fontSize: 11, color: '#374151', flex: 1, textAlign: 'right', paddingRight: 6 },
   control: { display: 'flex', alignItems: 'center', gap: 4 },
   value: { fontSize: 11, color: '#111827', minWidth: 32, textAlign: 'right' },
-  input: { width: 68, fontSize: 11, padding: '1px 3px', border: '1px solid #d1d5db', borderRadius: 3 },
+  input: { width: 50, fontSize: 11, padding: '1px 3px', border: '1px solid #d1d5db', borderRadius: 3, textAlign: 'right' },
+  taxGrid: { display: 'grid', gridTemplateColumns: 'auto auto auto', gap: '2px 4px', alignItems: 'center', justifyContent: 'end' },
+  taxHeader: { fontSize: 11, fontWeight: 600, color: '#6b7280', textAlign: 'center' },
+  taxLabel: { fontSize: 11, color: '#374151', textAlign: 'right', paddingRight: 4 },
 };
