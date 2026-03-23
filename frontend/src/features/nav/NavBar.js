@@ -3,15 +3,15 @@ import { ActionCreators } from 'redux-undo';
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard' },
-  { id: 'timeline',  label: 'Timeline' },
+  { id: 'living',    label: 'Living' },
   { id: 'health',    label: 'Health' },
   { id: 'dogs',      label: 'Dogs' },
   { id: 'cars',      label: 'Cars' },
   { id: 'travel',    label: 'Travel' },
-  { id: 'living',    label: 'Living' },
   { id: 'loans',     label: 'Loans' },
   { id: 'orcas',     label: 'Orcas' },
   { id: 'portland',  label: 'Portland' },
+  { id: 'timeline',  label: 'Timeline' },
 ];
 
 export { TABS };
