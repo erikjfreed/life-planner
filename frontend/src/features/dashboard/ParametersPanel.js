@@ -105,7 +105,7 @@ function Section({ title, children }) {
 
 export default function ParametersPanel() {
   const dispatch = useDispatch();
-  const params = useSelector(s => s.parameters.values);
+  const params = useSelector(s => s.parameters.present.values);
 
   if (!params || Object.keys(params).length === 0) return <p>Loading...</p>;
 

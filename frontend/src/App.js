@@ -1,19 +1,23 @@
 import { useState } from 'react';
 import NavBar from './features/nav/NavBar';
 import Dashboard from './features/dashboard/Dashboard';
+import HealthPage from './features/nav/HealthPage';
 import CategoryPage from './features/nav/CategoryPage';
 
 function App() {
   const [view, setView] = useState('dashboard');
 
+  const renderView = () => {
+    if (view === 'dashboard') return <Dashboard />;
+    if (view === 'health')    return <HealthPage />;
+    return <CategoryPage category={view} />;
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       <NavBar active={view} onSelect={setView} />
-      <div style={{ flex: 1, overflow: 'hidden' }}>
-        {view === 'dashboard'
-          ? <Dashboard />
-          : <CategoryPage category={view} />
-        }
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {renderView()}
       </div>
     </div>
   );

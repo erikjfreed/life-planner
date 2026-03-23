@@ -10,7 +10,7 @@ import ExpenseChart from './ExpenseChart';
 export default function Dashboard() {
   const dispatch = useDispatch();
   const { rows, status } = useSelector(s => s.timeline);
-  const params = useSelector(s => s.parameters.values);
+  const params = useSelector(s => s.parameters.present.values);
 
   useEffect(() => { dispatch(fetchParameters()); }, [dispatch]);
   useEffect(() => { if (status === 'idle') dispatch(fetchTimeline()); }, [status, dispatch]);

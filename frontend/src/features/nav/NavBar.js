@@ -1,3 +1,6 @@
+import { useDispatch, useSelector } from 'react-redux';
+import { ActionCreators } from 'redux-undo';
+
 const TABS = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'health',    label: 'Health' },
@@ -13,6 +16,10 @@ const TABS = [
 export { TABS };
 
 export default function NavBar({ active, onSelect }) {
+  const dispatch = useDispatch();
+  const canUndo = useSelector(s => s.parameters.past.length > 0);
+  const canRedo = useSelector(s => s.parameters.future.length > 0);
+
   return (
     <div style={styles.bar}>
       {TABS.map(t => (
@@ -24,6 +31,23 @@ export default function NavBar({ active, onSelect }) {
           {t.label}
         </button>
       ))}
+      <div style={styles.spacer} />
+      <button
+        onClick={() => dispatch(ActionCreators.undo())}
+        disabled={!canUndo}
+        style={{ ...styles.undoBtn, opacity: canUndo ? 1 : 0.35 }}
+        title="Undo"
+      >
+        ↩ Undo
+      </button>
+      <button
+        onClick={() => dispatch(ActionCreators.redo())}
+        disabled={!canRedo}
+        style={{ ...styles.undoBtn, opacity: canRedo ? 1 : 0.35 }}
+        title="Redo"
+      >
+        Redo ↪
+      </button>
     </div>
   );
 }
@@ -31,6 +55,7 @@ export default function NavBar({ active, onSelect }) {
 const styles = {
   bar: {
     display: 'flex',
+    alignItems: 'center',
     borderBottom: '1px solid #e5e7eb',
     background: '#fff',
     padding: '0 12px',
@@ -52,5 +77,16 @@ const styles = {
     color: '#111827',
     borderBottom: '2px solid #2563eb',
     fontWeight: 600,
+  },
+  spacer: { flex: 1 },
+  undoBtn: {
+    padding: '4px 10px',
+    fontSize: 12,
+    border: '1px solid #d1d5db',
+    borderRadius: 4,
+    background: '#f9fafb',
+    cursor: 'pointer',
+    color: '#374151',
+    marginLeft: 4,
   },
 };

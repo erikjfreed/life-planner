@@ -24,6 +24,7 @@ const DEFAULT_PARAMS = {
   allowancePerPersonPerMonth: 3000,
 
   healthBase: 21276,
+  healthScenarioPct: 0.45,
   dogsBase: 16389,
   carsBase: 18000,
   travelBase: 36000,
