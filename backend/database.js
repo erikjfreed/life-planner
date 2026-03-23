@@ -149,8 +149,8 @@ if (entityCount.cnt === 0) {
 
     insertEvent.run({ type: 're_buy',   year: 2026, month: null, age: null, entity_id: orcasId,    name: null, purchase_price: 2000000, down_payment: null, principal_balance: 449764, monthly_payment: 2186, sale_price: null, selling_costs_pct: null });
     insertEvent.run({ type: 're_buy',   year: 2026, month: null, age: null, entity_id: portlandId, name: null, purchase_price: 950000,  down_payment: null, principal_balance: 264655, monthly_payment: 1235, sale_price: null, selling_costs_pct: null });
-    insertEvent.run({ type: 'death',    year: 2041, month: null, age: 85, entity_id: null, name: 'Erik', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null,  sale_price: null, selling_costs_pct: null });
-    insertEvent.run({ type: 'death',    year: 2048, month: null, age: 87, entity_id: null, name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null,  sale_price: null, selling_costs_pct: null });
+    insertEvent.run({ type: 'death',    year: 2041, month: 12, age: 85, entity_id: null, name: 'Erik', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null,  sale_price: null, selling_costs_pct: null });
+    insertEvent.run({ type: 'death',    year: 2048, month: 10, age: 87, entity_id: null, name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null,  sale_price: null, selling_costs_pct: null });
     insertEvent.run({ type: 'ss_start', year: 2026, month: 12, age: null, entity_id: null, name: 'Erik', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5215, sale_price: null, selling_costs_pct: null });
     insertEvent.run({ type: 'ss_start', year: 2031, month: 10, age: null, entity_id: null, name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5392, sale_price: null, selling_costs_pct: null });
 

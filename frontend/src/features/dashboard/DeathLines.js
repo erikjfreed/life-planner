@@ -24,7 +24,7 @@ function EventLine({ x, label, color, height, labelOffset = 0 }) {
   );
 }
 
-export function DeathLinesOverlay({ erikDeathYear, debDeathYear, erikBirthYear, debBirthYear, ssEvents, minYear, maxYear, stripHeight = 50 }) {
+export function DeathLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ssEvents, minYear, maxYear, stripHeight = 50 }) {
   const ref = useRef(null);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
@@ -40,11 +40,16 @@ export function DeathLinesOverlay({ erikDeathYear, debDeathYear, erikBirthYear, 
     return () => ro.disconnect();
   }, []);
 
+  const erikDeath = (deathEvents ?? []).find(e => e.name === 'Erik');
+  const debDeath  = (deathEvents ?? []).find(e => e.name === 'Deb');
+  const erikDeathYear = erikDeath?.year;
+  const debDeathYear  = debDeath?.year;
   const erikAge = erikBirthYear && erikDeathYear ? erikDeathYear - erikBirthYear : null;
   const debAge  = debBirthYear  && debDeathYear  ? debDeathYear  - debBirthYear  : null;
 
+
   return (
-    <div ref={ref} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+    <div ref={ref} style={{ position: 'absolute', top: 0, bottom: 0, left: 12, right: 12, pointerEvents: 'none' }}>
       {width > 0 && (
         <svg width={width} height={height} style={{ position: 'absolute', top: 0, left: 0 }}>
           <defs>
@@ -66,17 +71,17 @@ export function DeathLinesOverlay({ erikDeathYear, debDeathYear, erikBirthYear, 
               />
             );
           })}
-          {erikDeathYear && erikAge && (
+          {erikDeath && erikAge && (
             <EventLine
-              x={xPixel(erikDeathYear, minYear, maxYear, width)}
+              x={xPixel(erikDeathYear + (erikDeath.month ? (erikDeath.month - 1) / 12 : 0), minYear, maxYear, width)}
               label={`Erik ${erikAge}`}
               color="#ef4444"
               height={height}
             />
           )}
-          {debDeathYear && debAge && (
+          {debDeath && debAge && (
             <EventLine
-              x={xPixel(debDeathYear, minYear, maxYear, width)}
+              x={xPixel(debDeathYear + (debDeath.month ? (debDeath.month - 1) / 12 : 0), minYear, maxYear, width)}
               label={`Deb ${debAge}`}
               color="#8b5cf6"
               height={height}

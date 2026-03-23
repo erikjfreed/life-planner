@@ -22,8 +22,7 @@ export default function Dashboard() {
   const minYear = rows.length > 0 ? rows[0].year : 2026;
   const maxYear = rows.length > 0 ? rows[rows.length - 1].year : 2060;
 
-  const erikDeathYear = events.find(e => e.type === 'death' && e.name === 'Erik')?.year;
-  const debDeathYear  = events.find(e => e.type === 'death' && e.name === 'Deb')?.year;
+  const deathEvents   = events.filter(e => e.type === 'death');
   const erikBirthYear = params?.erikDOB ? new Date(params.erikDOB).getFullYear() : null;
   const debBirthYear  = params?.debDOB  ? new Date(params.debDOB).getFullYear()  : null;
   const ssEvents      = events.filter(e => e.type === 'ss_start');
@@ -44,8 +43,7 @@ export default function Dashboard() {
               <div style={styles.chartSlot}><IncomeChart rows={rows} params={params} /></div>
               <div style={styles.chartSlot}><ExpenseChart rows={rows} params={params} /></div>
               <DeathLinesOverlay
-                erikDeathYear={erikDeathYear}
-                debDeathYear={debDeathYear}
+                deathEvents={deathEvents}
                 erikBirthYear={erikBirthYear}
                 debBirthYear={debBirthYear}
                 ssEvents={ssEvents}
