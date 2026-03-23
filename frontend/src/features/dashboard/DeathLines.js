@@ -18,13 +18,13 @@ function EventLine({ x, label, color, height, labelOffset = 0 }) {
   return (
     <g>
       <line x1={x} y1={0} x2={x} y2={height} stroke={color} strokeWidth={1} strokeDasharray="4 3" clipPath="url(#plotAreaClip)" />
-      <rect x={x - labelWidth / 2} y={1 + labelOffset} width={labelWidth} height={16} fill="white" fillOpacity={0.9} stroke={color} strokeWidth={1} rx={2} />
-      <text x={x} y={13 + labelOffset} textAnchor="middle" fontSize={10} fill={color}>{label}</text>
+      <rect x={x} y={1 + labelOffset} width={labelWidth} height={16} fill="white" fillOpacity={0.9} stroke={color} strokeWidth={1} rx={2} />
+      <text x={x + 4} y={13 + labelOffset} textAnchor="start" fontSize={10} fill={color}>{label}</text>
     </g>
   );
 }
 
-export function DeathLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ssEvents, minYear, maxYear, stripHeight = 50 }) {
+export function DeathLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ssEvents, reEvents, entities, minYear, maxYear, stripHeight = 50 }) {
   const ref = useRef(null);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
@@ -66,6 +66,24 @@ export function DeathLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ss
                 x={xPixel(fractionalYear, minYear, maxYear, width)}
                 label={label}
                 color="#2563eb"
+                height={height}
+                labelOffset={i * 18}
+              />
+            );
+          })}
+          {(reEvents ?? []).map((ev, i) => {
+            const entity = (entities ?? []).find(en => en.id === ev.entity_id);
+            const name = entity?.street_address || entity?.name || '?';
+            const isSell = ev.type === 're_sell';
+            const label = `${isSell ? 'Sell' : 'Buy'} ${name}`;
+            const color = isSell ? '#16a34a' : '#7c3aed';
+            const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
+            return (
+              <EventLine
+                key={`${ev.type}-${ev.entity_id}`}
+                x={xPixel(fractionalYear, minYear, maxYear, width)}
+                label={label}
+                color={color}
                 height={height}
                 labelOffset={i * 18}
               />

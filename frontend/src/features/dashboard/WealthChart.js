@@ -1,12 +1,34 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { DeathReferenceLine } from './DeathLines';
 
-export default function WealthChart({ rows, params }) {
-  const data = rows.map(r => ({
-    year: r.year,
-    'Real Estate': Math.round(r.real_estate / 1000),
-    'Investments': Math.round(r.investment_balance / 1000),
-  }));
+export default function WealthChart({ rows, params, events }) {
+  const reEvents = (events ?? []).filter(e => e.type === 're_buy' || e.type === 're_sell');
+  const data = [];
+  for (const r of rows) {
+    // Check if this year has RE events
+    const yearEvents = reEvents.filter(e => e.year === r.year);
+    if (yearEvents.length > 0 && r.pre_event_re_value !== r.re_value) {
+      const earliestMonth = Math.min(...yearEvents.map(e => e.month || 1));
+      // Pre-event point
+      data.push({
+        year: r.year + (earliestMonth - 1) / 12 - 0.01,
+        'Real Estate': Math.round(r.pre_event_re_value / 1000),
+        'Investments': Math.round(r.investment_balance / 1000),
+      });
+      // Post-event point
+      data.push({
+        year: r.year + (earliestMonth - 1) / 12,
+        'Real Estate': Math.round(r.re_value / 1000),
+        'Investments': Math.round(r.investment_balance / 1000),
+      });
+    } else {
+      data.push({
+        year: r.year,
+        'Real Estate': Math.round(r.re_value / 1000),
+        'Investments': Math.round(r.investment_balance / 1000),
+      });
+    }
+  }
 
   const minYear = data.length > 0 ? data[0].year : 2026;
   const maxYear = data.length > 0 ? data[data.length - 1].year : 2060;
@@ -24,8 +46,8 @@ export default function WealthChart({ rows, params }) {
           <CartesianGrid vertical={false} stroke="#e5e7eb" strokeWidth={1} />
           <Tooltip formatter={(v) => `$${(v/1000).toFixed(2)}M`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-          <Area type="monotone" dataKey="Real Estate" stackId="1" stroke="#7c3aed" fill="#7c3aed" fillOpacity={0.7} />
-          <Area type="monotone" dataKey="Investments" stackId="1" stroke="#16a34a" fill="#16a34a" fillOpacity={0.6} />
+          <Area type="linear" dataKey="Real Estate" stackId="1" stroke="#7c3aed" fill="#7c3aed" fillOpacity={0.7} />
+          <Area type="linear" dataKey="Investments" stackId="1" stroke="#16a34a" fill="#16a34a" fillOpacity={0.6} />
         </AreaChart>
       </ResponsiveContainer>
     </div>

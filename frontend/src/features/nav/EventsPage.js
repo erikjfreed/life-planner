@@ -251,7 +251,7 @@ export default function EventsPage() {
                 </td>
               </tr>
             ) : (
-              <tr key={ev.id} style={{ background: ev.type === 'death' ? '#fef2f2' : undefined }}>
+              <tr key={ev.id} style={{ background: ev.type === 'death' ? '#fef2f2' : undefined, opacity: ev.hidden ? 0.4 : 1 }}>
                 <td style={styles.td}>{`${ev.month || 1}/1/${ev.year}`}</td>
                 <td style={styles.td}>{TYPE_LABELS[ev.type] ?? ev.type}</td>
                 <td style={{ ...styles.td, background: '#f3f4f6' }}>{eventSummary(ev, entities, params).name}</td>

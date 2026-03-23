@@ -66,9 +66,9 @@ app.post('/api/events', (req, res) => {
   const e = req.body;
   db.prepare(`
     INSERT INTO events (type, year, month, age, entity_id, name, purchase_price, down_payment, principal_balance,
-      monthly_payment, sale_price, selling_costs_pct)
+      monthly_payment, sale_price, selling_costs_pct, hidden)
     VALUES (@type, @year, @month, @age, @entity_id, @name, @purchase_price, @down_payment, @principal_balance,
-      @monthly_payment, @sale_price, @selling_costs_pct)
+      @monthly_payment, @sale_price, @selling_costs_pct, @hidden)
   `).run({
     type: e.type ?? null,
     year: e.year ?? null,
@@ -82,6 +82,7 @@ app.post('/api/events', (req, res) => {
     monthly_payment: e.monthly_payment ?? null,
     sale_price: e.sale_price ?? null,
     selling_costs_pct: e.selling_costs_pct ?? null,
+    hidden: e.hidden ?? 0,
   });
   res.json(loadEvents());
 });
@@ -95,7 +96,7 @@ app.put('/api/events/:id', (req, res) => {
       type = @type, year = @year, month = @month, age = @age, entity_id = @entity_id, name = @name,
       purchase_price = @purchase_price, down_payment = @down_payment,
       principal_balance = @principal_balance, monthly_payment = @monthly_payment,
-      sale_price = @sale_price, selling_costs_pct = @selling_costs_pct
+      sale_price = @sale_price, selling_costs_pct = @selling_costs_pct, hidden = @hidden
     WHERE id = @id
   `).run({
     id: parseInt(id),
@@ -111,6 +112,7 @@ app.put('/api/events/:id', (req, res) => {
     monthly_payment: e.monthly_payment ?? null,
     sale_price: e.sale_price ?? null,
     selling_costs_pct: e.selling_costs_pct ?? null,
+    hidden: e.hidden ?? 0,
   });
   res.json(loadEvents());
 });

@@ -4,32 +4,51 @@ import { fetchTimeline } from './timelineSlice';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-function getRowEvent(row, events, params) {
+function getRowEvent(row, events, entities, params) {
+  const labels = [];
+  let type = null;
+
   const erikDeathEvent = events.find(e => e.type === 'death' && e.name === 'Erik');
   const debDeathEvent  = events.find(e => e.type === 'death' && e.name === 'Deb');
 
-  const deathEvents = [];
   if (erikDeathEvent && row.year === erikDeathEvent.year) {
     const age = params?.erikDOB ? erikDeathEvent.year - new Date(params.erikDOB).getFullYear() : '';
-    deathEvents.push(`RIP Erik ${age}`);
+    labels.push(`RIP Erik ${age}`);
+    type = 'death';
   }
   if (debDeathEvent && row.year === debDeathEvent.year) {
     const age = params?.debDOB ? debDeathEvent.year - new Date(params.debDOB).getFullYear() : '';
-    deathEvents.push(`RIP Deb ${age}`);
+    labels.push(`RIP Deb ${age}`);
+    type = 'death';
   }
-  if (deathEvents.length > 0) return { label: deathEvents.join(', '), type: 'death' };
 
   const endOfGameYear = erikDeathEvent && debDeathEvent
     ? Math.max(erikDeathEvent.year, debDeathEvent.year) + 2
     : null;
-  if (endOfGameYear && row.year === endOfGameYear) return { label: 'EndGame', type: 'eog' };
+  if (endOfGameYear && row.year === endOfGameYear) {
+    labels.push('EndGame');
+    type = type || 'eog';
+  }
 
-  const ssLabels = events
-    .filter(e => e.type === 'ss_start' && e.year === row.year)
-    .map(e => `SS ${e.name}${e.month ? ' ' + MONTHS[e.month - 1] : ''}`);
-  if (ssLabels.length > 0) return { label: ssLabels.join(', '), type: 'ss' };
+  events.filter(e => e.type === 'ss_start' && e.year === row.year).forEach(e => {
+    labels.push(`SS ${e.name}${e.month ? ' ' + MONTHS[e.month - 1] : ''}`);
+    type = type || 'ss';
+  });
 
-  return null;
+  events.filter(e => e.type === 're_buy' && e.year === row.year && !e.hidden).forEach(e => {
+    const entity = entities.find(en => en.id === e.entity_id);
+    labels.push(`Buy ${entity?.street_address || entity?.name || '?'}`);
+    type = type || 're_buy';
+  });
+
+  events.filter(e => e.type === 're_sell' && e.year === row.year && !e.hidden).forEach(e => {
+    const entity = entities.find(en => en.id === e.entity_id);
+    labels.push(`Sell ${entity?.street_address || entity?.name || '?'}`);
+    type = type || 're_sell';
+  });
+
+  if (labels.length === 0) return null;
+  return { label: labels.join(', '), type };
 }
 
 const fmt = (val) =>
@@ -51,20 +70,21 @@ const COLUMNS = [
   { key: 'travel', label: 'Travel', group: 'Lifestyle', format: fmt },
   { key: 'living', label: 'General', group: 'Lifestyle', format: fmt },
   { key: 'allowance', label: 'Allowance', group: 'Lifestyle', format: fmt },
-  { key: 'ltc', label: 'LTC', group: 'Lifestyle', format: fmt },
   { key: 'total_expenses', label: 'Total Exp', format: fmt },
   { key: 'ss_net', label: 'SS Net', group: 'Income', format: fmt },
   { key: 'net_draw', label: 'Draw', group: 'Income', format: fmt },
   { key: 'draw_rate', label: 'Rate', group: 'Income', format: pct },
   { key: 'investment_balance', label: 'Investments', group: 'Wealth', format: fmt },
-  { key: 'invest_plus_re', label: 'W/RE', group: 'Wealth', format: fmt },
+  { key: 're_value', label: 'Real Estate', group: 'Wealth', format: fmt },
+  { key: 'invest_plus_re', label: 'NET', group: 'Wealth', format: fmt },
 ];
 
 export default function TimelineTable() {
   const dispatch = useDispatch();
   const { rows, status, error } = useSelector((state) => state.timeline);
   const params = useSelector((s) => s.parameters.present.values);
-  const events = useSelector((s) => s.events.items);
+  const events   = useSelector((s) => s.events.items);
+  const entities = useSelector((s) => s.entities.items);
 
   useEffect(() => {
     if (status === 'idle') dispatch(fetchTimeline());
@@ -111,12 +131,14 @@ export default function TimelineTable() {
         </thead>
         <tbody>
           {rows.map((row, i) => {
-            const event = getRowEvent(row, events, params);
+            const event = getRowEvent(row, events, entities, params);
             const isDeath = event?.type === 'death';
             const isEog   = event?.type === 'eog';
             const isSS    = event?.type === 'ss';
-            const outline = isDeath ? '1.5px solid #ef4444' : isEog ? '1.5px solid #16a34a' : isSS ? '1.5px solid #2563eb' : undefined;
-            const eventColor = isDeath ? '#ef4444' : isEog ? '#16a34a' : isSS ? '#2563eb' : undefined;
+            const isSell  = event?.type === 're_sell';
+            const isBuy   = event?.type === 're_buy';
+            const outline = isDeath ? '1.5px solid #ef4444' : isEog ? '1.5px solid #16a34a' : isSS ? '1.5px solid #2563eb' : isSell ? '1.5px solid #16a34a' : isBuy ? '1.5px solid #7c3aed' : undefined;
+            const eventColor = isDeath ? '#ef4444' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : undefined;
             return (
               <tr key={row.year} style={{ background: i % 2 === 0 ? '#f9f9f9' : '#fff', outline }}>
                 {COLUMNS.map((col) => (

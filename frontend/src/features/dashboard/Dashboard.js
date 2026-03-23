@@ -26,6 +26,8 @@ export default function Dashboard() {
   const erikBirthYear = params?.erikDOB ? new Date(params.erikDOB).getFullYear() : null;
   const debBirthYear  = params?.debDOB  ? new Date(params.debDOB).getFullYear()  : null;
   const ssEvents      = events.filter(e => e.type === 'ss_start');
+  const reEvents      = events.filter(e => (e.type === 're_buy' || e.type === 're_sell') && !e.hidden);
+  const entities      = useSelector(s => s.entities.items);
 
   return (
     <div style={styles.container}>
@@ -39,7 +41,7 @@ export default function Dashboard() {
           {status === 'succeeded' && (
             <>
               <div style={styles.eventStrip} />
-              <div style={styles.chartSlot}><WealthChart rows={rows} params={params} /></div>
+              <div style={styles.chartSlot}><WealthChart rows={rows} params={params} events={events} /></div>
               <div style={styles.chartSlot}><IncomeChart rows={rows} params={params} /></div>
               <div style={styles.chartSlot}><ExpenseChart rows={rows} params={params} /></div>
               <DeathLinesOverlay
@@ -47,6 +49,8 @@ export default function Dashboard() {
                 erikBirthYear={erikBirthYear}
                 debBirthYear={debBirthYear}
                 ssEvents={ssEvents}
+                reEvents={reEvents}
+                entities={entities}
                 minYear={minYear}
                 maxYear={maxYear}
                 stripHeight={24}

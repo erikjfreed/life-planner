@@ -90,13 +90,23 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
   });
 
   let investmentBalance = investmentBalanceBase;
+  let saleProceeds = 0;
 
   for (let year = startYear; year <= endOfGameYear + 2; year++) {
+    saleProceeds = 0;
     const yrs     = year - startYear;
     const erikAge = year - new Date(erikDOB).getFullYear();
     const debAge  = year - new Date(debDOB).getFullYear();
     const alive   = year < endOfGameYear;
     const t       = yrs;
+
+    // Reset monthsActive: active properties get full year, inactive get 0
+    for (const prop of properties) {
+      prop.monthsActive = prop.active ? 12 : 0;
+    }
+
+    // Snapshot pre-event RE value for chart interpolation
+    const preEventREValue = properties.filter(p => p.active).reduce((sum, p) => sum + p.value, 0);
 
     // Add new properties from re_buy events scheduled for this year (future purchases)
     if (year > startYear) {
@@ -110,6 +120,8 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           rate: l.rate,
           payment: l.monthly_payment,
         }));
+        const buyMonth = e.month || 1;
+        const monthsOwned = 13 - buyMonth; // e.g. Aug(8) = 5 months
         properties.push({
           name: entity.name ?? e.name,
           entityId: e.entity_id,
@@ -119,21 +131,27 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           yearBought: e.year,
           active: true,
           loans: propLoans,
+          monthsActive: monthsOwned,
         });
+        // Subtract cash outlay (purchase price minus loan amounts)
+        const loanTotal = propLoans.reduce((s, l) => s + l.principal, 0);
+        saleProceeds -= (e.purchase_price - loanTotal);
       }
     }
 
     // Process re_sell events for this year
     const sells = events.filter(e => e.type === 're_sell' && e.year === year);
     for (const sell of sells) {
-      const prop = properties.find(p => p.name === sell.name && p.active);
+      const prop = properties.find(p => p.entityId === sell.entity_id && p.active);
       if (prop) {
         prop.active = false;
+        const sellMonth = sell.month || 1;
+        prop.monthsActive = sellMonth - 1; // e.g. Jun(6) = 5 months owned
         const salePrice = sell.sale_price != null ? sell.sale_price : prop.value;
         const sellingCostsPct = sell.selling_costs_pct != null ? sell.selling_costs_pct : 0;
         const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
         const proceeds = (salePrice - totalPrincipal) * (1 - sellingCostsPct);
-        investmentBalance += proceeds;
+        saleProceeds += proceeds;
       }
     }
 
@@ -168,10 +186,17 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       .filter(p => p.active)
       .reduce((sum, p) => sum + (p.value - propPrincipal(p)), 0);
 
-    // -- EXPENSES --
+    const reValue = properties
+      .filter(p => p.active)
+      .reduce((sum, p) => sum + p.value, 0);
+
+    // -- EXPENSES (prorated by monthsActive for buy/sell year) --
+    const activePlusPartial = properties.filter(p => p.active || (p.monthsActive ?? 0) > 0);
     const loanPayments = alive
-      ? properties.filter(p => p.active).reduce((sum, p) =>
-          sum + p.loans.filter(l => l.principal > 0).reduce((s, l) => s + l.payment * 12, 0), 0)
+      ? activePlusPartial.reduce((sum, p) => {
+          const months = p.monthsActive ?? 12;
+          return sum + p.loans.filter(l => l.principal > 0).reduce((s, l) => s + l.payment * months, 0);
+        }, 0)
       : 0;
 
     const health    = alive ? inf(healthBase,    healthcareInflation, t) : 0;
@@ -187,8 +212,17 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const allowancePerPerson = inf(allowancePerPersonPerMonth * 12, allowanceNetRate, t);
     const allowance = allowancePerPerson * (erikMonthsAlive / 12) + allowancePerPerson * (debMonthsAlive / 12);
 
-    const orcas    = alive && orcasProp    ? inf(orcasProp.expenseBase,    generalInflation, t) : 0;
-    const portland = alive && portlandProp ? inf(portlandProp.expenseBase, generalInflation, t) : 0;
+    const orcasMonths    = orcasProp    ? (orcasProp.monthsActive ?? 12) : 0;
+    const portlandMonths = portlandProp ? (portlandProp.monthsActive ?? 12) : 0;
+    // Also check sold-this-year properties
+    const orcasSold    = !orcasProp ? properties.find(p => p.name === 'Orcas' && !p.active && (p.monthsActive ?? 0) > 0) : null;
+    const portlandSold = !portlandProp ? properties.find(p => p.name === 'Portland' && !p.active && (p.monthsActive ?? 0) > 0) : null;
+    const orcasEffMonths    = orcasProp ? orcasMonths : (orcasSold ? orcasSold.monthsActive : 0);
+    const portlandEffMonths = portlandProp ? portlandMonths : (portlandSold ? portlandSold.monthsActive : 0);
+    const orcasExpProp    = orcasProp || orcasSold;
+    const portlandExpProp = portlandProp || portlandSold;
+    const orcas    = alive && orcasExpProp    ? inf(orcasExpProp.expenseBase,    generalInflation, t) * (orcasEffMonths / 12) : 0;
+    const portland = alive && portlandExpProp ? inf(portlandExpProp.expenseBase, generalInflation, t) * (portlandEffMonths / 12) : 0;
     const ltc      = 0; // handled in future event phase
 
     const totalExpenses = loanPayments + health + dogs + cars + travel + living + allowance + orcas + portland;
@@ -222,10 +256,10 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
 
     // -- INVESTMENT BALANCE --
     if (t === 0) {
-      investmentBalance = investmentBalanceBase;
+      investmentBalance = investmentBalanceBase + saleProceeds;
     } else {
       const prev = rows[t - 1];
-      investmentBalance = Math.max(0, prev.investment_balance + prev.roi - prev.net_draw);
+      investmentBalance = Math.max(0, prev.investment_balance + prev.roi - prev.net_draw) + saleProceeds;
     }
 
     const roi          = investmentBalance * investmentROI;
@@ -242,7 +276,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       gross_draw: grossDraw, draw_tax: drawTax, net_draw: effectiveNetDraw,
       draw_rate: drawRate, capital_spend: capitalSpend,
       investment_balance: investmentBalance, roi, invest_plus_re: investPlusRE,
-      real_estate: realEstate, ltc_monthly: 0, ltc_entrance: 0,
+      real_estate: realEstate, re_value: reValue, pre_event_re_value: preEventREValue, ltc_monthly: 0, ltc_entrance: 0,
       orcas_value: orcasValue, orcas_principal: orcasPrincipal, orcas_equity: orcasEquity,
       portland_value: portlandValue, portland_principal: portlandPrincipal, portland_equity: portlandEquity,
     });
