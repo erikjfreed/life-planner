@@ -8,7 +8,8 @@ function computeTimeline(params) {
   const {
     erikDOB,
     debDOB,
-    endOfGameYear,
+    erikDeathYear,
+    debDeathYear,
 
     generalInflation,
     healthcareInflation,
@@ -61,6 +62,7 @@ function computeTimeline(params) {
   }
 
   const startYear = 2026;
+  const endOfGameYear = Math.max(erikDeathYear, debDeathYear);
   const rows = [];
   const drawTaxRate = drawFedTaxRate + drawStateTaxRate;
   const ssTaxRate   = ssFedTaxRate   + ssStateTaxRate;
@@ -124,20 +126,22 @@ function computeTimeline(params) {
       investmentBalance = investmentBalanceBase;
     } else {
       const prev = rows[t - 1];
-      investmentBalance = prev.investment_balance + prev.roi - prev.net_draw;
+      investmentBalance = Math.max(0, prev.investment_balance + prev.roi - prev.net_draw);
     }
 
     const roi          = investmentBalance * investmentROI;
     const investPlusRE = investmentBalance + realEstate;
-    const drawRate     = investPlusRE > 0 ? netDraw / investPlusRE : 0;
-    const capitalSpend = Math.max(0, netDraw - roi);
+    // If broke, no draw is possible beyond SS
+    const effectiveNetDraw = investmentBalance === 0 ? 0 : netDraw;
+    const drawRate     = investPlusRE > 0 ? effectiveNetDraw / investPlusRE : 0;
+    const capitalSpend = Math.max(0, effectiveNetDraw - roi);
 
     rows.push({
       year, yrs, erik_age: erikAge, deb_age: debAge,
       loans, health, dogs, cars, travel, living, allowance, orcas, portland, ltc,
       total_expenses: totalExpenses,
       ss_erik: ssErik, ss_debbie: ssDebbie, ss_subtotal: ssSubtotal, ss_tax: ssTax, ss_net: ssNet,
-      gross_draw: grossDraw, draw_tax: drawTax, net_draw: netDraw,
+      gross_draw: grossDraw, draw_tax: drawTax, net_draw: effectiveNetDraw,
       draw_rate: drawRate, capital_spend: capitalSpend,
       investment_balance: investmentBalance, roi, invest_plus_re: investPlusRE,
       real_estate: realEstate, ltc_monthly: 0, ltc_entrance: 0,

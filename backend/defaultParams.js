@@ -1,7 +1,8 @@
 const DEFAULT_PARAMS = {
   erikDOB: '1956-12-27',
   debDOB: '1961-10-18',
-  endOfGameYear: 2055,
+  erikDeathYear: 2055,
+  debDeathYear: 2055,
 
   generalInflation: 0.025,
   healthcareInflation: 0.06,
