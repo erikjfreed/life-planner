@@ -3,7 +3,6 @@ const { computeTimeline } = require('./compute');
 const params = {
   erikDOB: '1956-12-27',
   debDOB: '1961-10-18',
-  endOfGameYear: 2055,
 
   generalInflation: 0.025,
   healthcareInflation: 0.06,
@@ -29,30 +28,38 @@ const params = {
   carsBase: 18000,
   travelBase: 36000,
   livingBase: 33619,
-  loansBase: 41052,
-  orcasExpenseBase: 23094,
-  portlandExpenseBase: 32093,
-
-  orcasValueBase: 2000000,
-  orcasPrincipalBase: 714419,
-  orcasMortgageRate: 0.03125,
-  orcasMonthlyPayment: 2186,
-
-  portlandValueBase: 950000,
-  portlandPrincipalBase: 449764,
-  portlandMortgageRate: 0.0275,
-  portlandMonthlyPayment: 1235,
 
   investmentBalanceBase: 3823105,
 };
 
-const rows = computeTimeline(params);
+const events = [
+  {
+    type: 're_buy', year: 2026, name: 'Orcas',
+    purchase_price: 2000000, principal_balance: 449764, mortgage_rate: 0.03125,
+    term_years: 30, monthly_payment: 2186, appreciation_rate: 0.05, expense_base: 23094,
+    tax_yearly: null, insurance_yearly: null,
+  },
+  {
+    type: 're_buy', year: 2026, name: 'Portland',
+    purchase_price: 950000, principal_balance: 264655, mortgage_rate: 0.0275,
+    term_years: 30, monthly_payment: 1235, appreciation_rate: 0.05, expense_base: 32093,
+    tax_yearly: null, insurance_yearly: null,
+  },
+  { type: 'death', year: 2055, name: 'Erik' },
+  { type: 'death', year: 2055, name: 'Deb' },
+];
 
+const rows = computeTimeline(params, events);
+
+// real_estate 2026 = (2,000,000 - 449,764) + (950,000 - 264,655) = 1,550,236 + 685,345 = 2,235,581
+// invest_plus_re 2026 = 3,823,105 + 2,235,581 = 6,058,686
+// loans 2026 = (2186 * 12) + (1235 * 12) = 26,232 + 14,820 = 41,052
+// total_expenses 2026 = 41,052 + 21,276 + 16,389 + 18,000 + 36,000 + 33,619 + 72,000 + 23,094 + 32,093 = 293,523
 const expected = {
-  2026: { total_expenses: 293523, ss_net: 0,     net_draw: 340487, investment_balance: 3823105, invest_plus_re: 5608922 },
-  2027: { total_expenses: 299860, ss_net: 54065, net_draw: 285122, investment_balance: 3769351, invest_plus_re: 5709113 },
-  2028: { total_expenses: 306389, ss_net: 55417, net_draw: 291127, investment_balance: 3766930, invest_plus_re: 5868207 },
-  2032: { total_expenses: 334578, ss_net: 117072, net_draw: 252307, investment_balance: 3688524, invest_plus_re: 6519337 },
+  2026: { total_expenses: 293523, ss_net: 0,     net_draw: 340487, investment_balance: 3823105, real_estate: 2235581, invest_plus_re: 6058686 },
+  2027: { total_expenses: 299860, ss_net: 54065, net_draw: 285122, investment_balance: 3769351 },
+  2028: { total_expenses: 306389, ss_net: 55417, net_draw: 291127, investment_balance: 3766930 },
+  2032: { total_expenses: 334578, ss_net: 117072, net_draw: 252307, investment_balance: 3688524 },
 };
 
 let allPass = true;

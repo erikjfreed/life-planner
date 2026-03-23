@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import undoable, { includeAction } from 'redux-undo';
 import timelineReducer from '../features/timeline/timelineSlice';
 import parametersReducer from '../features/parameters/parametersSlice';
+import eventsReducer from '../features/events/eventsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,5 +11,6 @@ export const store = configureStore({
       filter: includeAction('parameters/update/fulfilled'),
       limit: 50,
     }),
+    events: eventsReducer,
   },
 });

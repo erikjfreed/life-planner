@@ -1,8 +1,6 @@
 const DEFAULT_PARAMS = {
   erikDOB: '1956-12-27',
   debDOB: '1961-10-18',
-  erikDeathYear: 2055,
-  debDeathYear: 2055,
 
   generalInflation: 0.025,
   healthcareInflation: 0.06,
@@ -29,19 +27,6 @@ const DEFAULT_PARAMS = {
   carsBase: 18000,
   travelBase: 36000,
   livingBase: 33619,
-  loansBase: 41052,
-  orcasExpenseBase: 23094,
-  portlandExpenseBase: 32093,
-
-  orcasValueBase: 2000000,
-  orcasPrincipalBase: 714419,
-  orcasMortgageRate: 0.03125,
-  orcasMonthlyPayment: 2186,
-
-  portlandValueBase: 950000,
-  portlandPrincipalBase: 449764,
-  portlandMortgageRate: 0.0275,
-  portlandMonthlyPayment: 1235,
 
   investmentBalanceBase: 3823105,
 };

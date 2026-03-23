@@ -2,16 +2,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ActionCreators } from 'redux-undo';
 
 const TABS = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'living',    label: 'Living' },
-  { id: 'health',    label: 'Health' },
-  { id: 'dogs',      label: 'Dogs' },
-  { id: 'cars',      label: 'Cars' },
-  { id: 'travel',    label: 'Travel' },
-  { id: 'loans',     label: 'Loans' },
-  { id: 'orcas',     label: 'Orcas' },
-  { id: 'portland',  label: 'Portland' },
-  { id: 'timeline',  label: 'Timeline' },
+  { id: 'dashboard',   label: 'Dashboard' },
+  { id: 'living',      label: 'Living' },
+  { id: 'travel',      label: 'Travel' },
+  { id: 'health',      label: 'Health' },
+  { id: 'dogs',        label: 'Dogs' },
+  { id: 'vehicles',    label: 'Vehicles' },
+  { id: 'real-estate', label: 'Real Estate' },
+  { id: 'timeline',    label: 'Timeline' },
 ];
 
 export { TABS };

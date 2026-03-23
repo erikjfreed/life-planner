@@ -2,7 +2,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateParameters } from '../parameters/parametersSlice';
 
 const MONTHLY_OPTIONS = Array.from({ length: 41 }, (_, i) => i * 500); // 0 to 20000
-const LIFESPAN_OPTIONS = Array.from({ length: 36 }, (_, i) => 70 + i); // age 70 to 105
 
 const TAX_OPTIONS = Array.from({ length: 41 }, (_, i) => i); // 0 to 40
 
@@ -80,20 +79,6 @@ function ParamRow({ label, value, onChange, type, min, max, step }) {
   );
 }
 
-function LifespanRow({ label, deathYear, birthYear, onChange }) {
-  const age = deathYear - birthYear;
-  return (
-    <div style={styles.row}>
-      <div style={styles.label}>{label}</div>
-      <div style={styles.control}>
-        <select value={age} onChange={e => onChange(birthYear + parseInt(e.target.value))} style={styles.input}>
-          {LIFESPAN_OPTIONS.map(a => <option key={a} value={a}>{a}</option>)}
-        </select>
-      </div>
-    </div>
-  );
-}
-
 function Section({ title, children }) {
   return (
     <fieldset style={styles.section}>
@@ -145,10 +130,6 @@ export default function ParametersPanel() {
         <ParamRow label="Deflation"            value={params.allowanceDeflation}     onChange={update('allowanceDeflation')}     type="slider" min={0} max={5} step={0.1} />
       </Section>
 
-      <Section title="Lifespan">
-        <LifespanRow label="Erik Death" deathYear={params.erikDeathYear} birthYear={new Date(params.erikDOB).getFullYear()} onChange={update('erikDeathYear')} />
-        <LifespanRow label="Deb Death"  deathYear={params.debDeathYear}  birthYear={new Date(params.debDOB).getFullYear()}  onChange={update('debDeathYear')}  />
-      </Section>
     </div>
   );
 }

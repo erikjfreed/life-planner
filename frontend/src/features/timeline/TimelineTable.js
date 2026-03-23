@@ -2,20 +2,23 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTimeline } from './timelineSlice';
 
-function getRowEvent(row, params) {
+function getRowEvent(row, events, params) {
+  const erikDeathEvent = events.find(e => e.type === 'death' && e.name === 'Erik');
+  const debDeathEvent  = events.find(e => e.type === 'death' && e.name === 'Deb');
+
   const deathEvents = [];
-  if (params?.erikDeathYear && row.year === params.erikDeathYear) {
-    const age = params.erikDOB ? params.erikDeathYear - new Date(params.erikDOB).getFullYear() : '';
+  if (erikDeathEvent && row.year === erikDeathEvent.year) {
+    const age = params?.erikDOB ? erikDeathEvent.year - new Date(params.erikDOB).getFullYear() : '';
     deathEvents.push(`Erik ${age}`);
   }
-  if (params?.debDeathYear && row.year === params.debDeathYear) {
-    const age = params.debDOB ? params.debDeathYear - new Date(params.debDOB).getFullYear() : '';
+  if (debDeathEvent && row.year === debDeathEvent.year) {
+    const age = params?.debDOB ? debDeathEvent.year - new Date(params.debDOB).getFullYear() : '';
     deathEvents.push(`Deb ${age}`);
   }
   if (deathEvents.length > 0) return { label: deathEvents.join(', '), type: 'death' };
 
-  const endOfGameYear = params?.erikDeathYear && params?.debDeathYear
-    ? Math.max(params.erikDeathYear, params.debDeathYear) + 2
+  const endOfGameYear = erikDeathEvent && debDeathEvent
+    ? Math.max(erikDeathEvent.year, debDeathEvent.year) + 2
     : null;
   if (endOfGameYear && row.year === endOfGameYear) return { label: 'EndGame', type: 'eog' };
 
@@ -55,6 +58,7 @@ export default function TimelineTable() {
   const dispatch = useDispatch();
   const { rows, status, error } = useSelector((state) => state.timeline);
   const params = useSelector((s) => s.parameters.present.values);
+  const events = useSelector((s) => s.events.items);
 
   useEffect(() => {
     if (status === 'idle') dispatch(fetchTimeline());
@@ -78,7 +82,7 @@ export default function TimelineTable() {
         </thead>
         <tbody>
           {rows.map((row, i) => {
-            const event = getRowEvent(row, params);
+            const event = getRowEvent(row, events, params);
             const isDeath = event?.type === 'death';
             const isEog   = event?.type === 'eog';
             const outline = isDeath ? '1.5px solid #ef4444' : isEog ? '1.5px solid #16a34a' : undefined;

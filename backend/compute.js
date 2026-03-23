@@ -1,20 +1,16 @@
 /**
  * Financial timeline computation engine.
- * Pure forward projection from parameters — no events.
- * Events will be added in a future phase.
+ * Accepts params and events array. Events drive property state and death years.
  */
 
-function computeTimeline(params) {
+function computeTimeline(params, events = []) {
   const {
     erikDOB,
     debDOB,
-    erikDeathYear,
-    debDeathYear,
 
     generalInflation,
     healthcareInflation,
     allowanceDeflation,
-    realEstateAppreciation,
     investmentROI,
     ssCoLA,
 
@@ -35,19 +31,6 @@ function computeTimeline(params) {
     carsBase,
     travelBase,
     livingBase,
-    loansBase,
-    orcasExpenseBase,
-    portlandExpenseBase,
-
-    orcasValueBase,
-    orcasPrincipalBase,       // remaining mortgage balance in start year
-    orcasMortgageRate,        // annual rate e.g. 0.03125
-    orcasMonthlyPayment,      // monthly P&I e.g. 2186
-
-    portlandValueBase,
-    portlandPrincipalBase,
-    portlandMortgageRate,
-    portlandMonthlyPayment,
 
     investmentBalanceBase,
   } = params;
@@ -62,13 +45,37 @@ function computeTimeline(params) {
   }
 
   const startYear = 2026;
-  const endOfGameYear = Math.max(erikDeathYear, debDeathYear);
+
+  // Extract death years from events
+  const erikDeathEvent = events.find(e => e.type === 'death' && e.name === 'Erik');
+  const debDeathEvent  = events.find(e => e.type === 'death' && e.name === 'Deb');
+  const erikDeathYear  = erikDeathEvent ? erikDeathEvent.year : 2060;
+  const debDeathYear   = debDeathEvent  ? debDeathEvent.year  : 2060;
+  const endOfGameYear  = Math.max(erikDeathYear, debDeathYear);
+
   const rows = [];
   const drawTaxRate = drawFedTaxRate + drawStateTaxRate;
   const ssTaxRate   = ssFedTaxRate   + ssStateTaxRate;
   const allowanceNetRate = generalInflation - allowanceDeflation;
 
   const inf = (base, rate, t) => base * Math.pow(1 + rate, t);
+
+  // Build initial property state from re_buy events with year <= startYear
+  // Each property: { name, value, principal, rate, payment, appreciationRate, expenseBase, yearBought, active }
+  const initialBuys = events.filter(e => e.type === 're_buy' && e.year <= startYear);
+  const properties = initialBuys.map(e => ({
+    name: e.name,
+    value: e.purchase_price,
+    principal: e.principal_balance,
+    rate: e.mortgage_rate,
+    payment: e.monthly_payment,
+    appreciationRate: e.appreciation_rate,
+    expenseBase: e.expense_base,
+    yearBought: e.year,
+    active: true,
+  }));
+
+  let investmentBalance = investmentBalanceBase;
 
   for (let year = startYear; year <= endOfGameYear + 2; year++) {
     const yrs     = year - startYear;
@@ -77,17 +84,79 @@ function computeTimeline(params) {
     const alive   = year < endOfGameYear;
     const t       = yrs;
 
+    // Add new properties from re_buy events scheduled for this year (future purchases)
+    if (year > startYear) {
+      const newBuys = events.filter(e => e.type === 're_buy' && e.year === year);
+      for (const e of newBuys) {
+        properties.push({
+          name: e.name,
+          value: e.purchase_price,
+          principal: e.principal_balance,
+          rate: e.mortgage_rate,
+          payment: e.monthly_payment,
+          appreciationRate: e.appreciation_rate,
+          expenseBase: e.expense_base,
+          yearBought: e.year,
+          active: true,
+        });
+      }
+    }
+
+    // Process re_sell events for this year
+    const sells = events.filter(e => e.type === 're_sell' && e.year === year);
+    for (const sell of sells) {
+      const prop = properties.find(p => p.name === sell.name && p.active);
+      if (prop) {
+        prop.active = false;
+        const salePrice = sell.sale_price != null ? sell.sale_price : prop.value;
+        const sellingCostsPct = sell.selling_costs_pct != null ? sell.selling_costs_pct : 0;
+        const proceeds = (salePrice - prop.principal) * (1 - sellingCostsPct);
+        investmentBalance += proceeds;
+      }
+    }
+
+    // Appreciate and amortize active properties
+    for (const prop of properties) {
+      if (!prop.active) continue;
+      if (year > prop.yearBought) {
+        prop.value = prop.value * (1 + prop.appreciationRate);
+        if (prop.principal > 0) {
+          prop.principal = amortize(prop.rate, prop.payment, prop.principal);
+        }
+      }
+    }
+
+    // Compute property-level values for Orcas and Portland (for row output)
+    const orcasProp    = properties.find(p => p.name === 'Orcas'    && p.active);
+    const portlandProp = properties.find(p => p.name === 'Portland' && p.active);
+
+    const orcasValue      = orcasProp    ? orcasProp.value     : 0;
+    const orcasPrincipal  = orcasProp    ? orcasProp.principal : 0;
+    const orcasEquity     = orcasValue - orcasPrincipal;
+
+    const portlandValue     = portlandProp ? portlandProp.value     : 0;
+    const portlandPrincipal = portlandProp ? portlandProp.principal : 0;
+    const portlandEquity    = portlandValue - portlandPrincipal;
+
+    const realEstate = properties
+      .filter(p => p.active)
+      .reduce((sum, p) => sum + (p.value - p.principal), 0);
+
     // -- EXPENSES --
-    const loans     = alive ? loansBase : 0;
-    const health    = alive ? inf(healthBase,    healthcareInflation,  t) : 0;
-    const dogs      = alive ? inf(dogsBase,      generalInflation,     t) : 0;
-    const cars      = alive ? inf(carsBase,      generalInflation,     t) : 0;
-    const travel    = alive ? inf(travelBase,    generalInflation,     t) : 0;
-    const living    = alive ? inf(livingBase,    generalInflation,     t) : 0;
+    const loans = alive
+      ? properties.filter(p => p.active && p.principal > 0).reduce((sum, p) => sum + p.payment * 12, 0)
+      : 0;
+
+    const health    = alive ? inf(healthBase,    healthcareInflation, t) : 0;
+    const dogs      = alive ? inf(dogsBase,      generalInflation,    t) : 0;
+    const cars      = alive ? inf(carsBase,      generalInflation,    t) : 0;
+    const travel    = alive ? inf(travelBase,    generalInflation,    t) : 0;
+    const living    = alive ? inf(livingBase,    generalInflation,    t) : 0;
     const allowance = alive ? inf(allowancePerPersonPerMonth * 2 * 12, allowanceNetRate, t) : 0;
-    const orcas     = alive ? inf(orcasExpenseBase,    generalInflation, t) : 0;
-    const portland  = alive ? inf(portlandExpenseBase, generalInflation, t) : 0;
-    const ltc       = 0; // handled in future event phase
+
+    const orcas    = alive && orcasProp    ? inf(orcasProp.expenseBase,    generalInflation, t) : 0;
+    const portland = alive && portlandProp ? inf(portlandProp.expenseBase, generalInflation, t) : 0;
+    const ltc      = 0; // handled in future event phase
 
     const totalExpenses = loans + health + dogs + cars + travel + living + allowance + orcas + portland;
 
@@ -97,7 +166,7 @@ function computeTimeline(params) {
     const ssDebbie = alive && year >= ssDebbieStartYear
       ? inf(ssDebbieMonthly * 12, ssCoLA, year - ssDebbieStartYear) : 0;
     const ssSubtotal = ssErik + ssDebbie;
-    const ssTax      = ssSubtotal * 0.85 * ssTaxRate;  // only 85% of SS is taxable
+    const ssTax      = ssSubtotal * 0.85 * ssTaxRate;
     const ssNet      = ssSubtotal - ssTax;
 
     // -- DRAW --
@@ -105,23 +174,7 @@ function computeTimeline(params) {
     const drawTax   = Math.max(0, grossDraw) * drawTaxRate;
     const netDraw   = grossDraw + drawTax;
 
-    // -- PROPERTIES --
-    const orcasValue     = inf(orcasValueBase, realEstateAppreciation, t);
-    const orcasPrincipal = t === 0
-      ? orcasPrincipalBase
-      : amortize(orcasMortgageRate, orcasMonthlyPayment, rows[t - 1].orcas_principal);
-    const orcasEquity    = orcasValue - orcasPrincipal;
-
-    const portlandValue     = inf(portlandValueBase, realEstateAppreciation, t);
-    const portlandPrincipal = t === 0
-      ? portlandPrincipalBase
-      : amortize(portlandMortgageRate, portlandMonthlyPayment, rows[t - 1].portland_principal);
-    const portlandEquity    = portlandValue - portlandPrincipal;
-
-    const realEstate = orcasEquity + portlandEquity;
-
     // -- INVESTMENT BALANCE --
-    let investmentBalance;
     if (t === 0) {
       investmentBalance = investmentBalanceBase;
     } else {
@@ -131,7 +184,6 @@ function computeTimeline(params) {
 
     const roi          = investmentBalance * investmentROI;
     const investPlusRE = investmentBalance + realEstate;
-    // If broke, no draw is possible beyond SS
     const effectiveNetDraw = investmentBalance === 0 ? 0 : netDraw;
     const drawRate     = investPlusRE > 0 ? effectiveNetDraw / investPlusRE : 0;
     const capitalSpend = Math.max(0, effectiveNetDraw - roi);

@@ -23,7 +23,7 @@ function DeathLine({ x, name, age, color, height, stripHeight }) {
   );
 }
 
-export function DeathLinesOverlay({ params, minYear, maxYear, stripHeight = 50 }) {
+export function DeathLinesOverlay({ erikDeathYear, debDeathYear, erikBirthYear, debBirthYear, minYear, maxYear, stripHeight = 50 }) {
   const ref = useRef(null);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
@@ -39,11 +39,8 @@ export function DeathLinesOverlay({ params, minYear, maxYear, stripHeight = 50 }
     return () => ro.disconnect();
   }, []);
 
-  const erikBirthYear = params?.erikDOB ? new Date(params.erikDOB).getFullYear() : null;
-  const erikDeathYear = params?.erikDeathYear;
-  const debDeathYear  = params?.debDeathYear;
   const erikAge = erikBirthYear && erikDeathYear ? erikDeathYear - erikBirthYear : null;
-  const debAge  = erikBirthYear && debDeathYear  ? debDeathYear  - new Date(params.debDOB).getFullYear() : null;
+  const debAge  = debBirthYear  && debDeathYear  ? debDeathYear  - debBirthYear  : null;
 
   return (
     <div ref={ref} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>

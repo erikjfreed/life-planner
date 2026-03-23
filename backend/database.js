@@ -50,7 +50,55 @@ db.exec(`
     portland_value REAL,
     portland_principal REAL,
     portland_equity REAL
+  );
+
+  CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    year INTEGER NOT NULL,
+    name TEXT,
+    purchase_price REAL,
+    down_payment REAL,
+    principal_balance REAL,
+    mortgage_rate REAL,
+    term_years INTEGER,
+    monthly_payment REAL,
+    appreciation_rate REAL,
+    expense_base REAL,
+    tax_yearly REAL,
+    insurance_yearly REAL,
+    sale_price REAL,
+    selling_costs_pct REAL,
+    useful_life_years INTEGER,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+// Seed initial events if the events table is empty
+const eventCount = db.prepare('SELECT COUNT(*) AS cnt FROM events').get();
+if (eventCount.cnt === 0) {
+  const insertEvent = db.prepare(`
+    INSERT INTO events (type, year, name, purchase_price, principal_balance, mortgage_rate, term_years, monthly_payment, appreciation_rate, expense_base, tax_yearly, insurance_yearly)
+    VALUES (@type, @year, @name, @purchase_price, @principal_balance, @mortgage_rate, @term_years, @monthly_payment, @appreciation_rate, @expense_base, @tax_yearly, @insurance_yearly)
+  `);
+  const insertDeath = db.prepare('INSERT INTO events (type, year, name) VALUES (@type, @year, @name)');
+  const seedAll = db.transaction(() => {
+    insertEvent.run({
+      type: 're_buy', year: 2026, name: 'Orcas',
+      purchase_price: 2000000, principal_balance: 449764, mortgage_rate: 0.03125,
+      term_years: 30, monthly_payment: 2186, appreciation_rate: 0.05, expense_base: 23094,
+      tax_yearly: null, insurance_yearly: null,
+    });
+    insertEvent.run({
+      type: 're_buy', year: 2026, name: 'Portland',
+      purchase_price: 950000, principal_balance: 264655, mortgage_rate: 0.0275,
+      term_years: 30, monthly_payment: 1235, appreciation_rate: 0.05, expense_base: 32093,
+      tax_yearly: null, insurance_yearly: null,
+    });
+    insertDeath.run({ type: 'death', year: 2055, name: 'Erik' });
+    insertDeath.run({ type: 'death', year: 2055, name: 'Deb' });
+  });
+  seedAll();
+}
 
 module.exports = db;

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTimeline } from '../timeline/timelineSlice';
 import { fetchParameters } from '../parameters/parametersSlice';
+import { fetchEvents } from '../events/eventsSlice';
 import ParametersPanel from './ParametersPanel';
 import WealthChart from './WealthChart';
 import IncomeChart from './IncomeChart';
@@ -12,12 +13,19 @@ export default function Dashboard() {
   const dispatch = useDispatch();
   const { rows, status } = useSelector(s => s.timeline);
   const params = useSelector(s => s.parameters.present.values);
+  const events = useSelector(s => s.events.items);
 
   useEffect(() => { dispatch(fetchParameters()); }, [dispatch]);
+  useEffect(() => { dispatch(fetchEvents()); }, [dispatch]);
   useEffect(() => { if (status === 'idle') dispatch(fetchTimeline()); }, [status, dispatch]);
 
   const minYear = rows.length > 0 ? rows[0].year : 2026;
   const maxYear = rows.length > 0 ? rows[rows.length - 1].year : 2060;
+
+  const erikDeathYear = events.find(e => e.type === 'death' && e.name === 'Erik')?.year;
+  const debDeathYear  = events.find(e => e.type === 'death' && e.name === 'Deb')?.year;
+  const erikBirthYear = params?.erikDOB ? new Date(params.erikDOB).getFullYear() : null;
+  const debBirthYear  = params?.debDOB  ? new Date(params.debDOB).getFullYear()  : null;
 
   return (
     <div style={styles.container}>
@@ -34,7 +42,15 @@ export default function Dashboard() {
               <div style={styles.chartSlot}><WealthChart rows={rows} params={params} /></div>
               <div style={styles.chartSlot}><IncomeChart rows={rows} params={params} /></div>
               <div style={styles.chartSlot}><ExpenseChart rows={rows} params={params} /></div>
-              <DeathLinesOverlay params={params} minYear={minYear} maxYear={maxYear} stripHeight={24} />
+              <DeathLinesOverlay
+                erikDeathYear={erikDeathYear}
+                debDeathYear={debDeathYear}
+                erikBirthYear={erikBirthYear}
+                debBirthYear={debBirthYear}
+                minYear={minYear}
+                maxYear={maxYear}
+                stripHeight={24}
+              />
             </>
           )}
         </div>
