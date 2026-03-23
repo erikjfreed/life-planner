@@ -43,17 +43,23 @@ function ParamRow({ label, value, onChange, type, min, max, step }) {
     );
   }
   if (type === 'slider') {
+    const s = step || 0.1;
+    const options = [];
+    for (let v = min; v <= max + 1e-9; v = Math.round((v + s) * 1000) / 1000) {
+      options.push(Math.round(v * 10) / 10);
+    }
+    const currentPct = Math.round(value * 1000) / 10; // e.g. 0.025 -> 2.5
     return (
       <div style={styles.row}>
         <div style={styles.label}>{label}</div>
         <div style={styles.control}>
-          <input
-            type="range" min={min} max={max} step={step || 0.1}
-            value={(value * 100).toFixed(1)}
+          <select
+            value={currentPct}
             onChange={e => onChange(parseFloat(e.target.value) / 100)}
-            style={{ width: 90 }}
-          />
-          <span style={styles.value}>{(value * 100).toFixed(1)}%</span>
+            style={styles.input}
+          >
+            {options.map(v => <option key={v} value={v}>{v.toFixed(1)}%</option>)}
+          </select>
         </div>
       </div>
     );
@@ -90,10 +96,10 @@ function LifespanRow({ label, deathYear, birthYear, onChange }) {
 
 function Section({ title, children }) {
   return (
-    <div style={styles.section}>
-      <div style={styles.sectionTitle}>{title}</div>
-      {children}
-    </div>
+    <fieldset style={styles.section}>
+      <legend style={styles.sectionTitle}>{title}</legend>
+      <div style={{ marginBottom: -3 }}>{children}</div>
+    </fieldset>
   );
 }
 
@@ -149,21 +155,23 @@ export default function ParametersPanel() {
 
 const styles = {
   panel: {
-    width: 260,
-    minWidth: 260,
+    width: 240,
+    minWidth: 240,
     background: '#f9fafb',
     borderRight: '1px solid #e5e7eb',
-    padding: '16px 12px',
-    overflowY: 'auto',
+    padding: '6px 8px',
+    overflowY: 'hidden',
     height: '100vh',
     boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column',
   },
-  heading: { margin: '0 0 16px 0', fontSize: 16, fontWeight: 700, color: '#111827' },
-  section: { marginBottom: 16 },
-  sectionTitle: { fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 },
-  row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  label: { fontSize: 12, color: '#374151', flex: 1 },
-  control: { display: 'flex', alignItems: 'center', gap: 6 },
-  value: { fontSize: 12, color: '#111827', minWidth: 36, textAlign: 'right' },
-  input: { width: 70, fontSize: 12, padding: '2px 4px', border: '1px solid #d1d5db', borderRadius: 4 },
+  heading: { margin: '0 0 8px 0', fontSize: 14, fontWeight: 700, color: '#111827', flexShrink: 0 },
+  section: { marginBottom: 8, border: '1px solid #d1d5db', borderRadius: 4, padding: '3px 8px 7px', minWidth: 0 },
+  sectionTitle: { fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0 3px' },
+  row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
+  label: { fontSize: 11, color: '#374151', flex: 1, textAlign: 'right', paddingRight: 6 },
+  control: { display: 'flex', alignItems: 'center', gap: 4 },
+  value: { fontSize: 11, color: '#111827', minWidth: 32, textAlign: 'right' },
+  input: { width: 68, fontSize: 11, padding: '1px 3px', border: '1px solid #d1d5db', borderRadius: 3 },
 };

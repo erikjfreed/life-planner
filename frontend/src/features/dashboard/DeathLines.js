@@ -1,11 +1,24 @@
 import { ReferenceLine } from 'recharts';
 
+function BgText({ x, y, anchor, color, children }) {
+  const w = String(children).length * 6 + 6;
+  const rx = anchor === 'end' ? x - w : x;
+  return (
+    <g>
+      <rect x={rx} y={y - 11} width={w} height={14} fill="white" fillOpacity={0.85} rx={2} />
+      <text x={x} y={y} textAnchor={anchor} fontSize={10} fill={color}>{children}</text>
+    </g>
+  );
+}
+
 function DeathLabel({ name, age, color, viewBox }) {
   const { x, y } = viewBox;
   return (
     <g>
-      <text x={x - 4} y={y + 12} textAnchor="end"   fontSize={10} fill={color}>{name} Dies</text>
-      <text x={x + 4} y={y + 12} textAnchor="start" fontSize={10} fill={color}>Age {age}</text>
+      <BgText x={x - 4} y={y + 12} anchor="end"   color={color}>{name}</BgText>
+      <BgText x={x + 4} y={y + 12} anchor="start" color={color}>Dies</BgText>
+      <BgText x={x - 4} y={y + 24} anchor="end"   color={color}>Age</BgText>
+      <BgText x={x + 4} y={y + 24} anchor="start" color={color}>{age}</BgText>
     </g>
   );
 }
