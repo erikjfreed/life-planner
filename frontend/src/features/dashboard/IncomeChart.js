@@ -11,6 +11,9 @@ export default function IncomeChart({ rows, params }) {
 
   const minYear = data.length > 0 ? data[0].year : 2026;
   const maxYear = data.length > 0 ? data[data.length - 1].year : 2060;
+  const maxVal = Math.max(...data.map(r => (r['SS'] || 0) + (r['ROI'] || 0) + (r['Cap Spend'] || 0)));
+  const yMax = Math.ceil(maxVal / 100) * 100;
+  const yTicks = Array.from({ length: yMax / 100 + 1 }, (_, i) => i * 100);
 
   return (
     <div style={styles.container}>
@@ -18,8 +21,8 @@ export default function IncomeChart({ rows, params }) {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 4, right: 20, left: 10, bottom: 0 }}>
           <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9 }} angle={-45} textAnchor="end" height={30} interval={0} />
+          <YAxis tick={{ fontSize: 11 }} tickFormatter={v => v % 200 === 0 ? `$${v}K` : ''} ticks={yTicks} domain={[0, yMax]} interval={0} />
           <CartesianGrid vertical={false} stroke="#e5e7eb" strokeWidth={1} />
-          <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `$${v}K`} />
           <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
           <Area type="monotone" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
