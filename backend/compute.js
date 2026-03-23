@@ -70,7 +70,7 @@ function computeTimeline(params) {
 
   const inf = (base, rate, t) => base * Math.pow(1 + rate, t);
 
-  for (let year = startYear; year <= 2062; year++) {
+  for (let year = startYear; year <= endOfGameYear + 2; year++) {
     const yrs     = year - startYear;
     const erikAge = year - new Date(erikDOB).getFullYear();
     const debAge  = year - new Date(debDOB).getFullYear();
