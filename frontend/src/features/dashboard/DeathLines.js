@@ -74,7 +74,7 @@ export function DeathLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ss
           {erikDeath && erikAge && (
             <EventLine
               x={xPixel(erikDeathYear + (erikDeath.month ? (erikDeath.month - 1) / 12 : 0), minYear, maxYear, width)}
-              label={`Erik ${erikAge}`}
+              label={`RIP Erik ${erikAge}`}
               color="#ef4444"
               height={height}
             />
@@ -82,7 +82,7 @@ export function DeathLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ss
           {debDeath && debAge && (
             <EventLine
               x={xPixel(debDeathYear + (debDeath.month ? (debDeath.month - 1) / 12 : 0), minYear, maxYear, width)}
-              label={`Deb ${debAge}`}
+              label={`RIP Deb ${debAge}`}
               color="#8b5cf6"
               height={height}
             />

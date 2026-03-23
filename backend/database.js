@@ -53,6 +53,7 @@ db.exec(`
   );
 `);
 
+db.exec('DROP TABLE IF EXISTS loans');
 db.exec('DROP TABLE IF EXISTS events');
 db.exec('DROP TABLE IF EXISTS entities');
 
@@ -85,6 +86,20 @@ db.exec(`
     monthly_payment REAL,
     sale_price REAL,
     selling_costs_pct REAL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS loans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    entity_id INTEGER REFERENCES entities(id),
+    name TEXT,
+    rate REAL NOT NULL,
+    term_years INTEGER,
+    original_balance REAL,
+    current_balance REAL,
+    monthly_payment REAL,
+    start_year INTEGER,
+    start_month INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 `);
@@ -128,7 +143,7 @@ if (entityCount.cnt === 0) {
     const portlandResult = insertEntity.run({
       type: 'real_estate',
       name: 'Portland',
-      street_address: '4848 NE 35th Ave',
+      street_address: '4818 NE 35th Ave',
       appreciation_rate: 0.05,
       services_json: JSON.stringify([
         { label: 'Internet (CenturyLink)', monthly:  65, yearly:  780 },
@@ -154,10 +169,22 @@ if (entityCount.cnt === 0) {
     insertEvent.run({ type: 'ss_start', year: 2026, month: 12, age: null, entity_id: null, name: 'Erik', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5215, sale_price: null, selling_costs_pct: null });
     insertEvent.run({ type: 'ss_start', year: 2031, month: 10, age: null, entity_id: null, name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5392, sale_price: null, selling_costs_pct: null });
 
-    const cx5Result = insertEntity.run({ type: 'vehicle', name: '2019 Mazda CX-5 Signature', street_address: null, appreciation_rate: -0.15, services_json: null, tax_yearly: null, insurance_yearly: null, mortgage_rate: null, term_years: null });
-    const ridgeResult = insertEntity.run({ type: 'vehicle', name: '2021 Honda Ridgeline RTL-E', street_address: null, appreciation_rate: -0.15, services_json: null, tax_yearly: null, insurance_yearly: null, mortgage_rate: null, term_years: null });
-    insertEvent.run({ type: 'car_buy', year: 2019, month: null, age: null, entity_id: cx5Result.lastInsertRowid,   name: null, purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null });
-    insertEvent.run({ type: 'car_buy', year: 2021, month: null, age: null, entity_id: ridgeResult.lastInsertRowid, name: null, purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null });
+    const vehicleServices = JSON.stringify([
+      { label: 'Insurance', monthly: 100, yearly: 1200 },
+      { label: 'License / Registration / Smog', monthly: 25, yearly: 300 },
+      { label: 'Maintenance / Repair', monthly: 125, yearly: 1500 },
+    ]);
+    const cx5Result = insertEntity.run({ type: 'vehicle', name: '2019 Mazda CX-5 Signature', street_address: null, appreciation_rate: -0.15, services_json: vehicleServices, tax_yearly: null, insurance_yearly: null, mortgage_rate: null, term_years: null });
+    const ridgeResult = insertEntity.run({ type: 'vehicle', name: '2021 Honda Ridgeline RTL-E', street_address: null, appreciation_rate: -0.15, services_json: vehicleServices, tax_yearly: null, insurance_yearly: null, mortgage_rate: null, term_years: null });
+    insertEvent.run({ type: 'car_buy', year: 2019, month: null, age: null, entity_id: cx5Result.lastInsertRowid,   name: null, purchase_price: 38000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null });
+    insertEvent.run({ type: 'car_buy', year: 2021, month: null, age: null, entity_id: ridgeResult.lastInsertRowid, name: null, purchase_price: 52000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null });
+
+    const insertLoan = db.prepare(`
+      INSERT INTO loans (entity_id, name, rate, term_years, original_balance, current_balance, monthly_payment, start_year, start_month)
+      VALUES (@entity_id, @name, @rate, @term_years, @original_balance, @current_balance, @monthly_payment, @start_year, @start_month)
+    `);
+    insertLoan.run({ entity_id: orcasId, name: 'Mortgage', rate: 0.03125, term_years: 30, original_balance: 449764, current_balance: 449764, monthly_payment: 2186, start_year: 2009, start_month: null });
+    insertLoan.run({ entity_id: portlandId, name: 'Mortgage', rate: 0.0275, term_years: 30, original_balance: 264655, current_balance: 264655, monthly_payment: 1235, start_year: 2015, start_month: null });
   })();
 }
 

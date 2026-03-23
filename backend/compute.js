@@ -3,7 +3,7 @@
  * Accepts params and events array. Events drive property state and death years.
  */
 
-function computeTimeline(params, events = [], entities = []) {
+function computeTimeline(params, events = [], entities = [], loans = []) {
   const {
     erikDOB,
     debDOB,
@@ -66,22 +66,26 @@ function computeTimeline(params, events = [], entities = []) {
   const inf = (base, rate, t) => base * Math.pow(1 + rate, t);
 
   // Build initial property state from re_buy events with year <= startYear
-  // Each property: { name, value, principal, rate, payment, appreciationRate, expenseBase, yearBought, active }
+  // Each property: { name, value, loans: [{principal, rate, payment}], appreciationRate, expenseBase, yearBought, active }
   const initialBuys = events.filter(e => e.type === 're_buy' && e.year <= startYear);
   const properties = initialBuys.map(e => {
     const entity = entities.find(en => en.id === e.entity_id) ?? {};
     const services = entity.services_json ? JSON.parse(entity.services_json) : [];
     const expenseBase = services.reduce((s, i) => s + i.yearly, 0) + (entity.tax_yearly ?? 0) + (entity.insurance_yearly ?? 0);
+    const propLoans = loans.filter(l => l.entity_id === e.entity_id).map(l => ({
+      principal: l.current_balance,
+      rate: l.rate,
+      payment: l.monthly_payment,
+    }));
     return {
       name: entity.name ?? e.name,
+      entityId: e.entity_id,
       value: e.purchase_price,
-      principal: e.principal_balance,
-      rate: entity.mortgage_rate,
-      payment: e.monthly_payment,
       appreciationRate: entity.appreciation_rate,
       expenseBase,
       yearBought: e.year,
       active: true,
+      loans: propLoans,
     };
   });
 
@@ -101,16 +105,20 @@ function computeTimeline(params, events = [], entities = []) {
         const entity = entities.find(en => en.id === e.entity_id) ?? {};
         const services = entity.services_json ? JSON.parse(entity.services_json) : [];
         const expenseBase = services.reduce((s, i) => s + i.yearly, 0) + (entity.tax_yearly ?? 0) + (entity.insurance_yearly ?? 0);
+        const propLoans = loans.filter(l => l.entity_id === e.entity_id).map(l => ({
+          principal: l.current_balance,
+          rate: l.rate,
+          payment: l.monthly_payment,
+        }));
         properties.push({
           name: entity.name ?? e.name,
+          entityId: e.entity_id,
           value: e.purchase_price,
-          principal: e.principal_balance,
-          rate: entity.mortgage_rate,
-          payment: e.monthly_payment,
           appreciationRate: entity.appreciation_rate,
           expenseBase,
           yearBought: e.year,
           active: true,
+          loans: propLoans,
         });
       }
     }
@@ -123,7 +131,8 @@ function computeTimeline(params, events = [], entities = []) {
         prop.active = false;
         const salePrice = sell.sale_price != null ? sell.sale_price : prop.value;
         const sellingCostsPct = sell.selling_costs_pct != null ? sell.selling_costs_pct : 0;
-        const proceeds = (salePrice - prop.principal) * (1 - sellingCostsPct);
+        const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
+        const proceeds = (salePrice - totalPrincipal) * (1 - sellingCostsPct);
         investmentBalance += proceeds;
       }
     }
@@ -133,8 +142,10 @@ function computeTimeline(params, events = [], entities = []) {
       if (!prop.active) continue;
       if (year > prop.yearBought) {
         prop.value = prop.value * (1 + prop.appreciationRate);
-        if (prop.principal > 0) {
-          prop.principal = amortize(prop.rate, prop.payment, prop.principal);
+        for (const loan of prop.loans) {
+          if (loan.principal > 0) {
+            loan.principal = amortize(loan.rate, loan.payment, loan.principal);
+          }
         }
       }
     }
@@ -143,21 +154,24 @@ function computeTimeline(params, events = [], entities = []) {
     const orcasProp    = properties.find(p => p.name === 'Orcas'    && p.active);
     const portlandProp = properties.find(p => p.name === 'Portland' && p.active);
 
-    const orcasValue      = orcasProp    ? orcasProp.value     : 0;
-    const orcasPrincipal  = orcasProp    ? orcasProp.principal : 0;
+    const propPrincipal = (prop) => prop ? prop.loans.reduce((s, l) => s + l.principal, 0) : 0;
+
+    const orcasValue      = orcasProp    ? orcasProp.value         : 0;
+    const orcasPrincipal  = propPrincipal(orcasProp);
     const orcasEquity     = orcasValue - orcasPrincipal;
 
-    const portlandValue     = portlandProp ? portlandProp.value     : 0;
-    const portlandPrincipal = portlandProp ? portlandProp.principal : 0;
+    const portlandValue     = portlandProp ? portlandProp.value      : 0;
+    const portlandPrincipal = propPrincipal(portlandProp);
     const portlandEquity    = portlandValue - portlandPrincipal;
 
     const realEstate = properties
       .filter(p => p.active)
-      .reduce((sum, p) => sum + (p.value - p.principal), 0);
+      .reduce((sum, p) => sum + (p.value - propPrincipal(p)), 0);
 
     // -- EXPENSES --
-    const loans = alive
-      ? properties.filter(p => p.active && p.principal > 0).reduce((sum, p) => sum + p.payment * 12, 0)
+    const loanPayments = alive
+      ? properties.filter(p => p.active).reduce((sum, p) =>
+          sum + p.loans.filter(l => l.principal > 0).reduce((s, l) => s + l.payment * 12, 0), 0)
       : 0;
 
     const health    = alive ? inf(healthBase,    healthcareInflation, t) : 0;
@@ -165,13 +179,19 @@ function computeTimeline(params, events = [], entities = []) {
     const cars      = alive ? inf(carsBase,      generalInflation,    t) : 0;
     const travel    = alive ? inf(travelBase,    generalInflation,    t) : 0;
     const living    = alive ? inf(livingBase,    generalInflation,    t) : 0;
-    const allowance = alive ? inf(allowancePerPersonPerMonth * 2 * 12, allowanceNetRate, t) : 0;
+    // Prorate allowance by month in death year
+    const erikMonthsAlive = year < erikDeathYear ? 12
+      : year === erikDeathYear && erikDeathEvent?.month ? erikDeathEvent.month - 1 : 0;
+    const debMonthsAlive = year < debDeathYear ? 12
+      : year === debDeathYear && debDeathEvent?.month ? debDeathEvent.month - 1 : 0;
+    const allowancePerPerson = inf(allowancePerPersonPerMonth * 12, allowanceNetRate, t);
+    const allowance = allowancePerPerson * (erikMonthsAlive / 12) + allowancePerPerson * (debMonthsAlive / 12);
 
     const orcas    = alive && orcasProp    ? inf(orcasProp.expenseBase,    generalInflation, t) : 0;
     const portland = alive && portlandProp ? inf(portlandProp.expenseBase, generalInflation, t) : 0;
     const ltc      = 0; // handled in future event phase
 
-    const totalExpenses = loans + health + dogs + cars + travel + living + allowance + orcas + portland;
+    const totalExpenses = loanPayments + health + dogs + cars + travel + living + allowance + orcas + portland;
 
     // -- SOCIAL SECURITY --
     // In the start year, prorate by months remaining (13 - startMonth)
@@ -216,7 +236,7 @@ function computeTimeline(params, events = [], entities = []) {
 
     rows.push({
       year, yrs, erik_age: erikAge, deb_age: debAge,
-      loans, health, dogs, cars, travel, living, allowance, orcas, portland, ltc,
+      loans: loanPayments, health, dogs, cars, travel, living, allowance, orcas, portland, ltc,
       total_expenses: totalExpenses,
       ss_erik: ssErik, ss_debbie: ssDebbie, ss_subtotal: ssSubtotal, ss_tax: ssTax, ss_net: ssNet,
       gross_draw: grossDraw, draw_tax: drawTax, net_draw: effectiveNetDraw,

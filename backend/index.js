@@ -51,7 +51,8 @@ app.get('/api/timeline', (req, res) => {
   const params = loadParams();
   const events = loadEvents();
   const entities = loadEntities();
-  const rows = computeTimeline(params, events, entities);
+  const loans = loadLoans();
+  const rows = computeTimeline(params, events, entities, loans);
   res.json(rows);
 });
 
@@ -177,6 +178,50 @@ app.delete('/api/entities/:id', (req, res) => {
   const { id } = req.params;
   db.prepare('DELETE FROM entities WHERE id = ?').run(parseInt(id));
   res.json(loadEntities());
+});
+
+// --- LOANS ---
+function loadLoans() {
+  return db.prepare('SELECT * FROM loans ORDER BY start_year').all();
+}
+
+app.get('/api/loans', (req, res) => res.json(loadLoans()));
+
+app.post('/api/loans', (req, res) => {
+  const l = req.body;
+  db.prepare(`
+    INSERT INTO loans (entity_id, name, rate, term_years, original_balance, current_balance, monthly_payment, start_year, start_month)
+    VALUES (@entity_id, @name, @rate, @term_years, @original_balance, @current_balance, @monthly_payment, @start_year, @start_month)
+  `).run({
+    entity_id: l.entity_id ?? null, name: l.name ?? null, rate: l.rate ?? 0,
+    term_years: l.term_years ?? null, original_balance: l.original_balance ?? null,
+    current_balance: l.current_balance ?? null, monthly_payment: l.monthly_payment ?? null,
+    start_year: l.start_year ?? null, start_month: l.start_month ?? null,
+  });
+  res.json(loadLoans());
+});
+
+app.put('/api/loans/:id', (req, res) => {
+  const { id } = req.params;
+  const l = req.body;
+  db.prepare(`
+    UPDATE loans SET entity_id = @entity_id, name = @name, rate = @rate, term_years = @term_years,
+      original_balance = @original_balance, current_balance = @current_balance,
+      monthly_payment = @monthly_payment, start_year = @start_year, start_month = @start_month
+    WHERE id = @id
+  `).run({
+    id: parseInt(id), entity_id: l.entity_id ?? null, name: l.name ?? null, rate: l.rate ?? 0,
+    term_years: l.term_years ?? null, original_balance: l.original_balance ?? null,
+    current_balance: l.current_balance ?? null, monthly_payment: l.monthly_payment ?? null,
+    start_year: l.start_year ?? null, start_month: l.start_month ?? null,
+  });
+  res.json(loadLoans());
+});
+
+app.delete('/api/loans/:id', (req, res) => {
+  const { id } = req.params;
+  db.prepare('DELETE FROM loans WHERE id = ?').run(parseInt(id));
+  res.json(loadLoans());
 });
 
 app.listen(PORT, () => {

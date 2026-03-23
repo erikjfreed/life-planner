@@ -27,20 +27,20 @@ const PERSON_TYPES = ['death', 'ss_start'];
 
 function eventSummary(ev, entities, params) {
   const entity = entities.find(e => e.id === ev.entity_id);
-  const parts = [];
-  if (entity) parts.push(entity.name);
-  if (ev.name) parts.push(ev.name);
-  if (ev.type === 'death' && ev.age != null) parts.push(`age ${ev.age}`);
+  const rawName = entity ? (entity.street_address || entity.name) : ev.name || null;
+  const name = ev.type === 'ss_start' && ev.name ? `${ev.name} starts SS`
+    : ev.type === 'death' && ev.name ? `${ev.name} Passes`
+    : (ev.type === 're_buy' || ev.type === 'car_buy') && rawName ? `Purchase ${rawName}`
+    : (ev.type === 're_sell' || ev.type === 'car_sell') && rawName ? `Sale of ${rawName}` : rawName;
+  const details = [];
+  if (ev.type === 'death' && ev.age != null) details.push(`age ${ev.age}`);
   if (ev.type === 'ss_start' && ev.name && params) {
     const age = personAge(ev.name, ev.year, params);
-    if (age != null) parts.push(`age ${age}`);
-    if (ev.month != null) parts.push(MONTHS[ev.month - 1]);
+    if (age != null) details.push(`age ${age}`);
+    if (ev.month != null) details.push(MONTHS[ev.month - 1]);
   }
-  if (ev.purchase_price != null) parts.push(`$${Math.round(ev.purchase_price).toLocaleString()}`);
-  if (ev.sale_price != null) parts.push(`sale $${Math.round(ev.sale_price).toLocaleString()}`);
-  if (ev.principal_balance != null) parts.push(`bal $${Math.round(ev.principal_balance).toLocaleString()}`);
-  if (ev.monthly_payment != null) parts.push(`$${Math.round(ev.monthly_payment).toLocaleString()}/mo`);
-  return parts.join(' · ');
+  if (ev.principal_balance != null) details.push(`bal $${Math.round(ev.principal_balance).toLocaleString()}`);
+  return { name, details: details.join(' · ') };
 }
 
 const EMPTY_FORM = {
@@ -112,7 +112,7 @@ function EventForm({ initial, entities, onSave, onCancel }) {
             <label style={styles.label}>Entity</label>
             <select style={styles.input} value={form.entity_id} onChange={e => set('entity_id', e.target.value)}>
               <option value="">— select —</option>
-              {entities.map(en => <option key={en.id} value={en.id}>{en.name}</option>)}
+              {entities.map(en => <option key={en.id} value={en.id}>{en.street_address || en.name}</option>)}
             </select>
           </>
         )}
@@ -186,7 +186,7 @@ export default function EventsPage() {
   const [adding, setAdding]     = useState(false);
   const [editingId, setEditingId] = useState(null);
 
-  const sorted = [...events].sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || a.type.localeCompare(b.type));
+  const sorted = [...events].sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || (a.month ?? 1) - (b.month ?? 1) || a.type.localeCompare(b.type));
 
   const handleAdd = (payload) => {
     dispatch(createEvent(payload));
@@ -218,6 +218,9 @@ export default function EventsPage() {
           <tr>
             <th style={styles.th}>Year</th>
             <th style={styles.th}>Type</th>
+            <th style={styles.th}>Name</th>
+            <th style={{ ...styles.th, textAlign: 'right' }}>Price</th>
+            <th style={{ ...styles.th, textAlign: 'right' }}>Monthly</th>
             <th style={styles.th}>Details</th>
             <th style={{ ...styles.th, width: 80 }}></th>
           </tr>
@@ -226,7 +229,7 @@ export default function EventsPage() {
           {sorted.map(ev => (
             editingId === ev.id ? (
               <tr key={ev.id}>
-                <td colSpan={4} style={styles.td}>
+                <td colSpan={7} style={styles.td}>
                   <EventForm
                     initial={{
                       type: ev.type,
@@ -249,9 +252,34 @@ export default function EventsPage() {
               </tr>
             ) : (
               <tr key={ev.id} style={{ background: ev.type === 'death' ? '#fef2f2' : undefined }}>
-                <td style={styles.td}>{ev.year}</td>
+                <td style={styles.td}>{`${ev.month || 1}/1/${ev.year}`}</td>
                 <td style={styles.td}>{TYPE_LABELS[ev.type] ?? ev.type}</td>
-                <td style={styles.td}>{eventSummary(ev, entities, params)}</td>
+                <td style={{ ...styles.td, background: '#f3f4f6' }}>{eventSummary(ev, entities, params).name}</td>
+                <td style={{ ...styles.td, textAlign: 'right' }}>{(() => {
+                  const amt = (ev.type === 're_buy' || ev.type === 'car_buy') && ev.purchase_price != null ? -ev.purchase_price
+                    : (ev.type === 're_sell' || ev.type === 'car_sell') && ev.sale_price != null ? ev.sale_price
+                    : null;
+                  if (amt == null) return '—';
+                  const color = amt >= 0 ? '#16a34a' : '#dc2626';
+                  return <span style={{ color }}>{amt < 0 ? '-' : ''}${Math.abs(Math.round(amt)).toLocaleString()}</span>;
+                })()}</td>
+                <td style={{ ...styles.td, textAlign: 'right' }}>{(() => {
+                  if (ev.type === 'ss_start' && ev.monthly_payment != null) {
+                    return <span style={{ color: '#16a34a' }}>${Math.round(ev.monthly_payment).toLocaleString()}</span>;
+                  }
+                  if ((ev.type === 're_buy' || ev.type === 'car_buy') && ev.entity_id) {
+                    const entity = entities.find(e => e.id === ev.entity_id);
+                    if (entity) {
+                      const services = entity.services_json ? JSON.parse(entity.services_json) : [];
+                      const monthly = services.reduce((s, i) => s + i.monthly, 0)
+                        + (entity.insurance_yearly ?? 0) / 12
+                        + (entity.tax_yearly ?? 0) / 12;
+                      if (monthly > 0) return <span style={{ color: '#dc2626' }}>${Math.round(monthly).toLocaleString()}</span>;
+                    }
+                  }
+                  return '—';
+                })()}</td>
+                <td style={styles.td}>{eventSummary(ev, entities, params).details}</td>
                 <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
                   <button style={styles.editBtn} onClick={() => setEditingId(ev.id)}>Edit</button>
                   <button style={styles.delBtn}  onClick={() => handleDelete(ev.id)}>Del</button>
@@ -281,4 +309,5 @@ const styles = {
   input:  { fontSize: 12, padding: '3px 6px', border: '1px solid #d1d5db', borderRadius: 3 },
   saveBtn:  { padding: '4px 14px', fontSize: 12, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' },
   cancelBtn:{ padding: '4px 14px', fontSize: 12, background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 4, cursor: 'pointer', marginLeft: 4 },
+  nameBadge: { background: '#f3f4f6', padding: '1px 6px', borderRadius: 3, fontSize: 11, color: '#374151' },
 };

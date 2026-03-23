@@ -4,6 +4,7 @@ import timelineReducer from '../features/timeline/timelineSlice';
 import parametersReducer from '../features/parameters/parametersSlice';
 import eventsReducer from '../features/events/eventsSlice';
 import entitiesReducer from '../features/entities/entitiesSlice';
+import loansReducer from '../features/loans/loansSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,5 +15,6 @@ export const store = configureStore({
     }),
     events: eventsReducer,
     entities: entitiesReducer,
+    loans: loansReducer,
   },
 });

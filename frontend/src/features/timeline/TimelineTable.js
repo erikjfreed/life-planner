@@ -11,11 +11,11 @@ function getRowEvent(row, events, params) {
   const deathEvents = [];
   if (erikDeathEvent && row.year === erikDeathEvent.year) {
     const age = params?.erikDOB ? erikDeathEvent.year - new Date(params.erikDOB).getFullYear() : '';
-    deathEvents.push(`Erik ${age}`);
+    deathEvents.push(`RIP Erik ${age}`);
   }
   if (debDeathEvent && row.year === debDeathEvent.year) {
     const age = params?.debDOB ? debDeathEvent.year - new Date(params.debDOB).getFullYear() : '';
-    deathEvents.push(`Deb ${age}`);
+    deathEvents.push(`RIP Deb ${age}`);
   }
   if (deathEvents.length > 0) return { label: deathEvents.join(', '), type: 'death' };
 

@@ -11,8 +11,10 @@ import TravelPage from './features/nav/TravelPage';
 import LivingPage from './features/nav/LivingPage';
 import RealEstatePage from './features/nav/RealEstatePage';
 import EventsPage from './features/nav/EventsPage';
+import LoansPage from './features/nav/LoansPage';
 import { fetchEvents } from './features/events/eventsSlice';
 import { fetchEntities } from './features/entities/entitiesSlice';
+import { fetchLoans } from './features/loans/loansSlice';
 import { fetchParameters } from './features/parameters/parametersSlice';
 
 function App() {
@@ -22,6 +24,7 @@ function App() {
   useEffect(() => {
     dispatch(fetchEvents());
     dispatch(fetchEntities());
+    dispatch(fetchLoans());
     dispatch(fetchParameters());
   }, [dispatch]);
 
@@ -34,6 +37,7 @@ function App() {
     if (view === 'travel')      return <TravelPage />;
     if (view === 'living')      return <LivingPage />;
     if (view === 'real-estate') return <RealEstatePage />;
+    if (view === 'loans')       return <LoansPage />;
     if (view === 'events')      return <EventsPage />;
     return <CategoryPage category={view} />;
   };

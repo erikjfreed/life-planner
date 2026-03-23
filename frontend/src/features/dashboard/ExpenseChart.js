@@ -3,20 +3,19 @@ import { DeathReferenceLine } from './DeathLines';
 
 const CATEGORIES = [
   { key: 'health',    label: 'Health',    color: '#f97316' },
-  { key: 'living',   label: 'Living',    color: '#fb923c' },
-  { key: 'allowance',label: 'Allowance', color: '#fbbf24' },
-  { key: 'travel',   label: 'Travel',    color: '#a3e635' },
-  { key: 'cars',     label: 'Cars',      color: '#facc15' },
-  { key: 'dogs',     label: 'Dogs',      color: '#34d399' },
-  { key: 'orcas',    label: 'Orcas',     color: '#22d3ee' },
-  { key: 'portland', label: 'Portland',  color: '#818cf8' },
-  { key: 'loans',    label: 'Loans',     color: '#60a5fa' },
+  { key: 'living',    label: 'General',   color: '#fb923c' },
+  { key: 'allowance', label: 'Allowance', color: '#fbbf24' },
+  { key: 'travel',    label: 'Travel',    color: '#a3e635' },
+  { key: 'cars',      label: 'Cars',      color: '#facc15' },
+  { key: 'dogs',      label: 'Dogs',      color: '#34d399' },
+  { key: 're_costs',  label: 'RE Costs',  color: '#22d3ee', compute: r => (r.orcas || 0) + (r.portland || 0) },
+  { key: 'loans',     label: 'Loans',     color: '#60a5fa' },
 ];
 
 export default function ExpenseChart({ rows, params }) {
   const data = rows.map(r => {
     const entry = { year: r.year };
-    CATEGORIES.forEach(c => { entry[c.label] = Math.round(r[c.key] / 1000); });
+    CATEGORIES.forEach(c => { entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) / 1000); });
     return entry;
   });
 
