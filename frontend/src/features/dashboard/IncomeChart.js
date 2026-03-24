@@ -25,9 +25,9 @@ export default function IncomeChart({ rows, params }) {
           <CartesianGrid vertical={false} stroke="#e5e7eb" strokeWidth={1} />
           <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-          <Area type="monotone" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
-          <Area type="monotone" dataKey="ROI"       stackId="1" stroke="#86efac" fill="#86efac" fillOpacity={0.7} />
-          <Area type="monotone" dataKey="Cap Spend" stackId="1" stroke="#dc2626" fill="#dc2626" fillOpacity={0.7} />
+          <Area type="linear" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
+          <Area type="linear" dataKey="ROI"       stackId="1" stroke="#86efac" fill="#86efac" fillOpacity={0.7} />
+          <Area type="linear" dataKey="Cap Spend" stackId="1" stroke="#dc2626" fill="#dc2626" fillOpacity={0.7} />
         </AreaChart>
       </ResponsiveContainer>
     </div>

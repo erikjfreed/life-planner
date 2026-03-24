@@ -212,38 +212,60 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const allowancePerPerson = inf(allowancePerPersonPerMonth * 12, allowanceNetRate, t);
     const allowance = allowancePerPerson * (erikMonthsAlive / 12) + allowancePerPerson * (debMonthsAlive / 12);
 
-    const orcasMonths    = orcasProp    ? (orcasProp.monthsActive ?? 12) : 0;
-    const portlandMonths = portlandProp ? (portlandProp.monthsActive ?? 12) : 0;
-    // Also check sold-this-year properties
-    const orcasSold    = !orcasProp ? properties.find(p => p.name === 'Orcas' && !p.active && (p.monthsActive ?? 0) > 0) : null;
-    const portlandSold = !portlandProp ? properties.find(p => p.name === 'Portland' && !p.active && (p.monthsActive ?? 0) > 0) : null;
-    const orcasEffMonths    = orcasProp ? orcasMonths : (orcasSold ? orcasSold.monthsActive : 0);
-    const portlandEffMonths = portlandProp ? portlandMonths : (portlandSold ? portlandSold.monthsActive : 0);
-    const orcasExpProp    = orcasProp || orcasSold;
-    const portlandExpProp = portlandProp || portlandSold;
-    const orcas    = alive && orcasExpProp    ? inf(orcasExpProp.expenseBase,    generalInflation, t) * (orcasEffMonths / 12) : 0;
-    const portland = alive && portlandExpProp ? inf(portlandExpProp.expenseBase, generalInflation, t) * (portlandEffMonths / 12) : 0;
-    const ltc      = 0; // handled in future event phase
+    // RE property expenses — generic for all properties, prorated by monthsActive
+    // Property tax computed from value × taxRate (grows with appreciation)
+    const reCosts = alive
+      ? activePlusPartial.reduce((sum, p) => {
+          const months = p.monthsActive ?? 0;
+          if (months === 0) return sum;
+          const yearsSinceBought = Math.max(0, year - p.yearBought);
+          return sum + inf(p.expenseBase, generalInflation, yearsSinceBought) * (months / 12);
+        }, 0)
+      : 0;
 
-    const totalExpenses = loanPayments + health + dogs + cars + travel + living + allowance + orcas + portland;
+    // Legacy per-property expenses for row output (orcas/portland columns)
+    const orcasExpProp = orcasProp || properties.find(p => p.name === 'Orcas' && !p.active && (p.monthsActive ?? 0) > 0);
+    const portlandExpProp = portlandProp || properties.find(p => p.name === 'Portland' && !p.active && (p.monthsActive ?? 0) > 0);
+    const orcas    = alive && orcasExpProp    ? inf(orcasExpProp.expenseBase, generalInflation, Math.max(0, year - orcasExpProp.yearBought)) * ((orcasExpProp.monthsActive ?? 0) / 12) : 0;
+    const portland = alive && portlandExpProp ? inf(portlandExpProp.expenseBase, generalInflation, Math.max(0, year - portlandExpProp.yearBought)) * ((portlandExpProp.monthsActive ?? 0) / 12) : 0;
+    const ltc      = 0;
+
+    const totalExpenses = loanPayments + health + dogs + cars + travel + living + allowance + reCosts;
 
     // -- SOCIAL SECURITY --
     // In the start year, prorate by months remaining (13 - startMonth)
-    const ssErik = alive && ssErikEvent && year >= ssErikEvent.year
+    const erikAlive = year < erikDeathYear || (year === erikDeathYear && erikMonthsAlive > 0);
+    const debAlive  = year < debDeathYear  || (year === debDeathYear  && debMonthsAlive > 0);
+
+    // Full annual SS amounts (with COLA) for each person
+    const ssErikFull = ssErikEvent && year >= ssErikEvent.year
+      ? inf(ssErikEvent.monthly_payment * 12, ssCoLA, year - ssErikEvent.year) : 0;
+    const ssDebbieFull = ssDebbieEvent && year >= ssDebbieEvent.year
+      ? inf(ssDebbieEvent.monthly_payment * 12, ssCoLA, year - ssDebbieEvent.year) : 0;
+
+    // Erik's SS: only while alive, prorated in start/death year
+    const ssErik = erikAlive && ssErikFull > 0
       ? (() => {
-          const full = inf(ssErikEvent.monthly_payment * 12, ssCoLA, year - ssErikEvent.year);
-          if (year === ssErikEvent.year && ssErikEvent.month) {
-            return ssErikEvent.monthly_payment * (13 - ssErikEvent.month);
-          }
-          return full;
+          if (year === ssErikEvent.year && ssErikEvent.month) return ssErikEvent.monthly_payment * (13 - ssErikEvent.month);
+          if (year === erikDeathYear) return ssErikFull * (erikMonthsAlive / 12);
+          return ssErikFull;
         })() : 0;
-    const ssDebbie = alive && ssDebbieEvent && year >= ssDebbieEvent.year
+
+    // Deb's SS: survivor benefit — after Erik dies, gets max(her own, Erik's)
+    const ssDebbie = debAlive && (ssDebbieFull > 0 || (!erikAlive && ssErikFull > 0))
       ? (() => {
-          const full = inf(ssDebbieEvent.monthly_payment * 12, ssCoLA, year - ssDebbieEvent.year);
-          if (year === ssDebbieEvent.year && ssDebbieEvent.month) {
-            return ssDebbieEvent.monthly_payment * (13 - ssDebbieEvent.month);
+          const ownBenefit = ssDebbieFull;
+          const survivorBenefit = !erikAlive ? ssErikFull : 0;
+          const effectiveFull = Math.max(ownBenefit, survivorBenefit);
+          if (year === ssDebbieEvent?.year && ssDebbieEvent.month) return ssDebbieEvent.monthly_payment * (13 - ssDebbieEvent.month);
+          // In Erik's death year: own benefit for months Erik alive, max(own, survivor) for remaining
+          if (year === erikDeathYear && erikDeathEvent?.month) {
+            const monthsBefore = erikDeathEvent.month - 1;
+            const monthsAfter = 12 - monthsBefore;
+            return ownBenefit * (monthsBefore / 12) + Math.max(ownBenefit, ssErikFull) * (monthsAfter / 12);
           }
-          return full;
+          if (year === debDeathYear) return effectiveFull * (debMonthsAlive / 12);
+          return effectiveFull;
         })() : 0;
     const ssSubtotal = ssErik + ssDebbie;
     const ssTax      = ssSubtotal * 0.85 * ssTaxRate;
@@ -276,7 +298,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       gross_draw: grossDraw, draw_tax: drawTax, net_draw: effectiveNetDraw,
       draw_rate: drawRate, capital_spend: capitalSpend,
       investment_balance: investmentBalance, roi, invest_plus_re: investPlusRE,
-      real_estate: realEstate, re_value: reValue, pre_event_re_value: preEventREValue, ltc_monthly: 0, ltc_entrance: 0,
+      real_estate: realEstate, re_value: reValue, re_costs: reCosts, pre_event_re_value: preEventREValue, ltc_monthly: 0, ltc_entrance: 0,
       orcas_value: orcasValue, orcas_principal: orcasPrincipal, orcas_equity: orcasEquity,
       portland_value: portlandValue, portland_principal: portlandPrincipal, portland_equity: portlandEquity,
     });

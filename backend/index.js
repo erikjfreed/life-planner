@@ -133,8 +133,8 @@ app.get('/api/entities', (req, res) => {
 app.post('/api/entities', (req, res) => {
   const en = req.body;
   db.prepare(`
-    INSERT INTO entities (type, name, street_address, appreciation_rate, services_json, tax_yearly, insurance_yearly, mortgage_rate, term_years)
-    VALUES (@type, @name, @street_address, @appreciation_rate, @services_json, @tax_yearly, @insurance_yearly, @mortgage_rate, @term_years)
+    INSERT INTO entities (type, name, street_address, appreciation_rate, services_json, tax_yearly, insurance_yearly, tax_rate, mortgage_rate, term_years)
+    VALUES (@type, @name, @street_address, @appreciation_rate, @services_json, @tax_yearly, @insurance_yearly, @tax_rate, @mortgage_rate, @term_years)
   `).run({
     type: en.type ?? null,
     name: en.name ?? null,
@@ -143,6 +143,7 @@ app.post('/api/entities', (req, res) => {
     services_json: en.services_json ?? null,
     tax_yearly: en.tax_yearly ?? null,
     insurance_yearly: en.insurance_yearly ?? null,
+    tax_rate: en.tax_rate ?? null,
     mortgage_rate: en.mortgage_rate ?? null,
     term_years: en.term_years ?? null,
   });
@@ -157,7 +158,7 @@ app.put('/api/entities/:id', (req, res) => {
     UPDATE entities SET
       type = @type, name = @name, street_address = @street_address,
       appreciation_rate = @appreciation_rate, services_json = @services_json,
-      tax_yearly = @tax_yearly, insurance_yearly = @insurance_yearly,
+      tax_yearly = @tax_yearly, insurance_yearly = @insurance_yearly, tax_rate = @tax_rate,
       mortgage_rate = @mortgage_rate, term_years = @term_years
     WHERE id = @id
   `).run({
@@ -169,6 +170,7 @@ app.put('/api/entities/:id', (req, res) => {
     services_json: en.services_json ?? null,
     tax_yearly: en.tax_yearly ?? null,
     insurance_yearly: en.insurance_yearly ?? null,
+    tax_rate: en.tax_rate ?? null,
     mortgage_rate: en.mortgage_rate ?? null,
     term_years: en.term_years ?? null,
   });

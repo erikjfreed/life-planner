@@ -67,6 +67,7 @@ db.exec(`
     services_json TEXT,
     tax_yearly REAL,
     insurance_yearly REAL,
+    tax_rate REAL,
     mortgage_rate REAL,
     term_years INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -109,8 +110,8 @@ db.exec(`
 const entityCount = db.prepare('SELECT COUNT(*) AS cnt FROM entities').get();
 if (entityCount.cnt === 0) {
   const insertEntity = db.prepare(`
-    INSERT INTO entities (type, name, street_address, appreciation_rate, services_json, tax_yearly, insurance_yearly, mortgage_rate, term_years)
-    VALUES (@type, @name, @street_address, @appreciation_rate, @services_json, @tax_yearly, @insurance_yearly, @mortgage_rate, @term_years)
+    INSERT INTO entities (type, name, street_address, appreciation_rate, services_json, tax_yearly, insurance_yearly, tax_rate, mortgage_rate, term_years)
+    VALUES (@type, @name, @street_address, @appreciation_rate, @services_json, @tax_yearly, @insurance_yearly, @tax_rate, @mortgage_rate, @term_years)
   `);
   const insertEvent = db.prepare(`
     INSERT INTO events (type, year, month, age, entity_id, name, purchase_price, down_payment, principal_balance, monthly_payment, sale_price, selling_costs_pct, hidden)
@@ -136,6 +137,7 @@ if (entityCount.cnt === 0) {
       ]),
       tax_yearly: 12038,
       insurance_yearly: 1016,
+      tax_rate: 0.006,
       mortgage_rate: 0.03125,
       term_years: 30,
     });
@@ -158,6 +160,7 @@ if (entityCount.cnt === 0) {
       ]),
       tax_yearly: 14968,
       insurance_yearly: 1039,
+      tax_rate: 0.015,
       mortgage_rate: 0.0275,
       term_years: 30,
     });
@@ -173,7 +176,7 @@ if (entityCount.cnt === 0) {
     insertEvent.run({ type: 're_sell',  year: 2036, month: 6,  age: null, entity_id: portlandId, name: null, purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: 997500,  selling_costs_pct: null, hidden: 0 });
 
     const portlandServices = JSON.parse(portlandResult ? db.prepare('SELECT services_json FROM entities WHERE id = ?').get(portlandId).services_json : '[]');
-    const dreamResult = insertEntity.run({ type: 'real_estate', name: 'California Dream', street_address: null, appreciation_rate: 0.05, services_json: JSON.stringify(portlandServices), tax_yearly: 14968, insurance_yearly: 1039, mortgage_rate: null, term_years: null });
+    const dreamResult = insertEntity.run({ type: 'real_estate', name: 'California Dream', street_address: null, appreciation_rate: 0.05, services_json: JSON.stringify(portlandServices), tax_yearly: 31200, insurance_yearly: 1039, tax_rate: 0.013, mortgage_rate: null, term_years: null });
     const dreamId = dreamResult.lastInsertRowid;
     insertEvent.run({ type: 're_buy',   year: 2035, month: 8,  age: null, entity_id: dreamId,    name: null, purchase_price: 2400000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 0 });
 
@@ -182,8 +185,8 @@ if (entityCount.cnt === 0) {
       { label: 'License / Registration / Smog', monthly: 25, yearly: 300 },
       { label: 'Maintenance / Repair', monthly: 125, yearly: 1500 },
     ]);
-    const cx5Result = insertEntity.run({ type: 'vehicle', name: '2019 Mazda CX-5 Signature', street_address: null, appreciation_rate: -0.15, services_json: vehicleServices, tax_yearly: null, insurance_yearly: null, mortgage_rate: null, term_years: null });
-    const ridgeResult = insertEntity.run({ type: 'vehicle', name: '2021 Honda Ridgeline RTL-E', street_address: null, appreciation_rate: -0.15, services_json: vehicleServices, tax_yearly: null, insurance_yearly: null, mortgage_rate: null, term_years: null });
+    const cx5Result = insertEntity.run({ type: 'vehicle', name: '2019 Mazda CX-5 Signature', street_address: null, appreciation_rate: -0.15, services_json: vehicleServices, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
+    const ridgeResult = insertEntity.run({ type: 'vehicle', name: '2021 Honda Ridgeline RTL-E', street_address: null, appreciation_rate: -0.15, services_json: vehicleServices, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
     insertEvent.run({ type: 'car_buy', year: 2019, month: null, age: null, entity_id: cx5Result.lastInsertRowid,   name: null, purchase_price: 38000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 1 });
     insertEvent.run({ type: 'car_buy', year: 2021, month: null, age: null, entity_id: ridgeResult.lastInsertRowid, name: null, purchase_price: 52000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 1 });
 

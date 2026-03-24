@@ -36,7 +36,7 @@ export default function ExpenseChart({ rows, params }) {
           <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
           {CATEGORIES.map(c => (
-            <Area key={c.key} type="monotone" dataKey={c.label} stackId="1"
+            <Area key={c.key} type="linear" dataKey={c.label} stackId="1"
               stroke={c.color} fill={c.color} fillOpacity={0.75} />
           ))}
         </AreaChart>

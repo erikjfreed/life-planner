@@ -26,6 +26,7 @@ function PropertyPanel({ entity, buyEvent, endYear }) {
       <div style={styles.summaryRow}>
         <div style={styles.summaryCell}><div style={styles.summaryLabel}>Purchase Price</div><div style={styles.summaryValue}>{fmt(buyEvent.purchase_price)}</div></div>
         <div style={styles.summaryCell}><div style={styles.summaryLabel}>Year</div><div style={styles.summaryValue}>{buyEvent.year}</div></div>
+        {entity.tax_rate != null && <div style={styles.summaryCell}><div style={styles.summaryLabel}>Tax Rate</div><div style={styles.summaryValue}>{(entity.tax_rate * 100).toFixed(1)}%</div></div>}
       </div>
 
       <div style={styles.innerTabs}>

@@ -63,7 +63,7 @@ const COLUMNS = [
   { key: 'erik_age', label: 'Erik', format: (v) => v },
   { key: 'deb_age', label: 'Deb', format: (v) => v },
   { key: 'loans', label: 'Loans', group: 'Real Estate', format: fmt },
-  { key: 're_costs', label: 'Costs', group: 'Real Estate', format: fmt, compute: (r) => (r.orcas || 0) + (r.portland || 0) },
+  { key: 're_costs', label: 'Costs', group: 'Real Estate', format: fmt },
   { key: 'health', label: 'Health', group: 'Lifestyle', format: fmt },
   { key: 'dogs', label: 'Dogs', group: 'Lifestyle', format: fmt },
   { key: 'cars', label: 'Cars', group: 'Lifestyle', format: fmt },

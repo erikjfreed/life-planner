@@ -95,7 +95,7 @@ const styles = {
     position: 'relative',
   },
   eventStrip: {
-    height: 24,
+    height: 56,
     flexShrink: 0,
     borderBottom: '1px solid #e5e7eb',
     background: '#fafafa',

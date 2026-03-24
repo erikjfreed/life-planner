@@ -14,12 +14,12 @@ function xPixel(year, minYear, maxYear, containerWidth) {
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function EventLine({ x, label, color, height, labelOffset = 0 }) {
-  const labelWidth = label.length * 6 + 8;
+  const labelWidth = label.length * 5.5 + 6;
   return (
     <g>
       <line x1={x} y1={0} x2={x} y2={height} stroke={color} strokeWidth={1} strokeDasharray="4 3" clipPath="url(#plotAreaClip)" />
-      <rect x={x} y={1 + labelOffset} width={labelWidth} height={16} fill="white" fillOpacity={0.9} stroke={color} strokeWidth={1} rx={2} />
-      <text x={x + 4} y={13 + labelOffset} textAnchor="start" fontSize={10} fill={color}>{label}</text>
+      <rect x={x + 1} y={1 + labelOffset} width={labelWidth} height={13} fill="white" fillOpacity={0.85} rx={2} />
+      <text x={x + 3} y={11 + labelOffset} textAnchor="start" fontSize={9} fontWeight={600} fill={color}>{label}</text>
     </g>
   );
 }
@@ -57,54 +57,37 @@ export function DeathLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ss
               <rect x={PLOT_OFFSET} y={0} width={width - PLOT_OFFSET - MARGIN_RIGHT} height={height} />
             </clipPath>
           </defs>
-          {(ssEvents ?? []).map((ev, i) => {
-            const label = `SS ${ev.name}${ev.month ? ' ' + MONTHS[ev.month - 1] : ''}`;
-            const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
-            return (
-              <EventLine
-                key={ev.name}
-                x={xPixel(fractionalYear, minYear, maxYear, width)}
-                label={label}
-                color="#2563eb"
-                height={height}
-                labelOffset={i * 18}
-              />
-            );
-          })}
-          {(reEvents ?? []).map((ev, i) => {
-            const entity = (entities ?? []).find(en => en.id === ev.entity_id);
-            const name = entity?.street_address || entity?.name || '?';
-            const isSell = ev.type === 're_sell';
-            const label = `${isSell ? 'Sell' : 'Buy'} ${name}`;
-            const color = isSell ? '#16a34a' : '#7c3aed';
-            const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
-            return (
-              <EventLine
-                key={`${ev.type}-${ev.entity_id}`}
-                x={xPixel(fractionalYear, minYear, maxYear, width)}
-                label={label}
-                color={color}
-                height={height}
-                labelOffset={i * 18}
-              />
-            );
-          })}
-          {erikDeath && erikAge && (
-            <EventLine
-              x={xPixel(erikDeathYear + (erikDeath.month ? (erikDeath.month - 1) / 12 : 0), minYear, maxYear, width)}
-              label={`RIP Erik ${erikAge}`}
-              color="#ef4444"
-              height={height}
-            />
-          )}
-          {debDeath && debAge && (
-            <EventLine
-              x={xPixel(debDeathYear + (debDeath.month ? (debDeath.month - 1) / 12 : 0), minYear, maxYear, width)}
-              label={`RIP Deb ${debAge}`}
-              color="#8b5cf6"
-              height={height}
-            />
-          )}
+          {(() => {
+            const allEvents = [];
+            (ssEvents ?? []).forEach(ev => {
+              const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
+              allEvents.push({ key: `ss-${ev.name}`, x: xPixel(fractionalYear, minYear, maxYear, width), label: `SS ${ev.name}${ev.month ? ' ' + MONTHS[ev.month - 1] : ''}`, color: '#2563eb' });
+            });
+            (reEvents ?? []).forEach(ev => {
+              const entity = (entities ?? []).find(en => en.id === ev.entity_id);
+              const name = entity?.street_address || entity?.name || '?';
+              const isSell = ev.type === 're_sell';
+              const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
+              allEvents.push({ key: `${ev.type}-${ev.entity_id}`, x: xPixel(fractionalYear, minYear, maxYear, width), label: `${isSell ? 'Sell' : 'Buy'} ${name}`, color: isSell ? '#16a34a' : '#7c3aed' });
+            });
+            if (erikDeath && erikAge) {
+              allEvents.push({ key: 'death-erik', x: xPixel(erikDeathYear + (erikDeath.month ? (erikDeath.month - 1) / 12 : 0), minYear, maxYear, width), label: `RIP Erik ${erikAge}`, color: '#ef4444' });
+            }
+            if (debDeath && debAge) {
+              allEvents.push({ key: 'death-deb', x: xPixel(debDeathYear + (debDeath.month ? (debDeath.month - 1) / 12 : 0), minYear, maxYear, width), label: `RIP Deb ${debAge}`, color: '#8b5cf6' });
+            }
+            allEvents.sort((a, b) => a.x - b.x);
+            // Stagger labels into rows to avoid overlap
+            const rows = []; // each row tracks its rightmost edge
+            return allEvents.map((ev) => {
+              const labelWidth = ev.label.length * 5.5 + 6;
+              let row = 0;
+              while (row < rows.length && ev.x < rows[row] + 4) row++;
+              if (row >= rows.length) rows.push(0);
+              rows[row] = ev.x + labelWidth;
+              return <EventLine key={ev.key} x={ev.x} label={ev.label} color={ev.color} height={height} labelOffset={row * 14} />;
+            });
+          })()}
         </svg>
       )}
     </div>
