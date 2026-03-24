@@ -273,8 +273,8 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
 
     // -- DRAW --
     const grossDraw = totalExpenses - ssNet;
-    const drawTax   = Math.max(0, grossDraw) * drawTaxRate;
-    const netDraw   = grossDraw + drawTax;
+    const netDraw   = Math.max(0, grossDraw) / (1 - drawTaxRate);
+    const drawTax   = netDraw - Math.max(0, grossDraw);
 
     // -- INVESTMENT BALANCE --
     if (t === 0) {

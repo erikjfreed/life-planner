@@ -38,11 +38,11 @@ function LoanPanel({ loan, entity }) {
         <table style={styles.table}>
           <thead>
             <tr>
-              <th style={styles.th}>Year</th>
-              <th style={{ ...styles.th, textAlign: 'right' }}>Opening</th>
-              <th style={{ ...styles.th, textAlign: 'right' }}>Interest</th>
-              <th style={{ ...styles.th, textAlign: 'right' }}>Principal</th>
-              <th style={{ ...styles.th, textAlign: 'right' }}>Closing</th>
+              <th style={styles.stickyTh}>Year</th>
+              <th style={{ ...styles.stickyTh, textAlign: 'right' }}>Opening</th>
+              <th style={{ ...styles.stickyTh, textAlign: 'right' }}>Interest</th>
+              <th style={{ ...styles.stickyTh, textAlign: 'right' }}>Principal</th>
+              <th style={{ ...styles.stickyTh, textAlign: 'right' }}>Closing</th>
             </tr>
           </thead>
           <tbody>
@@ -110,6 +110,7 @@ const styles = {
   sectionLabel: { fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '16px 0 6px' },
   table: { borderCollapse: 'collapse', width: '100%' },
   th: { fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '4px 8px', textAlign: 'left' },
+  stickyTh: { fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '4px 8px', textAlign: 'left', position: 'sticky', top: 0, background: '#fff', zIndex: 1 },
   td: { fontSize: 12, padding: '3px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
   amortScroll: { maxHeight: 300, overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: 4 },
 };

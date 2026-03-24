@@ -8,7 +8,7 @@ const CATEGORIES = [
   { key: 'travel',    label: 'Travel',    color: '#a3e635' },
   { key: 'cars',      label: 'Cars',      color: '#facc15' },
   { key: 'dogs',      label: 'Dogs',      color: '#34d399' },
-  { key: 're_costs',  label: 'RE Costs',  color: '#22d3ee', compute: r => (r.orcas || 0) + (r.portland || 0) },
+  { key: 're_costs',  label: 'RE Costs',  color: '#22d3ee' },
   { key: 'loans',     label: 'Loans',     color: '#60a5fa' },
 ];
 
@@ -33,8 +33,8 @@ export default function ExpenseChart({ rows, params }) {
           <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9 }} angle={-45} textAnchor="end" height={30} interval={0} />
           <YAxis width={52} tick={{ fontSize: 11 }} tickFormatter={v => v % 200 === 0 ? `$${v}K` : ''} ticks={yTicks} domain={[0, yMax]} interval={0} />
           <CartesianGrid vertical={false} stroke="#e5e7eb" strokeWidth={1} />
-          <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} />
-          <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+          <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} wrapperStyle={{ marginTop: -100 }} itemSorter={(a) => { const idx = CATEGORIES.findIndex(c => c.label === a.dataKey); return -idx; }} />
+          <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} payload={[...CATEGORIES].reverse().map(c => ({ value: c.label, type: 'square', color: c.color }))} />
           {CATEGORIES.map(c => (
             <Area key={c.key} type="linear" dataKey={c.label} stackId="1"
               stroke={c.color} fill={c.color} fillOpacity={0.75} />

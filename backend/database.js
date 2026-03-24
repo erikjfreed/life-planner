@@ -172,13 +172,13 @@ if (entityCount.cnt === 0) {
     insertEvent.run({ type: 'death',    year: 2048, month: 10, age: 87, entity_id: null, name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null,  sale_price: null, selling_costs_pct: null, hidden: 0 });
     insertEvent.run({ type: 'ss_start', year: 2026, month: 12, age: null, entity_id: null, name: 'Erik', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5215, sale_price: null, selling_costs_pct: null, hidden: 0 });
     insertEvent.run({ type: 'ss_start', year: 2031, month: 10, age: null, entity_id: null, name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5392, sale_price: null, selling_costs_pct: null, hidden: 0 });
-    insertEvent.run({ type: 're_sell',  year: 2034, month: 6,  age: null, entity_id: orcasId,    name: null, purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: 2100000, selling_costs_pct: null, hidden: 0 });
-    insertEvent.run({ type: 're_sell',  year: 2036, month: 6,  age: null, entity_id: portlandId, name: null, purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: 997500,  selling_costs_pct: null, hidden: 0 });
+    insertEvent.run({ type: 're_sell',  year: 2027, month: 6,  age: null, entity_id: orcasId,    name: null, purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: 2100000, selling_costs_pct: null, hidden: 0 });
+    insertEvent.run({ type: 're_sell',  year: 2027, month: 6,  age: null, entity_id: portlandId, name: null, purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: 997500,  selling_costs_pct: null, hidden: 0 });
 
     const portlandServices = JSON.parse(portlandResult ? db.prepare('SELECT services_json FROM entities WHERE id = ?').get(portlandId).services_json : '[]');
     const dreamResult = insertEntity.run({ type: 'real_estate', name: 'California Dream', street_address: null, appreciation_rate: 0.05, services_json: JSON.stringify(portlandServices), tax_yearly: 31200, insurance_yearly: 1039, tax_rate: 0.013, mortgage_rate: null, term_years: null });
     const dreamId = dreamResult.lastInsertRowid;
-    insertEvent.run({ type: 're_buy',   year: 2035, month: 8,  age: null, entity_id: dreamId,    name: null, purchase_price: 2400000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 0 });
+    insertEvent.run({ type: 're_buy',   year: 2027, month: 8,  age: null, entity_id: dreamId,    name: null, purchase_price: 2400000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 0 });
 
     const vehicleServices = JSON.stringify([
       { label: 'Insurance', monthly: 100, yearly: 1200 },

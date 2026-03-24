@@ -71,11 +71,16 @@ const COLUMNS = [
   { key: 'living', label: 'General', group: 'Lifestyle', format: fmt },
   { key: 'allowance', label: 'Allowance', group: 'Lifestyle', format: fmt },
   { key: 'total_expenses', label: 'Total Exp', format: fmt },
-  { key: 'ss_net', label: 'SS Net', group: 'Income', format: fmt },
-  { key: 'net_draw', label: 'Draw', group: 'Income', format: fmt },
+  { key: 'roi', label: 'ROI', group: 'Income', format: fmt },
+  { key: 'ss_net', label: 'SS', group: 'Income', format: fmt },
+  { key: 'ss_tax', label: 'SS Tax', group: 'Income', format: fmt },
+  { key: 'gross_draw', label: 'Gross', group: 'Draw', format: fmt },
+  { key: 'draw_tax', label: 'Tax', group: 'Draw', format: fmt },
+  { key: 'net_draw', label: 'NET', group: 'Draw', format: fmt },
+  { key: 'capital_spend', label: 'Cap Spend', group: 'Income', format: fmt },
   { key: 'draw_rate', label: 'Rate', group: 'Income', format: pct },
   { key: 'investment_balance', label: 'Investments', group: 'Wealth', format: fmt },
-  { key: 're_value', label: 'Real Estate', group: 'Wealth', format: fmt },
+  { key: 'real_estate', label: 'Real Estate', group: 'Wealth', format: fmt },
   { key: 'invest_plus_re', label: 'NET', group: 'Wealth', format: fmt },
 ];
 
@@ -146,7 +151,7 @@ export default function TimelineTable() {
                     {col.format(col.compute ? col.compute(row) : row[col.key])}
                   </td>
                 ))}
-                <td style={{ padding: '2px 8px', textAlign: 'left', borderBottom: '1px solid #eee', color: eventColor, fontWeight: event ? 600 : undefined }}>
+                <td style={{ padding: '2px 8px', textAlign: 'left', borderBottom: '1px solid #eee', color: eventColor, fontWeight: event ? 600 : undefined, maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={event?.label || ''}>
                   {event?.label || ''}
                 </td>
               </tr>
