@@ -1,5 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { DeathReferenceLine } from './SpouseDeathLines';
+
 
 const CATEGORIES = [
   { key: 'health',    label: 'Health',    color: '#f97316' },

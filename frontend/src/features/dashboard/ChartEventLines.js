@@ -24,7 +24,7 @@ function EventLine({ x, label, color, height, labelOffset = 0 }) {
   );
 }
 
-export function SpouseDeathLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ssEvents, reEvents, entities, minYear, maxYear, stripHeight = 50 }) {
+export function ChartEventLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ssEvents, reEvents, entities, minYear, maxYear, stripHeight = 50 }) {
   const ref = useRef(null);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);

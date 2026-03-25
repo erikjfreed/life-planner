@@ -7,7 +7,7 @@ import ParametersPanel from './ParametersPanel';
 import WealthChart from './WealthChart';
 import IncomeChart from './IncomeChart';
 import ExpenseChart from './ExpenseChart';
-import { SpouseDeathLinesOverlay } from './SpouseDeathLines';
+import { ChartEventLinesOverlay } from './ChartEventLines';
 
 export default function Dashboard() {
   const dispatch = useDispatch();
@@ -44,7 +44,7 @@ export default function Dashboard() {
               <div style={styles.chartSlot}><WealthChart rows={rows} params={params} events={events} /></div>
               <div style={styles.chartSlot}><IncomeChart rows={rows} params={params} /></div>
               <div style={styles.chartSlot}><ExpenseChart rows={rows} params={params} /></div>
-              <SpouseDeathLinesOverlay
+              <ChartEventLinesOverlay
                 deathEvents={deathEvents}
                 erikBirthYear={erikBirthYear}
                 debBirthYear={debBirthYear}

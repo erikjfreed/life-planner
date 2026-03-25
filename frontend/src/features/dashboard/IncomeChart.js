@@ -1,5 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { DeathReferenceLine } from './SpouseDeathLines';
+
 
 export default function IncomeChart({ rows, params }) {
   const data = rows.map(r => ({

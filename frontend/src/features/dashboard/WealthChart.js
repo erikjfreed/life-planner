@@ -1,5 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { DeathReferenceLine } from './SpouseDeathLines';
+
 
 export default function WealthChart({ rows, params, events }) {
   const reEvents = (events ?? []).filter(e => e.type === 'real_estate_buy' || e.type === 'real_estate_sell');
