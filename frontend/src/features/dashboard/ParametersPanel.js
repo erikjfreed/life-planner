@@ -133,19 +133,6 @@ export default function ParametersPanel() {
         <ParamRow label="Social Security" value={params.socialSecurityCoLA}      onChange={update('socialSecurityCoLA')}      type="slider" min={0} max={5}  step={0.1} />
       </Section>
 
-      <Section title="Taxes">
-        <div style={styles.taxGrid}>
-          <div />
-          <div style={styles.taxHeader}>Federal</div>
-          <div style={styles.taxHeader}>State</div>
-          <div style={styles.taxLabel}>Draw</div>
-          <TaxCell value={params.drawFedTaxRate}   onChange={update('drawFedTaxRate')} />
-          <TaxCell value={params.drawStateTaxRate}  onChange={update('drawStateTaxRate')} />
-          <div style={styles.taxLabel}>SS</div>
-          <TaxCell value={params.socialSecurityFedTaxRate}      onChange={update('socialSecurityFedTaxRate')} />
-          <TaxCell value={params.socialSecurityStateTaxRate}     onChange={update('socialSecurityStateTaxRate')} />
-        </div>
-      </Section>
 
       <Section title="Allowance">
         <ParamRow label="Per Person/Month ($)" value={params.allowancePerPersonPerMonth} onChange={update('allowancePerPersonPerMonth')} type="monthly-dropdown" />

@@ -50,6 +50,8 @@ export default function TaxPage() {
               <th style={styles.groupTh} colSpan={4}>Draw (IRA)</th>
               <th style={{ border: 'none', width: 6 }}></th>
               <th style={styles.groupTh} colSpan={3}>Result</th>
+              <th style={{ border: 'none', width: 6 }}></th>
+              <th style={styles.groupTh}>Events</th>
             </tr>
             <tr>
               <th style={styles.th}>Year</th>
@@ -73,13 +75,22 @@ export default function TaxPage() {
               <th style={{ ...styles.th, ...styles.bl, textAlign: 'right' }}>Total Tax</th>
               <th style={{ ...styles.th, textAlign: 'right' }}>Effective</th>
               <th style={{ ...styles.th, ...styles.br, textAlign: 'center' }}>Cycles</th>
+              <th style={styles.gap}></th>
+              <th style={{ ...styles.th, ...styles.bl, ...styles.br }}></th>
             </tr>
           </thead>
           <tbody>
             {taxData.map((row, i) => {
               const est = estimates[row.year];
+              const ev = row.event;
               const last = i === taxData.length - 1;
               const b = last ? styles.bb : {};
+              const isDeath = ev?.type === 'spouse_death';
+              const isEog = ev?.type === 'eog';
+              const isSS = ev?.type === 'ss';
+              const isSell = ev?.type === 'real_estate_sell';
+              const isBuy = ev?.type === 'real_estate_buy';
+              const eventColor = isDeath ? '#ef4444' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : undefined;
               return (
                 <tr key={row.year} style={{ background: i % 2 === 0 ? '#fafafa' : '#fff' }} title={est?.explanation || ''}>
                   <td style={styles.td}>{row.year}</td>
@@ -128,6 +139,10 @@ export default function TaxPage() {
                   </td>
                   <td style={{ ...styles.td, ...styles.br, ...b, textAlign: 'center' }}>
                     {est?.iterations != null ? est.iterations : '—'}
+                  </td>
+                  <td style={styles.gap}></td>
+                  <td style={{ ...styles.td, ...styles.bl, ...styles.br, ...b, color: eventColor, fontWeight: ev ? 600 : undefined, whiteSpace: 'nowrap' }}>
+                    {ev?.label || ''}
                   </td>
                     </tr>
               );

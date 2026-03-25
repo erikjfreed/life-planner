@@ -241,6 +241,48 @@ app.get('/api/tax-data', (req, res) => {
   res.json(buildTaxData(timelineRows, entities, events, loans, params));
 });
 
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function getRowEvent(year, events, entities, params) {
+  const labels = [];
+  let type = null;
+  const erikDeath = events.find(e => e.type === 'spouse_death' && e.name === 'Erik');
+  const debDeath = events.find(e => e.type === 'spouse_death' && e.name === 'Deb');
+  const erikBirthYear = params.erikDOB ? new Date(params.erikDOB).getFullYear() : null;
+  const debBirthYear = params.debDOB ? new Date(params.debDOB).getFullYear() : null;
+
+  if (erikDeath) {
+    const dy = erikDeath.age != null && erikBirthYear ? erikBirthYear + erikDeath.age : erikDeath.year;
+    if (dy === year) { labels.push(`RIP Erik ${erikBirthYear ? dy - erikBirthYear : ''}`); type = 'spouse_death'; }
+  }
+  if (debDeath) {
+    const dy = debDeath.age != null && debBirthYear ? debBirthYear + debDeath.age : debDeath.year;
+    if (dy === year) { labels.push(`RIP Deb ${debBirthYear ? dy - debBirthYear : ''}`); type = 'spouse_death'; }
+  }
+  const eogYear = erikDeath && debDeath ? Math.max(
+    erikDeath.age != null && erikBirthYear ? erikBirthYear + erikDeath.age : erikDeath.year,
+    debDeath.age != null && debBirthYear ? debBirthYear + debDeath.age : debDeath.year
+  ) + 2 : null;
+  if (eogYear && year === eogYear) { labels.push('EndGame'); type = type || 'eog'; }
+
+  events.filter(e => e.type === 'social_security_start' && e.year === year).forEach(e => {
+    labels.push(`SS ${e.name}${e.month ? ' ' + MONTHS[e.month - 1] : ''}`);
+    type = type || 'ss';
+  });
+  events.filter(e => e.type === 'real_estate_buy' && e.year === year && !e.hidden).forEach(e => {
+    const en = entities.find(x => x.id === e.entity_id);
+    labels.push(`Buy ${en?.street_address || en?.name || '?'}`);
+    type = type || 'real_estate_buy';
+  });
+  events.filter(e => e.type === 'real_estate_sell' && e.year === year && !e.hidden).forEach(e => {
+    const en = entities.find(x => x.id === e.entity_id);
+    labels.push(`Sell ${en?.street_address || en?.name || '?'}`);
+    type = type || 'real_estate_sell';
+  });
+  if (labels.length === 0) return null;
+  return { label: labels.join(', '), type };
+}
+
 app.get('/api/tax-computed', (req, res) => {
   const params = loadParams();
   const events = loadEvents();
@@ -273,7 +315,8 @@ app.get('/api/tax-computed', (req, res) => {
     }
 
     result = computeTaxes({ ...d, gross_draw: grossDraw });
-    return { ...d, estimate: { ...result, gross_draw_solved: Math.round(grossDraw), iterations } };
+    const event = getRowEvent(d.year, events, entities, params);
+    return { ...d, estimate: { ...result, gross_draw_solved: Math.round(grossDraw), iterations }, event };
   });
 
   res.json(results);

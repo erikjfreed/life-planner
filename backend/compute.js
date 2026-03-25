@@ -3,6 +3,8 @@
  * Accepts params and events array. Events drive property state and death years.
  */
 
+const { computeTaxes } = require('./taxBrackets');
+
 function computeTimeline(params, events = [], entities = [], loans = []) {
   const {
     erikDOB,
@@ -14,16 +16,11 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     investmentROI,
     socialSecurityCoLA,
 
-    drawFedTaxRate,
-    drawStateTaxRate,
-    socialSecurityFedTaxRate,
-    socialSecurityStateTaxRate,
 
     allowancePerPersonPerMonth,
 
     healthBase,
     dogsBase,
-    vehiclesBase,
     travelBase,
     livingBase,
 
@@ -54,9 +51,9 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
   const socialSecurityErikEvent   = events.find(e => e.type === 'social_security_start' && e.name === 'Erik');
   const socialSecurityDebbieEvent = events.find(e => e.type === 'social_security_start' && e.name === 'Deb');
 
+  const STATE_MAP = { 'Orcas': 'WA', 'Portland': 'WA' };
+
   const rows = [];
-  const drawTaxRate = drawFedTaxRate + drawStateTaxRate;
-  const socialSecurityTaxRate = socialSecurityFedTaxRate + socialSecurityStateTaxRate;
   const allowanceNetRate = generalInflation - allowanceDeflation;
 
   const inf = (base, rate, t) => base * Math.pow(1 + rate, t);
@@ -186,10 +183,27 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         }, 0)
       : 0;
 
-    const health    = alive ? inf(healthBase,    healthcareInflation, t) : 0;
+    const erikAliveForExpenses = year < erikDeathYear || (year === erikDeathYear && (erikDeathEvent?.month ? erikDeathEvent.month - 1 : 0) > 0);
+    const debAliveForExpenses = year < debDeathYear || (year === debDeathYear && (debDeathEvent?.month ? debDeathEvent.month - 1 : 0) > 0);
+    const peopleAlive = (erikAliveForExpenses ? 1 : 0) + (debAliveForExpenses ? 1 : 0);
+    const health    = alive ? inf(healthBase, healthcareInflation, t) * (peopleAlive / 2) : 0;
     const dogs      = alive ? inf(dogsBase,      generalInflation,    t) : 0;
-    const vehicles  = alive ? inf(vehiclesBase,  generalInflation,    t) : 0;
-    const travel    = alive ? inf(travelBase,    generalInflation,    t) : 0;
+    // Vehicle costs from active vehicle entities
+    const vehicles  = alive ? (() => {
+      let total = 0;
+      for (const entity of entities.filter(e => e.type === 'vehicle')) {
+        const bought = events.some(e => e.type === 'vehicle_buy' && e.entity_id === entity.id && e.year <= year);
+        const sold = events.some(e => e.type === 'vehicle_sell' && e.entity_id === entity.id && e.year <= year);
+        if (bought && !sold) {
+          const services = entity.services_json ? JSON.parse(entity.services_json) : [];
+          const buyEvent = events.find(e => e.type === 'vehicle_buy' && e.entity_id === entity.id);
+          const yearsSinceBuy = Math.max(0, year - (buyEvent?.year || startYear));
+          total += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, yearsSinceBuy);
+        }
+      }
+      return total * (peopleAlive / 2);
+    })() : 0;
+    const travel    = alive ? inf(travelBase,    generalInflation,    t) * (peopleAlive / 2) : 0;
     const living    = alive ? inf(livingBase,    generalInflation,    t) : 0;
     const erikMonthsAlive = year < erikDeathYear ? 12
       : year === erikDeathYear && erikDeathEvent?.month ? erikDeathEvent.month - 1 : 0;
@@ -246,13 +260,74 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           return effectiveFull;
         })() : 0;
     const socialSecuritySubtotal = socialSecurityErik + socialSecurityDebbie;
-    const socialSecurityTax      = socialSecuritySubtotal * 0.85 * socialSecurityTaxRate;
-    const socialSecurityNet      = socialSecuritySubtotal - socialSecurityTax;
 
-    // -- DRAW --
-    const grossDraw = totalExpenses - socialSecurityNet;
-    const netDraw   = Math.max(0, grossDraw) / (1 - drawTaxRate);
-    const drawTax   = netDraw - Math.max(0, grossDraw);
+    // -- Compute mortgage interest for this year --
+    let mortgageInterest = 0;
+    for (const prop of activePlusPartial) {
+      if ((prop.monthsActive ?? 0) === 0) continue;
+      for (const loan of prop.loans) {
+        if (loan.principal <= 0) continue;
+        // Walk 12 months to get interest (using pre-amortization principal for this year)
+        let bal = loan.principal;
+        const mr = loan.rate / 12;
+        for (let m = 0; m < (prop.monthsActive ?? 12); m++) {
+          mortgageInterest += bal * mr;
+          bal = Math.max(0, bal - (loan.payment - bal * mr));
+        }
+      }
+    }
+
+    // -- Property taxes for active RE entities --
+    let propertyTaxes = 0;
+    for (const prop of activePlusPartial) {
+      if ((prop.monthsActive ?? 0) === 0) continue;
+      const entity = entities.find(en => en.name === prop.name && en.type === 'real_estate');
+      if (entity && entity.tax_yearly) {
+        propertyTaxes += inf(entity.tax_yearly, generalInflation, Math.max(0, year - prop.yearBought)) * ((prop.monthsActive ?? 12) / 12);
+      }
+    }
+
+    // -- Determine state and filing status --
+    const activeREStates = new Set();
+    for (const prop of properties) {
+      if (prop.active) activeREStates.add(STATE_MAP[prop.name] || 'CA');
+    }
+    const taxState = activeREStates.has('WA') ? 'WA' : activeREStates.size > 0 ? [...activeREStates][0] : (params.stateOfResidence || 'WA');
+    const bothAlive = erikAlive && debAlive;
+    const filingStatus = bothAlive ? (params.filingStatus || 'married_filing_jointly') : 'single';
+
+    // -- TAX: iterative solver using bracket math --
+    let grossDraw = Math.max(0, totalExpenses - socialSecuritySubtotal);
+    let taxResult = null;
+    for (let iter = 0; iter < 10; iter++) {
+      taxResult = computeTaxes({
+        year, filing_status: filingStatus, state: taxState,
+        erik_age: erikAge, deb_age: debAge,
+        gross_draw: grossDraw, ss_income: socialSecuritySubtotal,
+        mortgage_interest: mortgageInterest, property_taxes: propertyTaxes,
+        inflation_rate: generalInflation,
+      });
+      const drawTaxRate = taxResult.draw_fed_rate + taxResult.draw_state_rate;
+      const ssTax = socialSecuritySubtotal * (taxResult.ss_fed_rate + taxResult.ss_state_rate);
+      const ssNet = socialSecuritySubtotal - ssTax;
+      const expensesAfterSS = Math.max(0, totalExpenses - ssNet);
+      const newGrossDraw = drawTaxRate < 1 ? expensesAfterSS / (1 - drawTaxRate) : expensesAfterSS;
+      if (Math.abs(newGrossDraw - grossDraw) < 1) { grossDraw = newGrossDraw; break; }
+      grossDraw = newGrossDraw;
+    }
+    // Final tax computation with solved draw
+    taxResult = computeTaxes({
+      year, filing_status: filingStatus, state: taxState,
+      erik_age: erikAge, deb_age: debAge,
+      gross_draw: grossDraw, ss_income: socialSecuritySubtotal,
+      mortgage_interest: mortgageInterest, property_taxes: propertyTaxes,
+      inflation_rate: generalInflation,
+    });
+
+    const socialSecurityTax = socialSecuritySubtotal * (taxResult.ss_fed_rate + taxResult.ss_state_rate);
+    const socialSecurityNet = socialSecuritySubtotal - socialSecurityTax;
+    const drawTax = grossDraw * (taxResult.draw_fed_rate + taxResult.draw_state_rate);
+    const netDraw = grossDraw + drawTax;
 
     // -- INVESTMENT BALANCE --
     if (t === 0) {
@@ -275,6 +350,11 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       social_security_erik: socialSecurityErik, social_security_debbie: socialSecurityDebbie,
       social_security_subtotal: socialSecuritySubtotal, social_security_tax: socialSecurityTax, social_security_net: socialSecurityNet,
       gross_draw: grossDraw, draw_tax: drawTax, net_draw: effectiveNetDraw,
+      draw_fed_rate: taxResult.draw_fed_rate, draw_state_rate: taxResult.draw_state_rate,
+      ss_fed_rate: taxResult.ss_fed_rate, ss_state_rate: taxResult.ss_state_rate,
+      fed_tax: taxResult.fed_tax, state_tax: taxResult.state_tax, total_tax: taxResult.total_tax,
+      mortgage_interest: Math.round(mortgageInterest), property_taxes_actual: Math.round(propertyTaxes),
+      tax_state: taxState, filing_status: filingStatus,
       draw_rate: drawRate, capital_spend: capitalSpend,
       investment_balance: investmentBalance, roi, invest_plus_re: investPlusRealEstate,
       real_estate: realEstate, real_estate_value: realEstateValue, real_estate_costs: realEstateCosts,

@@ -1,4 +1,4 @@
-import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { AreaChart, Area, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 
 export default function IncomeChart({ rows, params }) {
@@ -7,6 +7,7 @@ export default function IncomeChart({ rows, params }) {
     'SS': Math.round(r.social_security_net / 1000),
     'ROI': Math.round(r.roi / 1000),
     'Cap Spend': Math.round(r.capital_spend / 1000),
+    'Total Tax': Math.round((r.total_tax || 0) / 1000),
   }));
 
   const minYear = data.length > 0 ? data[0].year : 2026;
@@ -21,13 +22,14 @@ export default function IncomeChart({ rows, params }) {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 4, right: 20, left: 10, bottom: 0 }}>
           <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9 }} angle={-45} textAnchor="end" height={30} interval={0} />
-          <YAxis width={52} tick={{ fontSize: 11 }} tickFormatter={v => v % 200 === 0 ? `$${v}K` : ''} ticks={yTicks} domain={[0, yMax]} interval={0} />
+          <YAxis width={52} tick={{ fontSize: 11 }} tickFormatter={v => `$${v}K`} ticks={Array.from({ length: Math.floor(yMax / 100) + 1 }, (_, i) => i * 100)} domain={[0, yMax]} interval={0} />
           <CartesianGrid vertical={false} stroke="#e5e7eb" strokeWidth={1} />
           <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
           <Area type="linear" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
           <Area type="linear" dataKey="ROI"       stackId="1" stroke="#86efac" fill="#86efac" fillOpacity={0.7} />
           <Area type="linear" dataKey="Cap Spend" stackId="1" stroke="#dc2626" fill="#dc2626" fillOpacity={0.7} />
+          <Line type="linear" dataKey="Total Tax" stroke="#111827" strokeWidth={2} dot={false} />
         </AreaChart>
       </ResponsiveContainer>
     </div>

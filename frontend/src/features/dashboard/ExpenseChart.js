@@ -31,7 +31,7 @@ export default function ExpenseChart({ rows, params }) {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 4, right: 20, left: 10, bottom: 0 }}>
           <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9 }} angle={-45} textAnchor="end" height={30} interval={0} />
-          <YAxis width={52} tick={{ fontSize: 11 }} tickFormatter={v => v % 200 === 0 ? `$${v}K` : ''} ticks={yTicks} domain={[0, yMax]} interval={0} />
+          <YAxis width={58} tick={{ fontSize: 10 }} tickFormatter={v => `$${v}K`} ticks={Array.from({ length: Math.floor(yMax / 100) + 1 }, (_, i) => i * 100)} domain={[0, yMax]} interval={0} />
           <CartesianGrid vertical={false} stroke="#e5e7eb" strokeWidth={1} />
           <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} wrapperStyle={{ marginTop: -100 }} itemSorter={(a) => { const idx = CATEGORIES.findIndex(c => c.label === a.dataKey); return -idx; }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} payload={[...CATEGORIES].reverse().map(c => ({ value: c.label, type: 'square', color: c.color }))} />
