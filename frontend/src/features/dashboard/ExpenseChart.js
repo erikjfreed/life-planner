@@ -6,7 +6,7 @@ const CATEGORIES = [
   { key: 'living',    label: 'General',   color: '#fb923c' },
   { key: 'allowance', label: 'Allowance', color: '#fbbf24' },
   { key: 'travel',    label: 'Travel',    color: '#a3e635' },
-  { key: 'cars',      label: 'Cars',      color: '#facc15' },
+  { key: 'cars',      label: 'Vehicles',  color: '#facc15' },
   { key: 'dogs',      label: 'Dogs',      color: '#34d399' },
   { key: 're_costs',  label: 'RE Costs',  color: '#22d3ee' },
   { key: 'loans',     label: 'Loans',     color: '#60a5fa' },

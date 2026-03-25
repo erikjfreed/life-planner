@@ -12,6 +12,7 @@ function VehiclePanel({ entity, buyEvent }) {
     <div style={styles.panel}>
       {/* Summary */}
       <div style={styles.summaryRow}>
+        <div style={styles.idCell}><div style={styles.summaryLabel}>Entity ID</div><div style={styles.idValue}>{entity.id}</div></div>
         {buyEvent.purchase_price != null && (
           <div style={styles.summaryCell}><div style={styles.summaryLabel}>Purchase Price</div><div style={styles.summaryValue}>{fmt(buyEvent.purchase_price)}</div></div>
         )}
@@ -91,8 +92,10 @@ const styles = {
   panel: { maxWidth: 600 },
   summaryRow: { display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
   summaryCell: { background: '#f3f4f6', borderRadius: 6, padding: '8px 12px', minWidth: 100 },
+  idCell: { background: '#f9fafb', borderRadius: 6, padding: '8px 12px', minWidth: 50, border: '1px dashed #d1d5db' },
   summaryLabel: { fontSize: 10, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },
   summaryValue: { fontSize: 14, fontWeight: 700, color: '#111827' },
+  idValue: { fontSize: 14, fontWeight: 700, color: '#9ca3af', fontFamily: 'monospace' },
   sectionLabel: { fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '16px 0 6px' },
   table: { borderCollapse: 'collapse', width: '100%' },
   th: { fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '4px 8px', textAlign: 'left' },

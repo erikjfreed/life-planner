@@ -10,6 +10,8 @@ const TABS = [
   { id: 'vehicles',    label: 'Vehicles' },
   { id: 'real-estate', label: 'Real Estate' },
   { id: 'loans',       label: 'Loans' },
+  { id: 'ss',          label: 'Social Security' },
+  { id: 'spouses',     label: 'Spouses' },
   { id: 'events',      label: 'Events' },
   { id: 'timeline',    label: 'Timeline' },
 ];

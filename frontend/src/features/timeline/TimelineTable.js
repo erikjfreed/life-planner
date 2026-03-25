@@ -66,7 +66,7 @@ const COLUMNS = [
   { key: 're_costs', label: 'Costs', group: 'Real Estate', format: fmt },
   { key: 'health', label: 'Health', group: 'Lifestyle', format: fmt },
   { key: 'dogs', label: 'Dogs', group: 'Lifestyle', format: fmt },
-  { key: 'cars', label: 'Cars', group: 'Lifestyle', format: fmt },
+  { key: 'cars', label: 'Vehicles', group: 'Lifestyle', format: fmt },
   { key: 'travel', label: 'Travel', group: 'Lifestyle', format: fmt },
   { key: 'living', label: 'General', group: 'Lifestyle', format: fmt },
   { key: 'allowance', label: 'Allowance', group: 'Lifestyle', format: fmt },

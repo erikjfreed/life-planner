@@ -12,6 +12,8 @@ import LivingPage from './features/nav/LivingPage';
 import RealEstatePage from './features/nav/RealEstatePage';
 import EventsPage from './features/nav/EventsPage';
 import LoansPage from './features/nav/LoansPage';
+import SSPage from './features/nav/SSPage';
+import DeathPage from './features/nav/DeathPage';
 import { fetchEvents } from './features/events/eventsSlice';
 import { fetchEntities } from './features/entities/entitiesSlice';
 import { fetchLoans } from './features/loans/loansSlice';
@@ -38,6 +40,8 @@ function App() {
     if (view === 'living')      return <LivingPage />;
     if (view === 'real-estate') return <RealEstatePage />;
     if (view === 'loans')       return <LoansPage />;
+    if (view === 'ss')          return <SSPage />;
+    if (view === 'spouses')     return <DeathPage />;
     if (view === 'events')      return <EventsPage />;
     return <CategoryPage category={view} />;
   };
