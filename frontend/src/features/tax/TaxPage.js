@@ -15,37 +15,20 @@ export default function TaxPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/tax-data')
+    setLoading(true);
+    fetch('http://localhost:3001/api/tax-computed')
       .then(r => r.json())
-      .then(data => { setTaxData(data); setLoading(false); })
+      .then(data => {
+        setTaxData(data.map(r => ({ ...r, estimate: undefined, ...r })));
+        const results = {};
+        for (const row of data) {
+          if (row.estimate) results[row.year] = row.estimate;
+        }
+        setEstimates(results);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, []);
-
-  const calculate = async (row) => {
-    setEstimates(prev => ({ ...prev, [row.year]: { loading: true } }));
-    try {
-      const res = await fetch('http://localhost:3001/api/tax-estimate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(row),
-      });
-      const data = await res.json();
-      if (data.error) {
-        setEstimates(prev => ({ ...prev, [row.year]: { error: data.error } }));
-      } else {
-        setEstimates(prev => ({ ...prev, [row.year]: data }));
-      }
-    } catch (err) {
-      setEstimates(prev => ({ ...prev, [row.year]: { error: err.message } }));
-    }
-  };
-
-  const calculateAll = async () => {
-    for (const row of taxData) {
-      await calculate(row);
-      await new Promise(r => setTimeout(r, 500));
-    }
-  };
 
   if (loading) return <div style={styles.page}><p>Loading...</p></div>;
 
@@ -53,7 +36,6 @@ export default function TaxPage() {
     <div style={styles.page}>
       <div style={styles.header}>
         <h2 style={styles.title}>Tax Estimates</h2>
-        <button style={styles.calcAllBtn} onClick={calculateAll}>Calculate All</button>
       </div>
 
       <div style={styles.scroll}>
@@ -161,7 +143,6 @@ const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
   header: { display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 },
   title: { margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' },
-  calcAllBtn: { padding: '4px 12px', fontSize: 12, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' },
   scroll: { overflowX: 'auto' },
   table: { borderCollapse: 'collapse', width: 'auto' },
   th: { fontSize: 12, fontWeight: 600, color: '#374151', background: '#e5e7eb', borderBottom: '2px solid #d1d5db', padding: '3px 6px', textAlign: 'left' },

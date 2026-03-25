@@ -241,6 +241,44 @@ app.get('/api/tax-data', (req, res) => {
   res.json(buildTaxData(timelineRows, entities, events, loans, params));
 });
 
+app.get('/api/tax-computed', (req, res) => {
+  const params = loadParams();
+  const events = loadEvents();
+  const entities = loadEntities();
+  const loans = loadLoans();
+  const timelineRows = computeTimeline(params, events, entities, loans);
+  const taxRows = buildTaxData(timelineRows, entities, events, loans, params);
+
+  const MAX_ITERATIONS = 10;
+  const TOLERANCE = 1;
+
+  const results = taxRows.map(d => {
+    let grossDraw = d.gross_draw;
+    const totalExpenses = d.total_expenses || grossDraw;
+    const ssIncome = d.ss_income;
+    let result = null;
+    let iterations = 0;
+
+    for (let i = 0; i < MAX_ITERATIONS; i++) {
+      iterations = i + 1;
+      result = computeTaxes({ ...d, gross_draw: grossDraw });
+      const drawTaxRate = result.draw_fed_rate + result.draw_state_rate;
+      const ssTax = ssIncome * (result.ss_fed_rate + result.ss_state_rate);
+      const ssNet = ssIncome - ssTax;
+      const expensesAfterSS = Math.max(0, totalExpenses - ssNet);
+      const newGrossDraw = drawTaxRate < 1 ? expensesAfterSS / (1 - drawTaxRate) : expensesAfterSS;
+      const change = Math.abs(newGrossDraw - grossDraw);
+      grossDraw = newGrossDraw;
+      if (change < TOLERANCE) break;
+    }
+
+    result = computeTaxes({ ...d, gross_draw: grossDraw });
+    return { ...d, estimate: { ...result, gross_draw_solved: Math.round(grossDraw), iterations } };
+  });
+
+  res.json(results);
+});
+
 app.post('/api/tax-estimate', (req, res) => {
   const d = req.body;
   const MAX_ITERATIONS = 10;
