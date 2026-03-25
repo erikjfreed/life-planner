@@ -24,6 +24,9 @@ const DEFAULT_PARAMS = {
   livingBase: 33619,
 
   investmentBalanceBase: 3823105,
+
+  filingStatus: 'married_filing_jointly',
+  stateOfResidence: 'WA',
 };
 
 module.exports = DEFAULT_PARAMS;

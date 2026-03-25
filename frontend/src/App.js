@@ -12,6 +12,7 @@ import LivingPage from './features/nav/LivingPage';
 import RealEstatePage from './features/nav/RealEstatePage';
 import EventsPage from './features/nav/EventsPage';
 import LoansPage from './features/nav/LoansPage';
+import TaxPage from './features/tax/TaxPage';
 import SocialSecurityPage from './features/nav/SocialSecurityPage';
 import SpousesPage from './features/nav/SpousesPage';
 import { fetchEvents } from './features/events/eventsSlice';
@@ -42,6 +43,7 @@ function App() {
     if (view === 'loans')       return <LoansPage />;
     if (view === 'ss')          return <SocialSecurityPage />;
     if (view === 'spouses')     return <SpousesPage />;
+    if (view === 'tax')         return <TaxPage />;
     if (view === 'events')      return <EventsPage />;
     return <CategoryPage category={view} />;
   };

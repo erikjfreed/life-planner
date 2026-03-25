@@ -1,7 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const db = require('./database');
 const { computeTimeline } = require('./compute');
+const { buildTaxData } = require('./taxHelpers');
+const { computeTaxes } = require('./taxBrackets');
 const DEFAULT_PARAMS = require('./defaultParams');
 
 const app = express();
@@ -226,6 +229,58 @@ app.delete('/api/loans/:id', (req, res) => {
   const { id } = req.params;
   db.prepare('DELETE FROM loans WHERE id = ?').run(parseInt(id));
   res.json(loadLoans());
+});
+
+// --- TAX ---
+app.get('/api/tax-data', (req, res) => {
+  const params = loadParams();
+  const events = loadEvents();
+  const entities = loadEntities();
+  const loans = loadLoans();
+  const timelineRows = computeTimeline(params, events, entities, loans);
+  res.json(buildTaxData(timelineRows, entities, events, loans, params));
+});
+
+app.post('/api/tax-estimate', (req, res) => {
+  const d = req.body;
+  const MAX_ITERATIONS = 10;
+  const TOLERANCE = 1; // converge when draw changes by less than $1
+
+  try {
+    let grossDraw = d.gross_draw;
+    const totalExpenses = d.total_expenses || grossDraw;
+    const ssIncome = d.ss_income;
+    let result = null;
+    let iterations = 0;
+
+    for (let i = 0; i < MAX_ITERATIONS; i++) {
+      iterations = i + 1;
+      result = computeTaxes({ ...d, gross_draw: grossDraw });
+
+      const drawTaxRate = result.draw_fed_rate + result.draw_state_rate;
+      const ssTax = ssIncome * (result.ss_fed_rate + result.ss_state_rate);
+      const ssNet = ssIncome - ssTax;
+
+      const expensesAfterSS = Math.max(0, totalExpenses - ssNet);
+      const newGrossDraw = drawTaxRate < 1 ? expensesAfterSS / (1 - drawTaxRate) : expensesAfterSS;
+
+      const change = Math.abs(newGrossDraw - grossDraw);
+      grossDraw = newGrossDraw;
+
+      if (change < TOLERANCE) break;
+    }
+
+    // Final computation with solved draw
+    result = computeTaxes({ ...d, gross_draw: grossDraw });
+
+    res.json({
+      ...result,
+      gross_draw_solved: Math.round(grossDraw),
+      iterations,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.listen(PORT, () => {
