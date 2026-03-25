@@ -1,10 +1,10 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { DeathReferenceLine } from './DeathLines';
+import { DeathReferenceLine } from './SpouseDeathLines';
 
 export default function IncomeChart({ rows, params }) {
   const data = rows.map(r => ({
     year: r.year,
-    'SS': Math.round(r.ss_net / 1000),
+    'SS': Math.round(r.social_security_net / 1000),
     'ROI': Math.round(r.roi / 1000),
     'Cap Spend': Math.round(r.capital_spend / 1000),
   }));

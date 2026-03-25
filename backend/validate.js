@@ -9,18 +9,18 @@ const params = {
   allowanceDeflation: 0.01,
   realEstateAppreciation: 0.05,
   investmentROI: 0.075,
-  ssCoLA: 0.025,
+  socialSecurityCoLA: 0.025,
 
   drawFedTaxRate: 0.16,
   drawStateTaxRate: 0.00,
-  ssFedTaxRate: 0.16,
-  ssStateTaxRate: 0.00,
+  socialSecurityFedTaxRate: 0.16,
+  socialSecurityStateTaxRate: 0.00,
 
   allowancePerPersonPerMonth: 3000,
 
   healthBase: 21276,
   dogsBase: 16389,
-  carsBase: 18000,
+  vehiclesBase: 18000,
   travelBase: 36000,
   livingBase: 33619,
 
@@ -58,12 +58,12 @@ const entities = [
 ];
 
 const events = [
-  { type: 're_buy',   year: 2026, entity_id: 1, purchase_price: 2000000, principal_balance: 449764, monthly_payment: 2186 },
-  { type: 're_buy',   year: 2026, entity_id: 2, purchase_price: 950000,  principal_balance: 264655, monthly_payment: 1235 },
-  { type: 'death',    year: 2055, name: 'Erik' },
-  { type: 'death',    year: 2055, name: 'Deb'  },
-  { type: 'ss_start', year: 2027, name: 'Erik', monthly_payment: 5215 },
-  { type: 'ss_start', year: 2032, name: 'Deb',  monthly_payment: 5392 },
+  { type: 'real_estate_buy',   year: 2026, entity_id: 1, purchase_price: 2000000, principal_balance: 449764, monthly_payment: 2186 },
+  { type: 'real_estate_buy',   year: 2026, entity_id: 2, purchase_price: 950000,  principal_balance: 264655, monthly_payment: 1235 },
+  { type: 'spouse_death',    year: 2055, name: 'Erik' },
+  { type: 'spouse_death',    year: 2055, name: 'Deb'  },
+  { type: 'social_security_start', year: 2027, name: 'Erik', monthly_payment: 5215 },
+  { type: 'social_security_start', year: 2032, name: 'Deb',  monthly_payment: 5392 },
 ];
 
 const rows = computeTimeline(params, events, entities);
@@ -73,10 +73,10 @@ const rows = computeTimeline(params, events, entities);
 // loans 2026 = (2186 * 12) + (1235 * 12) = 26,232 + 14,820 = 41,052
 // total_expenses 2026 = 41,052 + 21,276 + 16,389 + 18,000 + 36,000 + 33,619 + 72,000 + 23,094 + 32,093 = 293,523
 const expected = {
-  2026: { total_expenses: 293523, ss_net: 0,     net_draw: 340487, investment_balance: 3823105, real_estate: 2235581, invest_plus_re: 6058686 },
-  2027: { total_expenses: 299860, ss_net: 54065, net_draw: 285122, investment_balance: 3769351 },
-  2028: { total_expenses: 306389, ss_net: 55417, net_draw: 291127, investment_balance: 3766930 },
-  2032: { total_expenses: 334578, ss_net: 117072, net_draw: 252307, investment_balance: 3688524 },
+  2026: { total_expenses: 293523, social_security_net: 0,     net_draw: 340487, investment_balance: 3823105, real_estate: 2235581, invest_plus_re: 6058686 },
+  2027: { total_expenses: 299860, social_security_net: 54065, net_draw: 285122, investment_balance: 3769351 },
+  2028: { total_expenses: 306389, social_security_net: 55417, net_draw: 291127, investment_balance: 3766930 },
+  2032: { total_expenses: 334578, social_security_net: 117072, net_draw: 252307, investment_balance: 3688524 },
 };
 
 let allPass = true;

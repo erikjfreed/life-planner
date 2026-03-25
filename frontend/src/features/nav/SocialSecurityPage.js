@@ -8,24 +8,24 @@ function SSPanel({ entity, ssEvent, timelineRows, params }) {
   const startYear = ssEvent.year;
   const startMonth = ssEvent.month;
   const monthlyBase = ssEvent.monthly_payment;
-  const ssCoLA = params.ssCoLA ?? 0;
-  const ssFedTaxRate = params.ssFedTaxRate ?? 0;
-  const ssStateTaxRate = params.ssStateTaxRate ?? 0;
-  const ssTaxRate = ssFedTaxRate + ssStateTaxRate;
+  const socialSecurityCoLA = params.socialSecurityCoLA ?? 0;
+  const socialSecurityFedTaxRate = params.socialSecurityFedTaxRate ?? 0;
+  const socialSecurityStateTaxRate = params.socialSecurityStateTaxRate ?? 0;
+  const socialSecurityTaxRate = socialSecurityFedTaxRate + socialSecurityStateTaxRate;
 
   // Build yearly schedule from timeline rows
   const schedule = timelineRows
     .filter(r => r.year >= startYear)
     .map(r => {
       const yearsFromStart = r.year - startYear;
-      const annualFull = monthlyBase * 12 * Math.pow(1 + ssCoLA, yearsFromStart);
-      const monthly = monthlyBase * Math.pow(1 + ssCoLA, yearsFromStart);
+      const annualFull = monthlyBase * 12 * Math.pow(1 + socialSecurityCoLA, yearsFromStart);
+      const monthly = monthlyBase * Math.pow(1 + socialSecurityCoLA, yearsFromStart);
       // Prorate first year
       let annual = annualFull;
       if (r.year === startYear && startMonth) {
         annual = monthlyBase * (13 - startMonth);
       }
-      const tax = annual * 0.85 * ssTaxRate;
+      const tax = annual * 0.85 * socialSecurityTaxRate;
       const net = annual - tax;
       return { year: r.year, monthly: Math.round(monthly), annual: Math.round(annual), tax: Math.round(tax), net: Math.round(net) };
     });
@@ -36,8 +36,8 @@ function SSPanel({ entity, ssEvent, timelineRows, params }) {
         <div style={styles.idCell}><div style={styles.summaryLabel}>Entity ID</div><div style={styles.idValue}>{entity.id}</div></div>
         <div style={styles.summaryCell}><div style={styles.summaryLabel}>Monthly Benefit</div><div style={styles.summaryValue}>{fmt(monthlyBase)}</div></div>
         <div style={styles.summaryCell}><div style={styles.summaryLabel}>Start</div><div style={styles.summaryValue}>{startMonth ? `${MONTHS[startMonth - 1]} ${startYear}` : startYear}</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>COLA</div><div style={styles.summaryValue}>{(ssCoLA * 100).toFixed(1)}%</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Tax Rate</div><div style={styles.summaryValue}>{(ssTaxRate * 100).toFixed(1)}%</div></div>
+        <div style={styles.summaryCell}><div style={styles.summaryLabel}>COLA</div><div style={styles.summaryValue}>{(socialSecurityCoLA * 100).toFixed(1)}%</div></div>
+        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Tax Rate</div><div style={styles.summaryValue}>{(socialSecurityTaxRate * 100).toFixed(1)}%</div></div>
       </div>
 
       <div style={styles.sectionLabel}>Annual Schedule</div>
@@ -69,7 +69,7 @@ function SSPanel({ entity, ssEvent, timelineRows, params }) {
   );
 }
 
-export default function SSPage() {
+export default function SocialSecurityPage() {
   const entities = useSelector(s => s.entities.items);
   const events   = useSelector(s => s.events.items);
   const params   = useSelector(s => s.parameters.present.values);
@@ -84,7 +84,7 @@ export default function SSPage() {
     return <div style={styles.page}><p style={{ color: '#6b7280', fontSize: 13 }}>No Social Security entities.</p></div>;
   }
 
-  const ssEvent = events.find(ev => ev.type === 'ss_start' && ev.entity_id === selected?.id);
+  const ssEvent = events.find(ev => ev.type === 'social_security_start' && ev.entity_id === selected?.id);
 
   return (
     <div style={styles.page}>

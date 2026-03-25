@@ -2,13 +2,13 @@ import { useSelector } from 'react-redux';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-export default function DeathPage() {
+export default function SpousesPage() {
   const entities = useSelector(s => s.entities.items);
   const events   = useSelector(s => s.events.items);
   const params   = useSelector(s => s.parameters.present.values);
 
   const spouseEntities = entities.filter(e => e.type === 'spouse');
-  const deathEvents = events.filter(e => e.type === 'death');
+  const deathEvents = events.filter(e => e.type === 'spouse_death');
 
   if (spouseEntities.length === 0) {
     return <div style={styles.page}><p style={{ color: '#6b7280', fontSize: 13 }}>No spouse entities.</p></div>;

@@ -130,7 +130,7 @@ export default function ParametersPanel() {
         <ParamRow label="General"         value={params.generalInflation}       onChange={update('generalInflation')}       type="slider" min={0} max={10} step={0.1} />
         <ParamRow label="Real Estate"     value={params.realEstateAppreciation} onChange={update('realEstateAppreciation')} type="slider" min={0} max={10} step={0.1} />
         <ParamRow label="Healthcare"      value={params.healthcareInflation}    onChange={update('healthcareInflation')}    type="slider" min={0} max={15} step={0.1} />
-        <ParamRow label="Social Security" value={params.ssCoLA}                 onChange={update('ssCoLA')}                 type="slider" min={0} max={5}  step={0.1} />
+        <ParamRow label="Social Security" value={params.socialSecurityCoLA}      onChange={update('socialSecurityCoLA')}      type="slider" min={0} max={5}  step={0.1} />
       </Section>
 
       <Section title="Taxes">
@@ -142,8 +142,8 @@ export default function ParametersPanel() {
           <TaxCell value={params.drawFedTaxRate}   onChange={update('drawFedTaxRate')} />
           <TaxCell value={params.drawStateTaxRate}  onChange={update('drawStateTaxRate')} />
           <div style={styles.taxLabel}>SS</div>
-          <TaxCell value={params.ssFedTaxRate}      onChange={update('ssFedTaxRate')} />
-          <TaxCell value={params.ssStateTaxRate}     onChange={update('ssStateTaxRate')} />
+          <TaxCell value={params.socialSecurityFedTaxRate}      onChange={update('socialSecurityFedTaxRate')} />
+          <TaxCell value={params.socialSecurityStateTaxRate}     onChange={update('socialSecurityStateTaxRate')} />
         </div>
       </Section>
 

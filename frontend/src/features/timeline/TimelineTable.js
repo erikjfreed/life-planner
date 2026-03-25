@@ -8,18 +8,18 @@ function getRowEvent(row, events, entities, params) {
   const labels = [];
   let type = null;
 
-  const erikDeathEvent = events.find(e => e.type === 'death' && e.name === 'Erik');
-  const debDeathEvent  = events.find(e => e.type === 'death' && e.name === 'Deb');
+  const erikDeathEvent = events.find(e => e.type === 'spouse_death' && e.name === 'Erik');
+  const debDeathEvent  = events.find(e => e.type === 'spouse_death' && e.name === 'Deb');
 
   if (erikDeathEvent && row.year === erikDeathEvent.year) {
     const age = params?.erikDOB ? erikDeathEvent.year - new Date(params.erikDOB).getFullYear() : '';
     labels.push(`RIP Erik ${age}`);
-    type = 'death';
+    type = 'spouse_death';
   }
   if (debDeathEvent && row.year === debDeathEvent.year) {
     const age = params?.debDOB ? debDeathEvent.year - new Date(params.debDOB).getFullYear() : '';
     labels.push(`RIP Deb ${age}`);
-    type = 'death';
+    type = 'spouse_death';
   }
 
   const endOfGameYear = erikDeathEvent && debDeathEvent
@@ -30,21 +30,21 @@ function getRowEvent(row, events, entities, params) {
     type = type || 'eog';
   }
 
-  events.filter(e => e.type === 'ss_start' && e.year === row.year).forEach(e => {
+  events.filter(e => e.type === 'social_security_start' && e.year === row.year).forEach(e => {
     labels.push(`SS ${e.name}${e.month ? ' ' + MONTHS[e.month - 1] : ''}`);
     type = type || 'ss';
   });
 
-  events.filter(e => e.type === 're_buy' && e.year === row.year && !e.hidden).forEach(e => {
+  events.filter(e => e.type === 'real_estate_buy' && e.year === row.year && !e.hidden).forEach(e => {
     const entity = entities.find(en => en.id === e.entity_id);
     labels.push(`Buy ${entity?.street_address || entity?.name || '?'}`);
-    type = type || 're_buy';
+    type = type || 'real_estate_buy';
   });
 
-  events.filter(e => e.type === 're_sell' && e.year === row.year && !e.hidden).forEach(e => {
+  events.filter(e => e.type === 'real_estate_sell' && e.year === row.year && !e.hidden).forEach(e => {
     const entity = entities.find(en => en.id === e.entity_id);
     labels.push(`Sell ${entity?.street_address || entity?.name || '?'}`);
-    type = type || 're_sell';
+    type = type || 'real_estate_sell';
   });
 
   if (labels.length === 0) return null;
@@ -63,17 +63,17 @@ const COLUMNS = [
   { key: 'erik_age', label: 'Erik', format: (v) => v },
   { key: 'deb_age', label: 'Deb', format: (v) => v },
   { key: 'loans', label: 'Loans', group: 'Real Estate', format: fmt },
-  { key: 're_costs', label: 'Costs', group: 'Real Estate', format: fmt },
+  { key: 'real_estate_costs', label: 'Costs', group: 'Real Estate', format: fmt },
   { key: 'health', label: 'Health', group: 'Lifestyle', format: fmt },
   { key: 'dogs', label: 'Dogs', group: 'Lifestyle', format: fmt },
-  { key: 'cars', label: 'Vehicles', group: 'Lifestyle', format: fmt },
+  { key: 'vehicles', label: 'Vehicles', group: 'Lifestyle', format: fmt },
   { key: 'travel', label: 'Travel', group: 'Lifestyle', format: fmt },
   { key: 'living', label: 'General', group: 'Lifestyle', format: fmt },
   { key: 'allowance', label: 'Allowance', group: 'Lifestyle', format: fmt },
   { key: 'total_expenses', label: 'Total Exp', format: fmt },
   { key: 'roi', label: 'ROI', group: 'Income', format: fmt },
-  { key: 'ss_net', label: 'SS', group: 'Income', format: fmt },
-  { key: 'ss_tax', label: 'SS Tax', group: 'Income', format: fmt },
+  { key: 'social_security_net', label: 'SS', group: 'Income', format: fmt },
+  { key: 'social_security_tax', label: 'SS Tax', group: 'Income', format: fmt },
   { key: 'gross_draw', label: 'Gross', group: 'Draw', format: fmt },
   { key: 'draw_tax', label: 'Tax', group: 'Draw', format: fmt },
   { key: 'net_draw', label: 'NET', group: 'Draw', format: fmt },
@@ -137,11 +137,11 @@ export default function TimelineTable() {
         <tbody>
           {rows.map((row, i) => {
             const event = getRowEvent(row, events, entities, params);
-            const isDeath = event?.type === 'death';
+            const isDeath = event?.type === 'spouse_death';
             const isEog   = event?.type === 'eog';
             const isSS    = event?.type === 'ss';
-            const isSell  = event?.type === 're_sell';
-            const isBuy   = event?.type === 're_buy';
+            const isSell  = event?.type === 'real_estate_sell';
+            const isBuy   = event?.type === 'real_estate_buy';
             const outline = isDeath ? '1.5px solid #ef4444' : isEog ? '1.5px solid #16a34a' : isSS ? '1.5px solid #2563eb' : isSell ? '1.5px solid #16a34a' : isBuy ? '1.5px solid #7c3aed' : undefined;
             const eventColor = isDeath ? '#ef4444' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : undefined;
             return (

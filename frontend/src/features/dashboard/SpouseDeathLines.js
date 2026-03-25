@@ -24,7 +24,7 @@ function EventLine({ x, label, color, height, labelOffset = 0 }) {
   );
 }
 
-export function DeathLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ssEvents, reEvents, entities, minYear, maxYear, stripHeight = 50 }) {
+export function SpouseDeathLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ssEvents, reEvents, entities, minYear, maxYear, stripHeight = 50 }) {
   const ref = useRef(null);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
@@ -66,7 +66,7 @@ export function DeathLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ss
             (reEvents ?? []).forEach(ev => {
               const entity = (entities ?? []).find(en => en.id === ev.entity_id);
               const name = entity?.street_address || entity?.name || '?';
-              const isSell = ev.type === 're_sell';
+              const isSell = ev.type === 'real_estate_sell';
               const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
               allEvents.push({ key: `${ev.type}-${ev.entity_id}`, x: xPixel(fractionalYear, minYear, maxYear, width), label: `${isSell ? 'Sell' : 'Buy'} ${name}`, color: isSell ? '#16a34a' : '#7c3aed' });
             });

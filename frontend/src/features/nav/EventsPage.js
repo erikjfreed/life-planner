@@ -9,24 +9,24 @@ function personAge(name, year, params) {
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 const TYPE_LABELS = {
-  re_buy:   'real_estate_buy',
-  re_sell:  'real_estate_sell',
-  death:    'spouse_death',
-  ss_start: 'social_security_start',
-  car_buy:  'vehicle_buy',
-  car_sell: 'vehicle_sell',
+  real_estate_buy:          'real_estate_buy',
+  real_estate_sell:         'real_estate_sell',
+  spouse_death:             'spouse_death',
+  social_security_start:    'social_security_start',
+  vehicle_buy:              'vehicle_buy',
+  vehicle_sell:             'vehicle_sell',
 };
 
 function eventSummary(ev, entities, params) {
   const entity = entities.find(e => e.id === ev.entity_id);
   const rawName = entity ? (entity.street_address || entity.name) : ev.name || null;
-  const name = ev.type === 'ss_start' && ev.name ? `${ev.name} starts Social Security`
-    : ev.type === 'death' && ev.name ? `${ev.name} Passes`
-    : (ev.type === 're_buy' || ev.type === 'car_buy') && rawName ? `Purchase ${rawName}`
-    : (ev.type === 're_sell' || ev.type === 'car_sell') && rawName ? `Sale of ${rawName}` : rawName;
+  const name = ev.type === 'social_security_start' && ev.name ? `${ev.name} starts Social Security`
+    : ev.type === 'spouse_death' && ev.name ? `${ev.name} Passes`
+    : (ev.type === 'real_estate_buy' || ev.type === 'vehicle_buy') && rawName ? `Purchase ${rawName}`
+    : (ev.type === 'real_estate_sell' || ev.type === 'vehicle_sell') && rawName ? `Sale of ${rawName}` : rawName;
   const details = [];
-  if (ev.type === 'death' && ev.age != null) details.push(`age ${ev.age}`);
-  if (ev.type === 'ss_start' && ev.name && params) {
+  if (ev.type === 'spouse_death' && ev.age != null) details.push(`age ${ev.age}`);
+  if (ev.type === 'social_security_start' && ev.name && params) {
     const age = personAge(ev.name, ev.year, params);
     if (age != null) details.push(`age ${age}`);
     if (ev.month != null) details.push(MONTHS[ev.month - 1]);
@@ -75,18 +75,18 @@ export default function EventsPage() {
                 <td style={styles.tdId}>{ev.entity_id ?? '—'}</td>
                 <td style={styles.td}>{ev.entity_id ? (entities.find(e => e.id === ev.entity_id)?.type ?? '—') : '—'}</td>
                 <td style={{ ...styles.td, textAlign: 'right' }}>{(() => {
-                  const amt = (ev.type === 're_buy' || ev.type === 'car_buy') && ev.purchase_price != null ? -ev.purchase_price
-                    : (ev.type === 're_sell' || ev.type === 'car_sell') && ev.sale_price != null ? ev.sale_price
+                  const amt = (ev.type === 'real_estate_buy' || ev.type === 'vehicle_buy') && ev.purchase_price != null ? -ev.purchase_price
+                    : (ev.type === 'real_estate_sell' || ev.type === 'vehicle_sell') && ev.sale_price != null ? ev.sale_price
                     : null;
                   if (amt == null) return '—';
                   const color = amt >= 0 ? '#16a34a' : '#dc2626';
                   return <span style={{ color }}>{amt < 0 ? '-' : ''}${Math.abs(Math.round(amt)).toLocaleString()}</span>;
                 })()}</td>
                 <td style={{ ...styles.td, textAlign: 'right' }}>{(() => {
-                  if (ev.type === 'ss_start' && ev.monthly_payment != null) {
+                  if (ev.type === 'social_security_start' && ev.monthly_payment != null) {
                     return <span style={{ color: '#16a34a' }}>${Math.round(ev.monthly_payment).toLocaleString()}</span>;
                   }
-                  if ((ev.type === 're_buy' || ev.type === 'car_buy') && ev.entity_id) {
+                  if ((ev.type === 'real_estate_buy' || ev.type === 'vehicle_buy') && ev.entity_id) {
                     const entity = entities.find(e => e.id === ev.entity_id);
                     if (entity) {
                       const services = entity.services_json ? JSON.parse(entity.services_json) : [];

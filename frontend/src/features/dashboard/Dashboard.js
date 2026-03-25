@@ -7,7 +7,7 @@ import ParametersPanel from './ParametersPanel';
 import WealthChart from './WealthChart';
 import IncomeChart from './IncomeChart';
 import ExpenseChart from './ExpenseChart';
-import { DeathLinesOverlay } from './DeathLines';
+import { SpouseDeathLinesOverlay } from './SpouseDeathLines';
 
 export default function Dashboard() {
   const dispatch = useDispatch();
@@ -22,11 +22,11 @@ export default function Dashboard() {
   const minYear = rows.length > 0 ? rows[0].year : 2026;
   const maxYear = rows.length > 0 ? rows[rows.length - 1].year : 2060;
 
-  const deathEvents   = events.filter(e => e.type === 'death');
+  const deathEvents   = events.filter(e => e.type === 'spouse_death');
   const erikBirthYear = params?.erikDOB ? new Date(params.erikDOB).getFullYear() : null;
   const debBirthYear  = params?.debDOB  ? new Date(params.debDOB).getFullYear()  : null;
-  const ssEvents      = events.filter(e => e.type === 'ss_start');
-  const reEvents      = events.filter(e => (e.type === 're_buy' || e.type === 're_sell') && !e.hidden);
+  const ssEvents      = events.filter(e => e.type === 'social_security_start');
+  const reEvents      = events.filter(e => (e.type === 'real_estate_buy' || e.type === 'real_estate_sell') && !e.hidden);
   const entities      = useSelector(s => s.entities.items);
 
   return (
@@ -44,7 +44,7 @@ export default function Dashboard() {
               <div style={styles.chartSlot}><WealthChart rows={rows} params={params} events={events} /></div>
               <div style={styles.chartSlot}><IncomeChart rows={rows} params={params} /></div>
               <div style={styles.chartSlot}><ExpenseChart rows={rows} params={params} /></div>
-              <DeathLinesOverlay
+              <SpouseDeathLinesOverlay
                 deathEvents={deathEvents}
                 erikBirthYear={erikBirthYear}
                 debBirthYear={debBirthYear}

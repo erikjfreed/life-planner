@@ -49,12 +49,12 @@ function VehiclePanel({ entity, buyEvent }) {
   );
 }
 
-export default function CarsPage() {
+export default function VehiclesPage() {
   const entities = useSelector(s => s.entities.items);
   const events   = useSelector(s => s.events.items);
 
   const vehicles = entities.filter(e => e.type === 'vehicle').filter(entity =>
-    events.some(ev => ev.type === 'car_buy' && ev.entity_id === entity.id)
+    events.some(ev => ev.type === 'vehicle_buy' && ev.entity_id === entity.id)
   );
 
   const [activeId, setActiveId] = useState(null);
@@ -64,7 +64,7 @@ export default function CarsPage() {
     return <div style={styles.page}><p style={{ color: '#6b7280', fontSize: 13 }}>No vehicles with a buy event.</p></div>;
   }
 
-  const buyEvent = events.find(ev => ev.type === 'car_buy' && ev.entity_id === selected?.id);
+  const buyEvent = events.find(ev => ev.type === 'vehicle_buy' && ev.entity_id === selected?.id);
 
   return (
     <div style={styles.page}>

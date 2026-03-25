@@ -100,10 +100,10 @@ export default function RealEstatePage() {
   const events   = useSelector(s => s.events.items);
 
   const reEntities = entities.filter(e => e.type === 'real_estate').filter(entity =>
-    events.some(ev => ev.type === 're_buy' && ev.entity_id === entity.id)
+    events.some(ev => ev.type === 'real_estate_buy' && ev.entity_id === entity.id)
   );
 
-  const deathYears = events.filter(e => e.type === 'death').map(e => e.year);
+  const deathYears = events.filter(e => e.type === 'spouse_death').map(e => e.year);
   const endOfGame = deathYears.length > 0 ? Math.max(...deathYears) + 2 : 2060;
 
   const [activeId, setActiveId] = useState(null);
@@ -113,7 +113,7 @@ export default function RealEstatePage() {
     return <div style={styles.page}><p style={{ color: '#6b7280', fontSize: 13 }}>No real estate entities with a buy event.</p></div>;
   }
 
-  const buyEvent = events.find(ev => ev.type === 're_buy' && ev.entity_id === selected?.id);
+  const buyEvent = events.find(ev => ev.type === 'real_estate_buy' && ev.entity_id === selected?.id);
 
   return (
     <div style={styles.page}>

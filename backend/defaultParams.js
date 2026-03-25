@@ -7,19 +7,19 @@ const DEFAULT_PARAMS = {
   allowanceDeflation: 0.01,
   realEstateAppreciation: 0.05,
   investmentROI: 0.075,
-  ssCoLA: 0.025,
+  socialSecurityCoLA: 0.025,
 
   drawFedTaxRate: 0.16,
   drawStateTaxRate: 0.00,
-  ssFedTaxRate: 0.16,
-  ssStateTaxRate: 0.00,
+  socialSecurityFedTaxRate: 0.16,
+  socialSecurityStateTaxRate: 0.00,
 
   allowancePerPersonPerMonth: 3000,
 
   healthBase: 21276,
   healthScenarioPct: 0.45,
   dogsBase: 16389,
-  carsBase: 18000,
+  vehiclesBase: 18000,
   travelBase: 36000,
   livingBase: 33619,
 

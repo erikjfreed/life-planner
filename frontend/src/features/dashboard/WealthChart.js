@@ -1,30 +1,30 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { DeathReferenceLine } from './DeathLines';
+import { DeathReferenceLine } from './SpouseDeathLines';
 
 export default function WealthChart({ rows, params, events }) {
-  const reEvents = (events ?? []).filter(e => e.type === 're_buy' || e.type === 're_sell');
+  const reEvents = (events ?? []).filter(e => e.type === 'real_estate_buy' || e.type === 'real_estate_sell');
   const data = [];
   for (const r of rows) {
     // Check if this year has RE events
     const yearEvents = reEvents.filter(e => e.year === r.year);
-    if (yearEvents.length > 0 && r.pre_event_re_value !== r.re_value) {
+    if (yearEvents.length > 0 && r.pre_event_real_estate_value !== r.real_estate_value) {
       const earliestMonth = Math.min(...yearEvents.map(e => e.month || 1));
       // Pre-event point
       data.push({
         year: r.year + (earliestMonth - 1) / 12 - 0.01,
-        'Real Estate': Math.round(r.pre_event_re_value / 1000),
+        'Real Estate': Math.round(r.pre_event_real_estate_value / 1000),
         'Investments': Math.round(r.investment_balance / 1000),
       });
       // Post-event point
       data.push({
         year: r.year + (earliestMonth - 1) / 12,
-        'Real Estate': Math.round(r.re_value / 1000),
+        'Real Estate': Math.round(r.real_estate_value / 1000),
         'Investments': Math.round(r.investment_balance / 1000),
       });
     } else {
       data.push({
         year: r.year,
-        'Real Estate': Math.round(r.re_value / 1000),
+        'Real Estate': Math.round(r.real_estate_value / 1000),
         'Investments': Math.round(r.investment_balance / 1000),
       });
     }
