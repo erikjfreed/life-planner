@@ -30,7 +30,7 @@ function EventLabel({ x, label, color, labelOffset = 0 }) {
   );
 }
 
-export function ChartEventLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ssEvents, reEvents, entities, minYear, maxYear, stripHeight = 50 }) {
+export function ChartEventLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ssEvents, reEvents, vehicleEvents, entities, minYear, maxYear, stripHeight = 50 }) {
   const ref = useRef(null);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
@@ -66,6 +66,12 @@ export function ChartEventLinesOverlay({ deathEvents, erikBirthYear, debBirthYea
       const isSell = ev.type === 'real_estate_sell';
       const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
       allEvents.push({ key: `${ev.type}-${ev.entity_id}`, x: xPixel(fractionalYear, minYear, maxYear, width), label: `${isSell ? 'Sell' : 'Buy'} ${name}`, color: isSell ? '#16a34a' : '#7c3aed' });
+    });
+    (vehicleEvents ?? []).forEach(ev => {
+      const entity = (entities ?? []).find(en => en.id === ev.entity_id);
+      const isSell = ev.type === 'vehicle_sell';
+      const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
+      allEvents.push({ key: `${ev.type}-${ev.entity_id}`, x: xPixel(fractionalYear, minYear, maxYear, width), label: `${isSell ? 'Sell' : 'Buy'} ${entity?.name || '?'}`, color: '#ec4899' });
     });
     if (erikDeath && erikAge) {
       allEvents.push({ key: 'death-erik', x: xPixel(erikDeathYear + (erikDeath.month ? (erikDeath.month - 1) / 12 : 0), minYear, maxYear, width), label: `RIP Erik ${erikAge}`, color: '#ef4444' });

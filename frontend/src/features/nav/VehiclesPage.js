@@ -1,12 +1,36 @@
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateEvent, fetchEvents } from '../events/eventsSlice';
 
 const fmt = v => `$${Math.round(v).toLocaleString()}`;
 
-function VehiclePanel({ entity, buyEvent }) {
+function VehiclePanel({ entity, buyEvent, sellEvent, nextEntity, dispatch }) {
   const services = entity.services_json ? JSON.parse(entity.services_json) : [];
   const totalExpense = services.reduce((s, i) => s + i.yearly, 0);
-  const age = new Date().getFullYear() - buyEvent.year;
+  const owner = entity.street_address;
+
+  const handleSellYearChange = async (yearVal) => {
+    if (yearVal === '') {
+      // Clear tradeup
+      if (nextEntity) {
+        await fetch('http://localhost:3001/api/vehicle-tradeup', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sell_entity_id: entity.id, buy_entity_id: nextEntity.id }),
+        });
+      }
+    } else {
+      // Create tradeup
+      if (nextEntity) {
+        await fetch('http://localhost:3001/api/vehicle-tradeup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sell_entity_id: entity.id, buy_entity_id: nextEntity.id, year: parseInt(yearVal), purchase_price: 50000 }),
+        });
+      }
+    }
+    dispatch(fetchEvents());
+  };
 
   return (
     <div style={styles.panel}>
@@ -15,17 +39,50 @@ function VehiclePanel({ entity, buyEvent }) {
         <span style={styles.val}>{entity.id}</span>
         <span />
         <span style={styles.labelCell}>Owner</span>
-        <span style={styles.val}>{entity.street_address || '—'}</span>
+        <span style={styles.val}>{owner || '—'}</span>
         <span style={styles.labelCell}>Purchase Price</span>
         <span style={styles.val}>{buyEvent.purchase_price != null ? fmt(buyEvent.purchase_price) : '—'}</span>
         <span />
         <span style={styles.labelCell}>Purchase Date</span>
         <span style={styles.val}>{`${buyEvent.month || 1}/1/${buyEvent.year}`}</span>
-        <span style={styles.labelCell}>Age</span>
-        <span style={styles.val}>{age} yrs</span>
-        <span />
         <span style={styles.labelCell}>Yearly Cost</span>
         <span style={styles.val}>{fmt(totalExpense)}</span>
+        <span />
+        <span style={styles.labelCell}>Sell Year</span>
+        <span style={styles.val}>
+          <select
+            value={sellEvent?.year ?? ''}
+            onChange={e => handleSellYearChange(e.target.value)}
+            style={styles.select}
+          >
+            <option value="">—</option>
+            {Array.from({ length: 20 }, (_, i) => new Date().getFullYear() + i).map(v => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        </span>
+        {sellEvent ? (() => {
+          const yearsOwned = sellEvent.year - buyEvent.year;
+          const depRate = entity.appreciation_rate ?? -0.075;
+          const estimatedValue = Math.round(buyEvent.purchase_price * Math.pow(1 + depRate, yearsOwned) / 1000) * 1000;
+          return <>
+            <span style={styles.labelCell}>Sale Price</span>
+            <span style={styles.val}>
+              <select
+                value={sellEvent.sale_price ?? estimatedValue}
+                onChange={e => dispatch(updateEvent({ ...sellEvent, sale_price: parseInt(e.target.value) }))}
+                style={styles.select}
+              >
+                {Array.from({ length: 80 }, (_, i) => (i + 1) * 1000).map(v => (
+                  <option key={v} value={v}>{fmt(v)}</option>
+                ))}
+              </select>
+            </span>
+            <span />
+            <span style={styles.labelCell}>Est. Depreciated</span>
+            <span style={styles.val}>{fmt(estimatedValue)}</span>
+          </>;
+        })() : null}
       </div>
 
       <table style={styles.table}>
@@ -56,6 +113,7 @@ function VehiclePanel({ entity, buyEvent }) {
 }
 
 export default function VehiclesPage() {
+  const dispatch = useDispatch();
   const entities = useSelector(s => s.entities.items);
   const events   = useSelector(s => s.events.items);
 
@@ -69,6 +127,7 @@ export default function VehiclesPage() {
   }
 
   const buyEvent = events.find(ev => ev.type === 'vehicle_buy' && ev.entity_id === selected?.id);
+  const sellEvent = events.find(ev => ev.type === 'vehicle_sell' && ev.entity_id === selected?.id);
   const notYetBought = !buyEvent;
 
   return (
@@ -84,7 +143,11 @@ export default function VehiclesPage() {
           </button>
         ))}
       </div>
-      {selected && buyEvent && <VehiclePanel entity={selected} buyEvent={buyEvent} />}
+      {selected && buyEvent && (() => {
+        const owner = selected.street_address;
+        const nextEntity = vehicles.find(v => v.street_address === owner && v.id !== selected.id && !events.some(e => e.type === 'vehicle_buy' && e.entity_id === v.id && e.hidden));
+        return <VehiclePanel entity={selected} buyEvent={buyEvent} sellEvent={sellEvent} nextEntity={nextEntity} dispatch={dispatch} />;
+      })()}
       {selected && notYetBought && (
         <div style={styles.panel}>
           <div style={styles.grid}>
@@ -111,6 +174,7 @@ const styles = {
   grid: { display: 'inline-grid', gridTemplateColumns: 'auto auto 20px auto auto', gap: '6px 4px', alignItems: 'center', marginBottom: 12 },
   labelCell: { fontSize: 11, color: '#94a3b8', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', background: '#334155', padding: '2px 6px', borderRadius: 2 },
   val: { fontSize: 11, color: '#e2e8f0' },
+  select: { fontSize: 11, border: '1px solid #475569', borderRadius: 3, padding: '0 2px', background: '#1e293b', color: '#e2e8f0' },
   table: { borderCollapse: 'collapse', width: '100%' },
   th: { fontSize: 11, fontWeight: 600, color: '#94a3b8', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
   td: { fontSize: 12, padding: '3px 8px', borderBottom: '1px solid #334155', color: '#e2e8f0' },

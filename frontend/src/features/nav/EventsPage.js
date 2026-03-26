@@ -15,11 +15,13 @@ const TYPE_LABELS = {
   social_security_start:    'social_security_start',
   vehicle_buy:              'vehicle_buy',
   vehicle_sell:             'vehicle_sell',
+  vehicle_tradeup:          'vehicle_tradeup',
 };
 
 function eventSummary(ev, entities, params) {
   const entity = entities.find(e => e.id === ev.entity_id);
-  const rawName = entity ? (entity.street_address ? entity.street_address.split(',')[0] : entity.name) : ev.name || null;
+  const isVehicle = ev.type === 'vehicle_buy' || ev.type === 'vehicle_sell';
+  const rawName = entity ? (isVehicle ? entity.name : (entity.street_address ? entity.street_address.split(',')[0] : entity.name)) : ev.name || null;
   const name = ev.type === 'social_security_start' && ev.name ? `${ev.name} starts Social Security`
     : (ev.type === 'spouse_death' || ev.type === 'pet_death') && (ev.name || rawName) ? `RIP ${ev.name || rawName}`
     : (ev.type === 'real_estate_buy' || ev.type === 'vehicle_buy') && rawName ? `Purchase ${rawName}`
@@ -70,7 +72,7 @@ export default function EventsPage() {
               <tr key={ev.id} style={{ background: idx % 2 === 0 ? '#1e293b' : '#0f172a' }}>
                 <td style={styles.tdId}>{ev.id}</td>
                 <td style={styles.td}>{TYPE_LABELS[ev.type] ?? ev.type}</td>
-                <td style={styles.td}>{`${ev.month || 1}/${ev.year}`}</td>
+                <td style={styles.td}>{`${ev.month || 1}/1/${ev.year}`}</td>
                 <td style={styles.td}>{eventSummary(ev, entities, params).name}</td>
                 <td style={styles.tdId}>{ev.entity_id ?? '—'}</td>
                 <td style={styles.td}>{ev.entity_id ? (entities.find(e => e.id === ev.entity_id)?.type ?? '—') : '—'}</td>

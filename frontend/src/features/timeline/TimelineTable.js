@@ -55,6 +55,18 @@ function getRowEvent(row, events, entities, params) {
     type = type || 'real_estate_sell';
   });
 
+  events.filter(e => e.type === 'vehicle_buy' && e.year === row.year && !e.hidden).forEach(e => {
+    const entity = entities.find(en => en.id === e.entity_id);
+    labels.push(`Buy ${entity?.name || '?'}`);
+    type = type || 'vehicle_buy';
+  });
+
+  events.filter(e => e.type === 'vehicle_sell' && e.year === row.year).forEach(e => {
+    const entity = entities.find(en => en.id === e.entity_id);
+    labels.push(`Sell ${entity?.name || '?'}`);
+    type = type || 'vehicle_sell';
+  });
+
   if (labels.length === 0) return null;
   return { label: labels.join(', '), type };
 }
@@ -126,7 +138,7 @@ export default function TimelineTable() {
                   );
                   i += span;
                 } else {
-                  cells.push(<th key={col.key} rowSpan={2} style={{ padding: '4px 8px', textAlign: 'center', borderBottom: '2px solid #475569' }}>{col.label}</th>);
+                  cells.push(<th key={col.key} rowSpan={2} style={{ padding: '4px 2px', textAlign: 'center', borderBottom: '2px solid #475569' }}>{col.label}</th>);
                   i++;
                 }
               }
@@ -151,16 +163,21 @@ export default function TimelineTable() {
             const isSS    = event?.type === 'ss';
             const isSell  = event?.type === 'real_estate_sell';
             const isBuy   = event?.type === 'real_estate_buy';
-            const outline = isDeath ? '1.5px solid #ef4444' : isPetDeath ? '1.5px solid #f97316' : isEog ? '1.5px solid #16a34a' : isSS ? '1.5px solid #2563eb' : isSell ? '1.5px solid #16a34a' : isBuy ? '1.5px solid #7c3aed' : undefined;
-            const eventColor = isDeath ? '#ef4444' : isPetDeath ? '#f97316' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : undefined;
+            const isVSell = event?.type === 'vehicle_sell';
+            const isVBuy  = event?.type === 'vehicle_buy';
+            const outline = isDeath ? '1.5px solid #ef4444' : isPetDeath ? '1.5px solid #f97316' : isEog ? '1.5px solid #16a34a' : isSS ? '1.5px solid #2563eb' : isSell ? '1.5px solid #16a34a' : isBuy ? '1.5px solid #7c3aed' : isVSell ? '1.5px solid #ec4899' : isVBuy ? '1.5px solid #ec4899' : undefined;
+            const eventColor = isDeath ? '#ef4444' : isPetDeath ? '#f97316' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : isVSell ? '#ec4899' : isVBuy ? '#ec4899' : undefined;
             return (
-              <tr key={row.year} style={{ background: i % 2 === 0 ? '#1e293b' : '#0f172a', outline, color: '#e2e8f0' }}>
-                {COLUMNS.map((col) => (
-                  <td key={col.key} style={{ padding: '2px 8px', textAlign: 'right', borderBottom: '1px solid #334155' }}>
-                    {col.format(col.compute ? col.compute(row) : row[col.key])}
-                  </td>
-                ))}
-                <td style={{ padding: '2px 8px', textAlign: 'left', borderBottom: '1px solid #334155', color: eventColor, fontWeight: event ? 600 : undefined, maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={event?.label || ''}>
+              <tr key={row.year} style={{ background: i % 2 === 0 ? '#1e293b' : '#0f172a', color: '#e2e8f0' }}>
+                {COLUMNS.map((col) => {
+                  const narrow = col.key === 'year' || col.key === 'erik_age' || col.key === 'deb_age';
+                  return (
+                    <td key={col.key} style={{ padding: narrow ? '2px 3px' : '2px 8px', textAlign: 'right', borderBottom: '1px solid #334155' }}>
+                      {col.format(col.compute ? col.compute(row) : row[col.key])}
+                    </td>
+                  );
+                })}
+                <td style={{ padding: '2px 8px', textAlign: 'left', borderBottom: '1px solid #334155', color: eventColor, fontWeight: event ? 600 : undefined, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={event?.label || ''}>
                   {event?.label || ''}
                 </td>
               </tr>

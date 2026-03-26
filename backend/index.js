@@ -127,6 +127,40 @@ app.delete('/api/events/:id', (req, res) => {
   res.json(loadEvents());
 });
 
+// POST /api/vehicle-tradeup — create sell event for old vehicle + buy event for next vehicle
+app.post('/api/vehicle-tradeup', (req, res) => {
+  const { sell_entity_id, buy_entity_id, year, purchase_price } = req.body;
+  const sellEntity = db.prepare('SELECT * FROM entities WHERE id = ?').get(sell_entity_id);
+  const buyEvent = db.prepare('SELECT * FROM events WHERE type = ? AND entity_id = ?').get('vehicle_buy', sell_entity_id);
+
+  // Compute depreciated sale price
+  const depRate = sellEntity?.appreciation_rate ?? -0.075;
+  const buyYear = buyEvent?.year ?? year;
+  const salePrice = Math.round((buyEvent?.purchase_price ?? 0) * Math.pow(1 + depRate, year - buyYear) / 1000) * 1000;
+
+  // Remove any existing sell/buy events for these entities
+  db.prepare('DELETE FROM events WHERE type = ? AND entity_id = ?').run('vehicle_sell', sell_entity_id);
+  db.prepare('DELETE FROM events WHERE type = ? AND entity_id = ?').run('vehicle_buy', buy_entity_id);
+
+  // Create sell event
+  db.prepare(`INSERT INTO events (type, year, month, entity_id, sale_price, hidden) VALUES (?, ?, 1, ?, ?, 0)`)
+    .run('vehicle_sell', year, sell_entity_id, salePrice);
+
+  // Create buy event for next vehicle
+  db.prepare(`INSERT INTO events (type, year, month, entity_id, purchase_price, hidden) VALUES (?, ?, 1, ?, ?, 0)`)
+    .run('vehicle_buy', year, buy_entity_id, purchase_price || 50000);
+
+  res.json(loadEvents());
+});
+
+// DELETE /api/vehicle-tradeup — remove sell event for old vehicle + buy event for next vehicle
+app.delete('/api/vehicle-tradeup', (req, res) => {
+  const { sell_entity_id, buy_entity_id } = req.body;
+  db.prepare('DELETE FROM events WHERE type = ? AND entity_id = ?').run('vehicle_sell', sell_entity_id);
+  db.prepare('DELETE FROM events WHERE type = ? AND entity_id = ?').run('vehicle_buy', buy_entity_id);
+  res.json(loadEvents());
+});
+
 // GET /api/entities — return all entities ordered by name
 app.get('/api/entities', (req, res) => {
   res.json(loadEntities());
@@ -284,6 +318,16 @@ function getRowEvent(year, events, entities, params) {
     const en = entities.find(x => x.id === e.entity_id);
     labels.push(`Sell ${en?.street_address ? en.street_address.split(',')[0] : (en?.name || '?')}`);
     type = type || 'real_estate_sell';
+  });
+  events.filter(e => e.type === 'vehicle_buy' && e.year === year && !e.hidden).forEach(e => {
+    const en = entities.find(x => x.id === e.entity_id);
+    labels.push(`Buy ${en?.name || '?'}`);
+    type = type || 'vehicle_buy';
+  });
+  events.filter(e => e.type === 'vehicle_sell' && e.year === year).forEach(e => {
+    const en = entities.find(x => x.id === e.entity_id);
+    labels.push(`Sell ${en?.name || '?'}`);
+    type = type || 'vehicle_sell';
   });
   if (labels.length === 0) return null;
   return { label: labels.join(', '), type };

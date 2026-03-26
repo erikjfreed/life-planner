@@ -140,6 +140,14 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       }
     }
 
+    // Vehicle buy/sell cash flows
+    events.filter(e => e.type === 'vehicle_sell' && e.year === year).forEach(e => {
+      saleProceeds += (e.sale_price ?? 0);
+    });
+    events.filter(e => e.type === 'vehicle_buy' && e.year === year && !e.hidden).forEach(e => {
+      saleProceeds -= (e.purchase_price ?? 0);
+    });
+
     for (const prop of properties) {
       if (!prop.active) continue;
       if (year > prop.yearBought) {
