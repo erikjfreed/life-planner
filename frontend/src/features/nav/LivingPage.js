@@ -49,9 +49,9 @@ export default function LivingPage() {
 }
 
 const styles = {
-  page: { padding: '24px 32px', fontFamily: 'sans-serif', maxWidth: 900 },
+  page: { padding: '16px 24px', fontFamily: 'sans-serif', maxWidth: 900, overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
   table: { borderCollapse: 'collapse', width: '100%' },
-  th: { fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '6px 12px', textAlign: 'left' },
-  td: { fontSize: 13, padding: '6px 12px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
+  th: { fontSize: 11, fontWeight: 600, color: '#94a3b8', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
+  td: { fontSize: 12, padding: '3px 8px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
   totalRow: { background: '#1e293b' },
 };
