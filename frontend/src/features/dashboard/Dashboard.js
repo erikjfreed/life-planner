@@ -33,9 +33,6 @@ export default function Dashboard() {
     <div style={styles.container}>
       <ParametersPanel />
       <div style={styles.right}>
-        <div style={styles.header}>
-          <h1 style={styles.heading}>Life Planner</h1>
-        </div>
         <div style={styles.charts}>
           {status === 'loading' && <p>Computing...</p>}
           {status === 'succeeded' && (

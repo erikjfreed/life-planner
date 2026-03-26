@@ -61,7 +61,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     background: '#16213e',
-    padding: '10px 12px 0',
+    padding: '10px 12px 8px',
     flexShrink: 0,
     gap: 6,
   },

@@ -50,6 +50,9 @@ function App() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#1a1a2e', color: '#e2e8f0' }}>
+      <div style={{ padding: '8px 16px 8px', flexShrink: 0, background: '#334155' }}>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#e2e8f0' }}>Freed Life Planner</h1>
+      </div>
       <NavBar active={view} onSelect={setView} />
       <div style={{ flex: 1, overflow: 'auto' }}>
         {renderView()}
