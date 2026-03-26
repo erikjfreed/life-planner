@@ -119,7 +119,7 @@ function PropertyPanel({ entity, buyEvent, endYear, dispatch }) {
             </thead>
             <tbody>
               {values.map((r, i) => (
-                <tr key={r.year} style={{ background: i % 2 === 0 ? '#fafafa' : '#fff' }}>
+                <tr key={r.year} style={{ background: i % 2 === 0 ? '#1e293b' : '#0f172a' }}>
                   <td style={styles.td}>{r.year}</td>
                   <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(r.value)}</td>
                 </tr>
@@ -148,7 +148,7 @@ export default function RealEstatePage() {
   const selected = reEntities.find(e => e.id === activeId) ?? reEntities[0];
 
   if (reEntities.length === 0) {
-    return <div style={styles.page}><p style={{ color: '#6b7280', fontSize: 13 }}>No real estate entities with a buy event.</p></div>;
+    return <div style={styles.page}><p style={{ color: '#94a3b8', fontSize: 13 }}>No real estate entities with a buy event.</p></div>;
   }
 
   const buyEvent = events.find(ev => ev.type === 'real_estate_buy' && ev.entity_id === selected?.id);
@@ -174,22 +174,22 @@ export default function RealEstatePage() {
 const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
   subtabs: { display: 'flex', gap: 6, marginBottom: 12 },
-  subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #d1d5db', borderBottom: '2px solid #d1d5db', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#6b7280' },
-  subtabActive: { color: '#111827', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
-  propertyPanel: { maxWidth: 600, border: '1px solid #e5e7eb', borderRadius: 6, padding: '12px 16px' },
+  subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #334155', borderBottom: '2px solid #334155', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#94a3b8' },
+  subtabActive: { color: '#e2e8f0', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
+  propertyPanel: { maxWidth: 600, border: '1px solid #334155', borderRadius: 6, padding: '12px 16px' },
   innerTabs: { display: 'flex', gap: 6, marginBottom: 12 },
-  innerTab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #d1d5db', borderBottom: '2px solid #d1d5db', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#6b7280' },
-  innerTabActive: { color: '#111827', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
+  innerTab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #334155', borderBottom: '2px solid #334155', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#94a3b8' },
+  innerTabActive: { color: '#e2e8f0', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
   grid: { display: 'inline-grid', gridTemplateColumns: 'auto auto 20px auto auto', gap: '6px 4px', alignItems: 'center', marginBottom: 12 },
-  label: { fontSize: 11, color: '#6b7280', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', background: '#f3f4f6', padding: '2px 6px', borderRadius: 2 },
-  val: { fontSize: 11, color: '#111827' },
-  select: { fontSize: 11, border: '1px solid #d1d5db', borderRadius: 3, padding: '0 2px' },
-  input: { fontSize: 11, border: '1px solid #d1d5db', borderRadius: 3, padding: '1px 4px' },
-  sectionLabel: { fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '16px 0 6px' },
+  label: { fontSize: 11, color: '#94a3b8', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', background: '#334155', padding: '2px 6px', borderRadius: 2 },
+  val: { fontSize: 11, color: '#e2e8f0' },
+  select: { fontSize: 11, border: '1px solid #475569', borderRadius: 3, padding: '0 2px', background: '#1e293b', color: '#e2e8f0' },
+  input: { fontSize: 11, border: '1px solid #475569', borderRadius: 3, padding: '1px 4px', background: '#1e293b', color: '#e2e8f0' },
+  sectionLabel: { fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '16px 0 6px' },
   table: { borderCollapse: 'collapse', width: '100%' },
-  th: { fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '4px 8px', textAlign: 'left' },
-  td: { fontSize: 12, padding: '3px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
-  subtotalRow: { background: '#f9fafb' },
-  totalRow: { background: '#f3f4f6' },
-  valueScroll: { maxHeight: 300, overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: 4 },
+  th: { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
+  td: { fontSize: 12, padding: '3px 8px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
+  subtotalRow: { background: '#1e293b' },
+  totalRow: { background: '#334155' },
+  valueScroll: { maxHeight: 300, overflowY: 'auto', border: '1px solid #334155', borderRadius: 4 },
 };

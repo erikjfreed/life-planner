@@ -21,7 +21,7 @@ function EventLabel({ x, label, color, labelOffset = 0 }) {
   return (
     <div style={{
       position: 'absolute', left: x + 1, top: labelOffset,
-      background: 'white', borderRadius: 2,
+      background: '#1e293b', borderRadius: 2,
       padding: '0 3px', fontSize: 9, fontWeight: 600, color, whiteSpace: 'nowrap',
       lineHeight: '14px',
     }}>

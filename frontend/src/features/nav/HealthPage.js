@@ -49,7 +49,7 @@ export default function HealthPage() {
               <td style={styles.td}>{item.label}</td>
               <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(item.min)}</td>
               <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(item.max)}</td>
-              <td style={{ ...styles.td, color: '#6b7280' }}>{item.note}</td>
+              <td style={{ ...styles.td, color: '#94a3b8' }}>{item.note}</td>
             </tr>
           ))}
           <tr style={styles.subtotalRow}>
@@ -86,15 +86,15 @@ export default function HealthPage() {
 
 const styles = {
   page: { padding: '24px 32px', fontFamily: 'sans-serif', maxWidth: 700 },
-  title: { fontSize: 18, fontWeight: 700, color: '#111827', margin: '0 0 4px' },
-  note: { fontSize: 12, color: '#6b7280', margin: '0 0 20px' },
+  title: { fontSize: 18, fontWeight: 700, color: '#e2e8f0', margin: '0 0 4px' },
+  note: { fontSize: 12, color: '#94a3b8', margin: '0 0 20px' },
   table: { borderCollapse: 'collapse', width: '100%', marginBottom: 24 },
-  th: { fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '6px 12px', textAlign: 'left' },
-  td: { fontSize: 13, padding: '6px 12px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
-  subtotalRow: { background: '#f9fafb' },
-  scenario: { background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: '16px 20px' },
-  scenarioLabel: { fontSize: 13, color: '#374151', display: 'block', marginBottom: 10 },
+  th: { fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '6px 12px', textAlign: 'left' },
+  td: { fontSize: 13, padding: '6px 12px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
+  subtotalRow: { background: '#1e293b' },
+  scenario: { background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: '16px 20px' },
+  scenarioLabel: { fontSize: 13, color: '#cbd5e1', display: 'block', marginBottom: 10 },
   scenarioControls: { display: 'flex', alignItems: 'center', gap: 16 },
-  select: { fontSize: 13, padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: 4 },
-  result: { fontSize: 15, color: '#111827' },
+  select: { fontSize: 13, padding: '4px 8px', border: '1px solid #475569', borderRadius: 4, background: '#1e293b', color: '#e2e8f0' },
+  result: { fontSize: 15, color: '#e2e8f0' },
 };

@@ -32,7 +32,7 @@ export default function LivingPage() {
               <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(item.weekly)}</td>
               <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(item.monthly)}</td>
               <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(item.yearly)}</td>
-              <td style={{ ...styles.td, color: '#6b7280' }}>{item.note}</td>
+              <td style={{ ...styles.td, color: '#94a3b8' }}>{item.note}</td>
             </tr>
           ))}
           <tr style={styles.totalRow}>
@@ -51,7 +51,7 @@ export default function LivingPage() {
 const styles = {
   page: { padding: '24px 32px', fontFamily: 'sans-serif', maxWidth: 900 },
   table: { borderCollapse: 'collapse', width: '100%' },
-  th: { fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '6px 12px', textAlign: 'left' },
-  td: { fontSize: 13, padding: '6px 12px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
-  totalRow: { background: '#f9fafb' },
+  th: { fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '6px 12px', textAlign: 'left' },
+  td: { fontSize: 13, padding: '6px 12px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
+  totalRow: { background: '#1e293b' },
 };

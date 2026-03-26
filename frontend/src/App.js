@@ -49,7 +49,7 @@ function App() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#1a1a2e', color: '#e2e8f0' }}>
       <NavBar active={view} onSelect={setView} />
       <div style={{ flex: 1, overflow: 'auto' }}>
         {renderView()}

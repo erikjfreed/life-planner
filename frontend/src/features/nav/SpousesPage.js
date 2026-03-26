@@ -11,7 +11,7 @@ export default function SpousesPage() {
   const deathEvents = events.filter(e => e.type === 'spouse_death');
 
   if (spouseEntities.length === 0) {
-    return <div style={styles.page}><p style={{ color: '#6b7280', fontSize: 13 }}>No spouse entities.</p></div>;
+    return <div style={styles.page}><p style={{ color: '#94a3b8', fontSize: 13 }}>No spouse entities.</p></div>;
   }
 
   const erikDOB = params.erikDOB ?? null;
@@ -53,7 +53,7 @@ export default function SpousesPage() {
           {rows.map((r, i) => {
             const yearsRemaining = r.deathYear ? r.deathYear - new Date().getFullYear() : null;
             return (
-              <tr key={r.entity.id} style={{ background: i % 2 === 0 ? '#fafafa' : '#fff' }}>
+              <tr key={r.entity.id} style={{ background: i % 2 === 0 ? '#1e293b' : '#0f172a' }}>
                 <td style={styles.td}>{r.entity.id}</td>
                 <td style={styles.td}>{r.entity.name.split(' ')[0] ?? '—'}</td>
                 <td style={styles.td}>{r.entity.name.split(' ')[1] ?? '—'}</td>
@@ -73,8 +73,8 @@ export default function SpousesPage() {
 
 const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
-  title: { margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#111827' },
+  title: { margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#e2e8f0' },
   table: { borderCollapse: 'collapse', width: '100%', maxWidth: 700 },
-  th: { fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '4px 8px', textAlign: 'left' },
-  td: { fontSize: 12, padding: '4px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
+  th: { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
+  td: { fontSize: 12, padding: '4px 8px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
 };

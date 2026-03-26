@@ -11,7 +11,7 @@ function DisplayRow({ label, value, color }) {
   return (
     <div style={styles.row}>
       <div style={styles.label}>{label}</div>
-      <div style={{ fontSize: 11, color: color || '#111827', textAlign: 'right', minWidth: 68 }}>{value}</div>
+      <div style={{ fontSize: 11, color: color || '#e2e8f0', textAlign: 'right', minWidth: 68 }}>{value}</div>
     </div>
   );
 }
@@ -147,8 +147,8 @@ const styles = {
   panel: {
     width: 240,
     minWidth: 240,
-    background: '#f9fafb',
-    borderRight: '1px solid #e5e7eb',
+    background: '#1e293b',
+    borderRight: '1px solid #334155',
     padding: '6px 8px',
     overflowY: 'hidden',
     height: '100%',
@@ -156,15 +156,15 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
   },
-  heading: { margin: '0 0 8px 0', fontSize: 14, fontWeight: 700, color: '#111827', flexShrink: 0 },
-  section: { marginBottom: 8, border: '1px solid #d1d5db', borderRadius: 4, padding: '3px 8px 7px', minWidth: 0 },
-  sectionTitle: { fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0 3px' },
+  heading: { margin: '0 0 8px 0', fontSize: 14, fontWeight: 700, color: '#e2e8f0', flexShrink: 0 },
+  section: { marginBottom: 8, border: '1px solid #475569', borderRadius: 4, padding: '3px 8px 7px', minWidth: 0 },
+  sectionTitle: { fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0 3px' },
   row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
-  label: { fontSize: 11, color: '#374151', flex: 1, textAlign: 'right', paddingRight: 6 },
+  label: { fontSize: 11, color: '#cbd5e1', flex: 1, textAlign: 'right', paddingRight: 6 },
   control: { display: 'flex', alignItems: 'center', gap: 4 },
-  value: { fontSize: 11, color: '#111827', minWidth: 32, textAlign: 'right' },
-  input: { width: 50, fontSize: 11, padding: '1px 3px', border: '1px solid #d1d5db', borderRadius: 3, textAlign: 'right' },
+  value: { fontSize: 11, color: '#e2e8f0', minWidth: 32, textAlign: 'right' },
+  input: { width: 50, fontSize: 11, padding: '1px 3px', border: '1px solid #475569', borderRadius: 3, textAlign: 'right', background: '#1e293b', color: '#e2e8f0' },
   taxGrid: { display: 'grid', gridTemplateColumns: 'auto auto auto', gap: '2px 4px', alignItems: 'center', justifyContent: 'end' },
-  taxHeader: { fontSize: 11, fontWeight: 600, color: '#6b7280', textAlign: 'center' },
-  taxLabel: { fontSize: 11, color: '#374151', textAlign: 'right', paddingRight: 4 },
+  taxHeader: { fontSize: 11, fontWeight: 600, color: '#94a3b8', textAlign: 'center' },
+  taxLabel: { fontSize: 11, color: '#cbd5e1', textAlign: 'right', paddingRight: 4 },
 };

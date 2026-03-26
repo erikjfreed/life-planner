@@ -67,7 +67,7 @@ export default function EventsPage() {
         </thead>
         <tbody>
           {sorted.map((ev, idx) => (
-              <tr key={ev.id} style={{ background: idx % 2 === 0 ? '#fafafa' : '#fff' }}>
+              <tr key={ev.id} style={{ background: idx % 2 === 0 ? '#1e293b' : '#0f172a' }}>
                 <td style={styles.tdId}>{ev.id}</td>
                 <td style={styles.td}>{TYPE_LABELS[ev.type] ?? ev.type}</td>
                 <td style={styles.td}>{`${ev.month || 1}/${ev.year}`}</td>
@@ -110,10 +110,10 @@ export default function EventsPage() {
 const styles = {
   page:  { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
   header:{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 },
-  title: { margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' },
+  title: { margin: 0, fontSize: 16, fontWeight: 700, color: '#e2e8f0' },
   table: { borderCollapse: 'collapse', width: 'auto' },
-  th:    { fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '4px 6px', textAlign: 'left' },
-  thId:  { fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '4px 6px', textAlign: 'center' },
-  td:    { fontSize: 12, padding: '3px 6px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
-  tdId:  { fontSize: 12, padding: '3px 6px', borderBottom: '1px solid #f3f4f6', color: '#111827', textAlign: 'center' },
+  th:    { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 6px', textAlign: 'left' },
+  thId:  { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 6px', textAlign: 'center' },
+  td:    { fontSize: 12, padding: '3px 6px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
+  tdId:  { fontSize: 12, padding: '3px 6px', borderBottom: '1px solid #334155', color: '#e2e8f0', textAlign: 'center' },
 };

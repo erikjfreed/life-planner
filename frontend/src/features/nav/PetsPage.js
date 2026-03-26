@@ -29,7 +29,7 @@ export default function PetsPage() {
   const selected = petEntities.find(e => e.id === activeId) ?? petEntities[0];
 
   if (petEntities.length === 0) {
-    return <div style={styles.page}><p style={{ color: '#6b7280', fontSize: 13 }}>No pet entities.</p></div>;
+    return <div style={styles.page}><p style={{ color: '#94a3b8', fontSize: 13 }}>No pet entities.</p></div>;
   }
 
   const services = selected ? (selected.services_json ? JSON.parse(selected.services_json) : []) : [];
@@ -104,16 +104,16 @@ export default function PetsPage() {
               </thead>
               <tbody>
                 {services.map((item, i) => (
-                  <tr key={item.label} style={{ background: i % 2 === 0 ? '#fafafa' : '#fff' }}>
+                  <tr key={item.label} style={{ background: i % 2 === 0 ? '#1e293b' : '#0f172a' }}>
                     <td style={styles.td}>{item.label}</td>
                     <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(item.monthly)}</td>
                     <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(item.yearly)}</td>
-                    <td style={{ ...styles.td, color: '#6b7280' }}>
+                    <td style={{ ...styles.td, color: '#94a3b8' }}>
                       {item.label === 'Boarding' ? `${params?.travelDaysWithoutPets ?? 21} days @ $${params?.boardingCostPerPetPerDay ?? 75}/day` : ''}
                     </td>
                   </tr>
                 ))}
-                <tr style={{ background: '#f3f4f6' }}>
+                <tr style={{ background: '#334155' }}>
                   <td style={styles.td}><strong>Total</strong></td>
                   <td style={{ ...styles.td, textAlign: 'right' }}><strong>{fmt(services.reduce((s, i) => s + i.monthly, 0))}</strong></td>
                   <td style={{ ...styles.td, textAlign: 'right' }}><strong>{fmt(totalYearly)}</strong></td>
@@ -131,13 +131,13 @@ export default function PetsPage() {
 const styles = {
   page: { padding: '8px 16px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
   subtabs: { display: 'flex', gap: 6, marginBottom: 8 },
-  subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #d1d5db', borderBottom: '2px solid #d1d5db', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#6b7280' },
-  subtabActive: { color: '#111827', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
+  subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #334155', borderBottom: '2px solid #334155', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#94a3b8' },
+  subtabActive: { color: '#e2e8f0', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
   grid: { display: 'inline-grid', gridTemplateColumns: 'auto auto auto auto auto auto', gap: '2px 20px', alignItems: 'center', marginBottom: 8 },
-  label: { fontSize: 11, color: '#6b7280', textAlign: 'right', whiteSpace: 'nowrap' },
-  val: { fontSize: 11, color: '#111827', fontWeight: 600 },
+  label: { fontSize: 11, color: '#94a3b8', textAlign: 'right', whiteSpace: 'nowrap' },
+  val: { fontSize: 11, color: '#e2e8f0', fontWeight: 600 },
   table: { borderCollapse: 'collapse', width: 'auto' },
-  th: { fontSize: 11, fontWeight: 600, color: '#6b7280', borderBottom: '2px solid #e5e7eb', padding: '2px 6px', textAlign: 'left' },
-  td: { fontSize: 11, padding: '2px 6px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
-  select: { fontSize: 11, fontWeight: 600, border: '1px solid #d1d5db', borderRadius: 3, padding: '0 2px' },
+  th: { fontSize: 11, fontWeight: 600, color: '#94a3b8', borderBottom: '2px solid #334155', padding: '2px 6px', textAlign: 'left' },
+  td: { fontSize: 11, padding: '2px 6px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
+  select: { fontSize: 11, fontWeight: 600, border: '1px solid #475569', borderRadius: 3, padding: '0 2px', background: '#1e293b', color: '#e2e8f0' },
 };

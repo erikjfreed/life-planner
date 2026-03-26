@@ -82,10 +82,10 @@ const styles = {
   },
   header: {
     padding: '8px 16px 4px',
-    borderBottom: '1px solid #e5e7eb',
+    borderBottom: '1px solid #334155',
     flexShrink: 0,
   },
-  heading: { margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' },
+  heading: { margin: 0, fontSize: 16, fontWeight: 700, color: '#e2e8f0' },
   charts: {
     flex: 1,
     display: 'flex',
@@ -98,8 +98,8 @@ const styles = {
   eventStrip: {
     height: 56,
     flexShrink: 0,
-    borderBottom: '1px solid #e5e7eb',
-    background: '#fafafa',
+    borderBottom: '1px solid #334155',
+    background: '#0f172a',
   },
   chartSlot: {
     flex: 1,

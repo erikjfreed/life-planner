@@ -56,19 +56,19 @@ export default function TravelPage() {
           </tr>
         </thead>
         <tbody>
-          <tr style={{ background: '#fafafa' }}>
+          <tr style={{ background: '#1e293b' }}>
             <td style={styles.td}>Travel with Pets</td>
             <td style={{ ...styles.td, textAlign: 'right' }}>{daysWithPets}</td>
             <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(params.travelBase * (daysWithPets / totalDays))}</td>
-            <td style={{ ...styles.td, color: '#6b7280' }}>Pets travel along</td>
+            <td style={{ ...styles.td, color: '#94a3b8' }}>Pets travel along</td>
           </tr>
           <tr>
             <td style={styles.td}>Travel without Pets</td>
             <td style={{ ...styles.td, textAlign: 'right' }}>{daysWithoutPets}</td>
             <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(params.travelBase * (daysWithoutPets / totalDays))}</td>
-            <td style={{ ...styles.td, color: '#6b7280' }}>Pets need boarding</td>
+            <td style={{ ...styles.td, color: '#94a3b8' }}>Pets need boarding</td>
           </tr>
-          <tr style={{ background: '#f3f4f6' }}>
+          <tr style={{ background: '#334155' }}>
             <td style={styles.td}><strong>Total</strong></td>
             <td style={{ ...styles.td, textAlign: 'right' }}><strong>{totalDays}</strong></td>
             <td style={{ ...styles.td, textAlign: 'right' }}><strong>{fmt(params.travelBase)}</strong></td>
@@ -82,13 +82,13 @@ export default function TravelPage() {
 
 const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
-  title: { margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#111827' },
+  title: { margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#e2e8f0' },
   summaryRow: { display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
-  summaryCell: { background: '#f3f4f6', borderRadius: 6, padding: '8px 12px', minWidth: 100 },
-  summaryLabel: { fontSize: 10, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },
-  summaryValue: { fontSize: 14, fontWeight: 700, color: '#111827' },
-  select: { fontSize: 14, fontWeight: 700, border: '1px solid #d1d5db', borderRadius: 3, padding: '1px 4px' },
+  summaryCell: { background: '#1e293b', borderRadius: 6, padding: '8px 12px', minWidth: 100 },
+  summaryLabel: { fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },
+  summaryValue: { fontSize: 14, fontWeight: 700, color: '#e2e8f0' },
+  select: { fontSize: 14, fontWeight: 700, border: '1px solid #475569', borderRadius: 3, padding: '1px 4px', background: '#1e293b', color: '#e2e8f0' },
   table: { borderCollapse: 'collapse', width: 'auto' },
-  th: { fontSize: 12, fontWeight: 600, color: '#6b7280', borderBottom: '2px solid #e5e7eb', padding: '4px 8px', textAlign: 'left' },
-  td: { fontSize: 12, padding: '4px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
+  th: { fontSize: 12, fontWeight: 600, color: '#94a3b8', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
+  td: { fontSize: 12, padding: '4px 8px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
 };

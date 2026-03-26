@@ -21,15 +21,15 @@ export default function IncomeChart({ rows, params }) {
       <div style={styles.title}>Annual Income ($K) vs Year</div>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 4, right: 20, left: 10, bottom: 0 }}>
-          <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9 }} angle={-45} textAnchor="end" height={30} interval={0} />
-          <YAxis width={52} tick={{ fontSize: 11 }} tickFormatter={v => `$${v}K`} ticks={Array.from({ length: Math.floor(yMax / 100) + 1 }, (_, i) => i * 100)} domain={[0, yMax]} interval={0} />
-          <CartesianGrid vertical={false} stroke="#e5e7eb" strokeWidth={1} />
-          <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} />
-          <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+          <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9, fill: '#94a3b8' }} angle={-45} textAnchor="end" height={30} interval={0} />
+          <YAxis width={52} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={v => `$${v}K`} ticks={Array.from({ length: Math.floor(yMax / 100) + 1 }, (_, i) => i * 100)} domain={[0, yMax]} interval={0} />
+          <CartesianGrid vertical={false} stroke="#334155" strokeWidth={1} />
+          <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} contentStyle={{ background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0' }} labelStyle={{ color: '#e2e8f0' }} />
+          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} />
           <Area type="linear" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
           <Area type="linear" dataKey="ROI"       stackId="1" stroke="#86efac" fill="#86efac" fillOpacity={0.7} />
           <Area type="linear" dataKey="Cap Spend" stackId="1" stroke="#dc2626" fill="#dc2626" fillOpacity={0.7} />
-          <Line type="linear" dataKey="Total Tax" stroke="#111827" strokeWidth={2} dot={false} />
+          <Line type="linear" dataKey="Total Tax" stroke="#e2e8f0" strokeWidth={2} dot={false} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -38,5 +38,5 @@ export default function IncomeChart({ rows, params }) {
 
 const styles = {
   container: { display: 'flex', flexDirection: 'column', height: '100%' },
-  title: { fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 2, flexShrink: 0 },
+  title: { fontSize: 12, fontWeight: 600, color: '#cbd5e1', marginBottom: 2, flexShrink: 0 },
 };

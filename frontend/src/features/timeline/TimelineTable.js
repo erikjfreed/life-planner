@@ -110,7 +110,7 @@ export default function TimelineTable() {
     <div style={{ overflowX: 'auto', paddingTop: 12, paddingLeft: 16 }}>
       <table style={{ borderCollapse: 'collapse', fontSize: '11px', whiteSpace: 'nowrap' }}>
         <thead>
-          <tr style={{ background: '#d1d5db', color: '#111827' }}>
+          <tr style={{ background: '#334155', color: '#e2e8f0' }}>
             {(() => {
               const cells = [];
               let i = 0;
@@ -120,23 +120,23 @@ export default function TimelineTable() {
                   let span = 1;
                   while (i + span < COLUMNS.length && COLUMNS[i + span].group === col.group) span++;
                   cells.push(
-                    <th key={col.group} colSpan={span} style={{ padding: '2px 8px', textAlign: 'center', border: '1px solid #999', fontSize: 10, fontWeight: 700 }}>
+                    <th key={col.group} colSpan={span} style={{ padding: '2px 8px', textAlign: 'center', border: '1px solid #475569', fontSize: 10, fontWeight: 700 }}>
                       {col.group}
                     </th>
                   );
                   i += span;
                 } else {
-                  cells.push(<th key={col.key} rowSpan={2} style={{ padding: '4px 8px', textAlign: 'center', borderBottom: '2px solid #d1d5db' }}>{col.label}</th>);
+                  cells.push(<th key={col.key} rowSpan={2} style={{ padding: '4px 8px', textAlign: 'center', borderBottom: '2px solid #475569' }}>{col.label}</th>);
                   i++;
                 }
               }
-              cells.push(<th key="event" rowSpan={2} style={{ padding: '4px 8px', textAlign: 'left', borderBottom: '2px solid #d1d5db' }}>Event</th>);
+              cells.push(<th key="event" rowSpan={2} style={{ padding: '4px 8px', textAlign: 'left', borderBottom: '2px solid #475569' }}>Event</th>);
               return cells;
             })()}
           </tr>
-          <tr style={{ background: '#d1d5db', color: '#111827' }}>
+          <tr style={{ background: '#334155', color: '#e2e8f0' }}>
             {COLUMNS.filter(c => c.group).map(col => (
-              <th key={col.key} style={{ padding: '2px 8px', textAlign: 'center', border: '1px solid #999', fontSize: 10 }}>
+              <th key={col.key} style={{ padding: '2px 8px', textAlign: 'center', border: '1px solid #475569', fontSize: 10 }}>
                 {col.label}
               </th>
             ))}
@@ -154,13 +154,13 @@ export default function TimelineTable() {
             const outline = isDeath ? '1.5px solid #ef4444' : isPetDeath ? '1.5px solid #f97316' : isEog ? '1.5px solid #16a34a' : isSS ? '1.5px solid #2563eb' : isSell ? '1.5px solid #16a34a' : isBuy ? '1.5px solid #7c3aed' : undefined;
             const eventColor = isDeath ? '#ef4444' : isPetDeath ? '#f97316' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : undefined;
             return (
-              <tr key={row.year} style={{ background: i % 2 === 0 ? '#f9f9f9' : '#fff', outline }}>
+              <tr key={row.year} style={{ background: i % 2 === 0 ? '#1e293b' : '#0f172a', outline, color: '#e2e8f0' }}>
                 {COLUMNS.map((col) => (
-                  <td key={col.key} style={{ padding: '2px 8px', textAlign: 'right', borderBottom: '1px solid #eee' }}>
+                  <td key={col.key} style={{ padding: '2px 8px', textAlign: 'right', borderBottom: '1px solid #334155' }}>
                     {col.format(col.compute ? col.compute(row) : row[col.key])}
                   </td>
                 ))}
-                <td style={{ padding: '2px 8px', textAlign: 'left', borderBottom: '1px solid #eee', color: eventColor, fontWeight: event ? 600 : undefined, maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={event?.label || ''}>
+                <td style={{ padding: '2px 8px', textAlign: 'left', borderBottom: '1px solid #334155', color: eventColor, fontWeight: event ? 600 : undefined, maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={event?.label || ''}>
                   {event?.label || ''}
                 </td>
               </tr>

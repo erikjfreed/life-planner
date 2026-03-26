@@ -93,7 +93,7 @@ export default function TaxPage() {
               const isBuy = ev?.type === 'real_estate_buy';
               const eventColor = isDeath ? '#ef4444' : isPetDeath ? '#f97316' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : undefined;
               return (
-                <tr key={row.year} style={{ background: i % 2 === 0 ? '#fafafa' : '#fff' }} title={est?.explanation || ''}>
+                <tr key={row.year} style={{ background: i % 2 === 0 ? '#1e293b' : '#0f172a' }} title={est?.explanation || ''}>
                   <td style={styles.td}>{row.year}</td>
                   <td style={styles.td}>{row.erik_age}</td>
                   <td style={styles.td}>{row.deb_age}</td>
@@ -158,15 +158,15 @@ export default function TaxPage() {
 const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
   header: { display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 },
-  title: { margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' },
+  title: { margin: 0, fontSize: 16, fontWeight: 700, color: '#e2e8f0' },
   scroll: { overflowX: 'auto' },
   table: { borderCollapse: 'collapse', width: 'auto' },
-  th: { fontSize: 12, fontWeight: 600, color: '#374151', background: '#e5e7eb', borderBottom: '2px solid #d1d5db', padding: '3px 6px', textAlign: 'left' },
-  groupTh: { fontSize: 12, fontWeight: 700, color: '#111827', background: '#d1d5db', textAlign: 'center', padding: '3px 6px', border: '1px solid #9ca3af' },
+  th: { fontSize: 12, fontWeight: 600, color: '#cbd5e1', background: '#334155', borderBottom: '2px solid #475569', padding: '3px 6px', textAlign: 'left' },
+  groupTh: { fontSize: 12, fontWeight: 700, color: '#e2e8f0', background: '#334155', textAlign: 'center', padding: '3px 6px', border: '1px solid #475569' },
   gap: { width: 6, padding: 0, border: 'none' },
-  td: { fontSize: 12, padding: '3px 6px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
-  bl: { borderLeft: '1px solid #9ca3af' },
-  br: { borderRight: '1px solid #9ca3af' },
-  bb: { borderBottom: '1px solid #9ca3af' },
-  calcBtn: { padding: '2px 8px', fontSize: 11, border: '1px solid #d1d5db', borderRadius: 3, background: '#f9fafb', cursor: 'pointer' },
+  td: { fontSize: 12, padding: '3px 6px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
+  bl: { borderLeft: '1px solid #475569' },
+  br: { borderRight: '1px solid #475569' },
+  bb: { borderBottom: '1px solid #475569' },
+  calcBtn: { padding: '2px 8px', fontSize: 11, border: '1px solid #475569', borderRadius: 3, background: '#1e293b', cursor: 'pointer', color: '#e2e8f0' },
 };

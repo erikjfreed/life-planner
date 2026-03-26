@@ -54,7 +54,7 @@ function SSPanel({ entity, ssEvent, timelineRows, params }) {
           </thead>
           <tbody>
             {schedule.map((r, i) => (
-              <tr key={r.year} style={{ background: i % 2 === 0 ? '#fafafa' : '#fff' }}>
+              <tr key={r.year} style={{ background: i % 2 === 0 ? '#1e293b' : '#0f172a' }}>
                 <td style={styles.td}>{r.year}</td>
                 <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(r.monthly)}</td>
                 <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(r.annual)}</td>
@@ -81,7 +81,7 @@ export default function SocialSecurityPage() {
   const selected = ssEntities.find(e => e.id === activeId) ?? ssEntities[0];
 
   if (ssEntities.length === 0) {
-    return <div style={styles.page}><p style={{ color: '#6b7280', fontSize: 13 }}>No Social Security entities.</p></div>;
+    return <div style={styles.page}><p style={{ color: '#94a3b8', fontSize: 13 }}>No Social Security entities.</p></div>;
   }
 
   const ssEvent = events.find(ev => ev.type === 'social_security_start' && ev.entity_id === selected?.id);
@@ -107,18 +107,18 @@ export default function SocialSecurityPage() {
 const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
   subtabs: { display: 'flex', gap: 6, marginBottom: 12 },
-  subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #d1d5db', borderBottom: '2px solid #d1d5db', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#6b7280' },
-  subtabActive: { color: '#111827', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
+  subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #334155', borderBottom: '2px solid #334155', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#94a3b8' },
+  subtabActive: { color: '#e2e8f0', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
   panel: { maxWidth: 600 },
   summaryRow: { display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
-  summaryCell: { background: '#f3f4f6', borderRadius: 6, padding: '8px 12px', minWidth: 100 },
-  idCell: { background: '#f9fafb', borderRadius: 6, padding: '8px 12px', minWidth: 50, border: '1px dashed #d1d5db' },
-  summaryLabel: { fontSize: 10, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },
-  summaryValue: { fontSize: 14, fontWeight: 700, color: '#111827' },
-  idValue: { fontSize: 14, fontWeight: 700, color: '#9ca3af', fontFamily: 'monospace' },
-  sectionLabel: { fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '16px 0 6px' },
+  summaryCell: { background: '#1e293b', borderRadius: 6, padding: '8px 12px', minWidth: 100 },
+  idCell: { background: '#0f172a', borderRadius: 6, padding: '8px 12px', minWidth: 50, border: '1px dashed #475569' },
+  summaryLabel: { fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },
+  summaryValue: { fontSize: 14, fontWeight: 700, color: '#e2e8f0' },
+  idValue: { fontSize: 14, fontWeight: 700, color: '#64748b', fontFamily: 'monospace' },
+  sectionLabel: { fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '16px 0 6px' },
   table: { borderCollapse: 'collapse', width: '100%' },
-  stickyTh: { fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '4px 8px', textAlign: 'left', position: 'sticky', top: 0, background: '#fff', zIndex: 1 },
-  td: { fontSize: 12, padding: '3px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
-  scroll: { maxHeight: 400, overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: 4 },
+  stickyTh: { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left', position: 'sticky', top: 0, background: '#1e293b', zIndex: 1 },
+  td: { fontSize: 12, padding: '3px 8px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
+  scroll: { maxHeight: 400, overflowY: 'auto', border: '1px solid #334155', borderRadius: 4 },
 };

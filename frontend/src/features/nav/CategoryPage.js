@@ -9,6 +9,6 @@ export default function CategoryPage({ category }) {
 
 const styles = {
   container: { padding: 32, fontFamily: 'sans-serif' },
-  title: { fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 16px' },
-  placeholder: { color: '#6b7280', fontSize: 14 },
+  title: { fontSize: 20, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' },
+  placeholder: { color: '#94a3b8', fontSize: 14 },
 };

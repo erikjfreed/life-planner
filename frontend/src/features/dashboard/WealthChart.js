@@ -41,11 +41,11 @@ export default function WealthChart({ rows, params, events }) {
       <div style={styles.title}>Wealth ($M) vs Year</div>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 4, right: 20, left: 10, bottom: 0 }}>
-          <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9 }} angle={-45} textAnchor="end" height={30} interval={0} />
-          <YAxis width={52} tickFormatter={v => v % 2000 === 0 ? `$${(v/1000).toFixed(0)}M` : ''} tick={{ fontSize: 11 }} ticks={yTicks} domain={[0, yMax]} interval={0} />
-          <CartesianGrid vertical={false} stroke="#e5e7eb" strokeWidth={1} />
-          <Tooltip formatter={(v) => `$${(v/1000).toFixed(2)}M`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} />
-          <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+          <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9, fill: '#94a3b8' }} angle={-45} textAnchor="end" height={30} interval={0} />
+          <YAxis width={52} tickFormatter={v => v % 2000 === 0 ? `$${(v/1000).toFixed(0)}M` : ''} tick={{ fontSize: 11, fill: '#94a3b8' }} ticks={yTicks} domain={[0, yMax]} interval={0} />
+          <CartesianGrid vertical={false} stroke="#334155" strokeWidth={1} />
+          <Tooltip formatter={(v) => `$${(v/1000).toFixed(2)}M`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} contentStyle={{ background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0' }} labelStyle={{ color: '#e2e8f0' }} />
+          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} />
           <Area type="linear" dataKey="Real Estate" stackId="1" stroke="#7c3aed" fill="#7c3aed" fillOpacity={0.7} />
           <Area type="linear" dataKey="Investments" stackId="1" stroke="#16a34a" fill="#16a34a" fillOpacity={0.6} />
         </AreaChart>
@@ -56,5 +56,5 @@ export default function WealthChart({ rows, params, events }) {
 
 const styles = {
   container: { display: 'flex', flexDirection: 'column', height: '100%' },
-  title: { fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 2, flexShrink: 0 },
+  title: { fontSize: 12, fontWeight: 600, color: '#cbd5e1', marginBottom: 2, flexShrink: 0 },
 };
