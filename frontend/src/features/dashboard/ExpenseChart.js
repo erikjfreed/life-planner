@@ -3,7 +3,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Ca
 
 const CATEGORIES = [
   { key: 'allowance', label: 'Allowance', color: '#3b82f6' },
-  { key: 'real_estate_costs',  label: 'RE Costs',  color: '#ef4444' },
+  { key: 'real_estate_costs',  label: 'Housing',  color: '#ef4444' },
   { key: 'loans',     label: 'Loans',     color: '#22c55e' },
   { key: 'travel',    label: 'Travel',    color: '#f97316' },
   { key: 'living',    label: 'General',   color: '#8b5cf6' },
@@ -33,7 +33,26 @@ export default function ExpenseChart({ rows, params }) {
           <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9, fill: '#94a3b8' }} angle={-45} textAnchor="end" height={30} interval={0} />
           <YAxis width={58} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={v => `$${v}K`} ticks={Array.from({ length: Math.floor(yMax / 100) + 1 }, (_, i) => i * 100)} domain={[0, yMax]} interval={0} />
           <CartesianGrid vertical={false} stroke="#334155" strokeWidth={1} />
-          <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} wrapperStyle={{ marginTop: -100 }} itemSorter={(a) => { const idx = CATEGORIES.findIndex(c => c.label === a.dataKey); return -idx; }} contentStyle={{ background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0' }} labelStyle={{ color: '#e2e8f0' }} />
+          <Tooltip wrapperStyle={{ marginTop: -100 }} content={({ active, payload, label }) => {
+            if (!active || !payload?.length) return null;
+            const erikAge = label - new Date(params?.erikDOB).getFullYear();
+            const debAge = label - new Date(params?.debDOB).getFullYear();
+            const total = payload.reduce((s, p) => s + (p.value || 0), 0);
+            return (
+              <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 4, padding: '8px 12px', fontSize: 15 }}>
+                <div style={{ color: '#e2e8f0', fontWeight: 600, marginBottom: 2 }}>{label} (Erik {erikAge}, Deb {debAge})</div>
+                {[...payload].reverse().map(p => (
+                  <div key={p.dataKey} style={{ color: p.color, display: 'flex', gap: 6, justifyContent: 'space-between' }}>
+                    <span>{p.dataKey}</span>
+                    <span>${p.value}K ({total > 0 ? Math.round(p.value / total * 100) : 0}%)</span>
+                  </div>
+                ))}
+                <div style={{ color: '#e2e8f0', fontWeight: 600, borderTop: '1px solid #334155', marginTop: 2, paddingTop: 2, display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Total</span><span>${total}K</span>
+                </div>
+              </div>
+            );
+          }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} payload={[...CATEGORIES].reverse().map(c => ({ value: c.label, type: 'square', color: c.color }))} />
           {CATEGORIES.map(c => (
             <Area key={c.key} type="linear" dataKey={c.label} stackId="1"

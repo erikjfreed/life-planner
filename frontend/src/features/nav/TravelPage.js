@@ -17,33 +17,25 @@ export default function TravelPage() {
 
   return (
     <div style={styles.page}>
-      <h2 style={styles.title}>Travel</h2>
-
-      <div style={styles.summaryRow}>
-        <div style={styles.summaryCell}>
-          <div style={styles.summaryLabel}>Days with Pets</div>
-          <div style={styles.summaryValue}>
-            <select value={daysWithPets} onChange={e => update('travelDaysWithPets')(parseInt(e.target.value))} style={styles.select}>
-              {Array.from({ length: 53 }, (_, i) => i).map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </div>
-        </div>
-        <div style={styles.summaryCell}>
-          <div style={styles.summaryLabel}>Days without Pets</div>
-          <div style={styles.summaryValue}>
-            <select value={daysWithoutPets} onChange={e => update('travelDaysWithoutPets')(parseInt(e.target.value))} style={styles.select}>
-              {Array.from({ length: 53 }, (_, i) => i).map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </div>
-        </div>
-        <div style={styles.summaryCell}>
-          <div style={styles.summaryLabel}>Total Days</div>
-          <div style={styles.summaryValue}>{totalDays}</div>
-        </div>
-        <div style={styles.summaryCell}>
-          <div style={styles.summaryLabel}>Travel Base</div>
-          <div style={styles.summaryValue}>{fmt(params.travelBase)}</div>
-        </div>
+      <div style={styles.grid}>
+        <span style={styles.label}>Days with Pets</span>
+        <span style={styles.val}>
+          <select value={daysWithPets} onChange={e => update('travelDaysWithPets')(parseInt(e.target.value))} style={styles.select}>
+            {Array.from({ length: 53 }, (_, i) => i).map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </span>
+        <span />
+        <span style={styles.label}>Days without Pets</span>
+        <span style={styles.val}>
+          <select value={daysWithoutPets} onChange={e => update('travelDaysWithoutPets')(parseInt(e.target.value))} style={styles.select}>
+            {Array.from({ length: 53 }, (_, i) => i).map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </span>
+        <span style={styles.label}>Total Days</span>
+        <span style={styles.val}>{totalDays}</span>
+        <span />
+        <span style={styles.label}>Travel Base</span>
+        <span style={styles.val}>{fmt(params.travelBase)}</span>
       </div>
 
       <table style={styles.table}>
@@ -62,7 +54,7 @@ export default function TravelPage() {
             <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(params.travelBase * (daysWithPets / totalDays))}</td>
             <td style={{ ...styles.td, color: '#94a3b8' }}>Pets travel along</td>
           </tr>
-          <tr>
+          <tr style={{ background: '#0f172a' }}>
             <td style={styles.td}>Travel without Pets</td>
             <td style={{ ...styles.td, textAlign: 'right' }}>{daysWithoutPets}</td>
             <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(params.travelBase * (daysWithoutPets / totalDays))}</td>
@@ -82,13 +74,11 @@ export default function TravelPage() {
 
 const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
-  title: { margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#e2e8f0' },
-  summaryRow: { display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
-  summaryCell: { background: '#1e293b', borderRadius: 6, padding: '8px 12px', minWidth: 100 },
-  summaryLabel: { fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },
-  summaryValue: { fontSize: 14, fontWeight: 700, color: '#e2e8f0' },
-  select: { fontSize: 14, fontWeight: 700, border: '1px solid #475569', borderRadius: 3, padding: '1px 4px', background: '#1e293b', color: '#e2e8f0' },
+  grid: { display: 'inline-grid', gridTemplateColumns: 'auto auto 20px auto auto', gap: '6px 4px', alignItems: 'center', marginBottom: 16 },
+  label: { fontSize: 11, color: '#94a3b8', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', background: '#334155', padding: '2px 6px', borderRadius: 2 },
+  val: { fontSize: 11, color: '#e2e8f0' },
+  select: { fontSize: 11, border: '1px solid #475569', borderRadius: 3, padding: '0 2px', background: '#1e293b', color: '#e2e8f0' },
   table: { borderCollapse: 'collapse', width: 'auto' },
-  th: { fontSize: 12, fontWeight: 600, color: '#94a3b8', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
-  td: { fontSize: 12, padding: '4px 8px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
+  th: { fontSize: 11, fontWeight: 600, color: '#94a3b8', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
+  td: { fontSize: 12, padding: '3px 8px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
 };

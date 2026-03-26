@@ -24,7 +24,26 @@ export default function IncomeChart({ rows, params }) {
           <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9, fill: '#94a3b8' }} angle={-45} textAnchor="end" height={30} interval={0} />
           <YAxis width={52} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={v => `$${v}K`} ticks={Array.from({ length: Math.floor(yMax / 100) + 1 }, (_, i) => i * 100)} domain={[0, yMax]} interval={0} />
           <CartesianGrid vertical={false} stroke="#334155" strokeWidth={1} />
-          <Tooltip formatter={(v) => `$${v}K`} labelFormatter={l => { const erikAge = l - new Date(params?.erikDOB).getFullYear(); const debAge = l - new Date(params?.debDOB).getFullYear(); return `${l}  (Erik ${erikAge}, Deb ${debAge})`; }} contentStyle={{ background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0' }} labelStyle={{ color: '#e2e8f0' }} />
+          <Tooltip content={({ active, payload, label }) => {
+            if (!active || !payload?.length) return null;
+            const erikAge = label - new Date(params?.erikDOB).getFullYear();
+            const debAge = label - new Date(params?.debDOB).getFullYear();
+            const total = payload.filter(p => p.dataKey !== 'Total Tax').reduce((s, p) => s + (p.value || 0), 0);
+            return (
+              <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 4, padding: '8px 12px', fontSize: 15 }}>
+                <div style={{ color: '#e2e8f0', fontWeight: 600, marginBottom: 2 }}>{label} (Erik {erikAge}, Deb {debAge})</div>
+                {payload.map(p => (
+                  <div key={p.dataKey} style={{ color: p.color, display: 'flex', gap: 8, justifyContent: 'space-between' }}>
+                    <span>{p.dataKey}</span>
+                    <span>${p.value}K {p.dataKey !== 'Total Tax' && total > 0 ? `(${Math.round(p.value / total * 100)}%)` : ''}</span>
+                  </div>
+                ))}
+                <div style={{ color: '#e2e8f0', fontWeight: 600, borderTop: '1px solid #334155', marginTop: 2, paddingTop: 2, display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Total</span><span>${total}K</span>
+                </div>
+              </div>
+            );
+          }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} />
           <Area type="linear" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
           <Area type="linear" dataKey="ROI"       stackId="1" stroke="#86efac" fill="#86efac" fillOpacity={0.7} />

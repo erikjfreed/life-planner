@@ -24,15 +24,24 @@ function LoanPanel({ loan, entity }) {
 
   return (
     <div style={styles.panel}>
-
-      <div style={styles.summaryRow}>
-        <div style={styles.idCell}><div style={styles.summaryLabel}>Loan ID</div><div style={styles.idValue}>{loan.id}</div></div>
-        {loan.entity_id != null && <div style={styles.idCell}><div style={styles.summaryLabel}>Entity ID</div><div style={styles.idValue}>{loan.entity_id}</div></div>}
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Current Balance</div><div style={styles.summaryValue}>{fmt(loan.current_balance)}</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Rate</div><div style={styles.summaryValue}>{fmtP(loan.rate)}</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Payment/Mo</div><div style={styles.summaryValue}>{fmt(loan.monthly_payment)}</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Term</div><div style={styles.summaryValue}>{loan.term_years} yrs</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Start</div><div style={styles.summaryValue}>{loan.start_year}</div></div>
+      <div style={styles.grid}>
+        <span style={styles.label}>Loan ID</span>
+        <span style={styles.val}>{loan.id}</span>
+        <span />
+        <span style={styles.label}>Entity ID</span>
+        <span style={styles.val}>{loan.entity_id ?? '—'}</span>
+        <span style={styles.label}>Balance</span>
+        <span style={styles.val}>{fmt(loan.current_balance)}</span>
+        <span />
+        <span style={styles.label}>Rate</span>
+        <span style={styles.val}>{fmtP(loan.rate)}</span>
+        <span style={styles.label}>Payment/Mo</span>
+        <span style={styles.val}>{fmt(loan.monthly_payment)}</span>
+        <span />
+        <span style={styles.label}>Term</span>
+        <span style={styles.val}>{loan.term_years} yrs</span>
+        <span style={styles.label}>Start</span>
+        <span style={styles.val}>{`${loan.start_month || 1}/1/${loan.start_year}`}</span>
       </div>
 
       <div style={styles.sectionLabel}>Amortization Schedule</div>
@@ -104,13 +113,10 @@ const styles = {
   subtabs: { display: 'flex', gap: 6, marginBottom: 12 },
   subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #334155', borderBottom: '2px solid #334155', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#94a3b8' },
   subtabActive: { color: '#e2e8f0', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
-  panel: { maxWidth: 600 },
-  summaryRow: { display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
-  summaryCell: { background: '#1e293b', borderRadius: 6, padding: '8px 12px', minWidth: 100 },
-  idCell: { background: '#0f172a', borderRadius: 6, padding: '8px 12px', minWidth: 50, border: '1px dashed #475569' },
-  summaryLabel: { fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },
-  summaryValue: { fontSize: 14, fontWeight: 700, color: '#e2e8f0' },
-  idValue: { fontSize: 14, fontWeight: 700, color: '#64748b', fontFamily: 'monospace' },
+  panel: { maxWidth: 600, border: '1px solid #334155', borderRadius: 6, padding: '12px 16px' },
+  grid: { display: 'inline-grid', gridTemplateColumns: 'auto auto 20px auto auto', gap: '6px 4px', alignItems: 'center', marginBottom: 12 },
+  label: { fontSize: 11, color: '#94a3b8', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', background: '#334155', padding: '2px 6px', borderRadius: 2 },
+  val: { fontSize: 11, color: '#e2e8f0' },
   sectionLabel: { fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '16px 0 6px' },
   table: { borderCollapse: 'collapse', width: '100%' },
   th: { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },

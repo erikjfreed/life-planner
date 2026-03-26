@@ -130,14 +130,14 @@ export default function PetsPage() {
 
 const styles = {
   page: { padding: '8px 16px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
-  subtabs: { display: 'flex', gap: 6, marginBottom: 8 },
+  subtabs: { display: 'flex', gap: 6, marginTop: 12, marginBottom: 8 },
   subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #334155', borderBottom: '2px solid #334155', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#94a3b8' },
   subtabActive: { color: '#e2e8f0', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
   grid: { display: 'inline-grid', gridTemplateColumns: 'auto auto auto auto auto auto', gap: '2px 20px', alignItems: 'center', marginBottom: 8 },
-  label: { fontSize: 11, color: '#94a3b8', textAlign: 'right', whiteSpace: 'nowrap' },
-  val: { fontSize: 11, color: '#e2e8f0', fontWeight: 600 },
+  label: { fontSize: 11, color: '#94a3b8', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', background: '#334155', padding: '2px 6px', borderRadius: 2 },
+  val: { fontSize: 11, color: '#e2e8f0' },
   table: { borderCollapse: 'collapse', width: 'auto' },
-  th: { fontSize: 11, fontWeight: 600, color: '#94a3b8', borderBottom: '2px solid #334155', padding: '2px 6px', textAlign: 'left' },
-  td: { fontSize: 11, padding: '2px 6px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
+  th: { fontSize: 11, fontWeight: 600, color: '#94a3b8', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
+  td: { fontSize: 12, padding: '3px 8px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
   select: { fontSize: 11, fontWeight: 600, border: '1px solid #475569', borderRadius: 3, padding: '0 2px', background: '#1e293b', color: '#e2e8f0' },
 };
