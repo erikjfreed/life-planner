@@ -25,6 +25,10 @@ const DEFAULT_PARAMS = {
 
   investmentBalanceBase: 3823105,
 
+  travelDaysWithPets: 21,
+  travelDaysWithoutPets: 14,
+  boardingCostPerPetPerDay: 75,
+
   filingStatus: 'married_filing_jointly',
   stateOfResidence: 'WA',
 };
