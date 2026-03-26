@@ -19,7 +19,7 @@ const TYPE_LABELS = {
 
 function eventSummary(ev, entities, params) {
   const entity = entities.find(e => e.id === ev.entity_id);
-  const rawName = entity ? (entity.street_address || entity.name) : ev.name || null;
+  const rawName = entity ? (entity.street_address ? entity.street_address.split(',')[0] : entity.name) : ev.name || null;
   const name = ev.type === 'social_security_start' && ev.name ? `${ev.name} starts Social Security`
     : (ev.type === 'spouse_death' || ev.type === 'pet_death') && (ev.name || rawName) ? `RIP ${ev.name || rawName}`
     : (ev.type === 'real_estate_buy' || ev.type === 'vehicle_buy') && rawName ? `Purchase ${rawName}`

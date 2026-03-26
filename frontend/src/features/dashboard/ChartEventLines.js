@@ -62,7 +62,7 @@ export function ChartEventLinesOverlay({ deathEvents, erikBirthYear, debBirthYea
     });
     (reEvents ?? []).forEach(ev => {
       const entity = (entities ?? []).find(en => en.id === ev.entity_id);
-      const name = entity?.street_address || entity?.name || '?';
+      const name = entity?.street_address ? entity.street_address.split(',')[0] : (entity?.name || '?');
       const isSell = ev.type === 'real_estate_sell';
       const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
       allEvents.push({ key: `${ev.type}-${ev.entity_id}`, x: xPixel(fractionalYear, minYear, maxYear, width), label: `${isSell ? 'Sell' : 'Buy'} ${name}`, color: isSell ? '#16a34a' : '#7c3aed' });

@@ -45,13 +45,13 @@ function getRowEvent(row, events, entities, params) {
 
   events.filter(e => e.type === 'real_estate_buy' && e.year === row.year && !e.hidden).forEach(e => {
     const entity = entities.find(en => en.id === e.entity_id);
-    labels.push(`Buy ${entity?.street_address || entity?.name || '?'}`);
+    labels.push(`Buy ${entity?.street_address ? entity.street_address.split(',')[0] : (entity?.name || '?')}`);
     type = type || 'real_estate_buy';
   });
 
   events.filter(e => e.type === 'real_estate_sell' && e.year === row.year && !e.hidden).forEach(e => {
     const entity = entities.find(en => en.id === e.entity_id);
-    labels.push(`Sell ${entity?.street_address || entity?.name || '?'}`);
+    labels.push(`Sell ${entity?.street_address ? entity.street_address.split(',')[0] : (entity?.name || '?')}`);
     type = type || 'real_estate_sell';
   });
 

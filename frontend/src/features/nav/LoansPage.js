@@ -82,7 +82,7 @@ export default function LoansPage() {
       <div style={styles.subtabs}>
         {loans.map(loan => {
           const entity = entities.find(e => e.id === loan.entity_id);
-          const label = entity ? (entity.street_address || entity.name) : loan.name;
+          const label = entity ? (entity.street_address ? entity.street_address.split(',')[0] : entity.name) : loan.name;
           return (
             <button
               key={loan.id}

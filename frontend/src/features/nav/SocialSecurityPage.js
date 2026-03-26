@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateParameters } from '../parameters/parametersSlice';
 
 const fmt = v => `$${Math.round(v).toLocaleString()}`;
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -32,12 +33,36 @@ function SSPanel({ entity, ssEvent, timelineRows, params }) {
 
   return (
     <div style={styles.panel}>
-      <div style={styles.summaryRow}>
-        <div style={styles.idCell}><div style={styles.summaryLabel}>Entity ID</div><div style={styles.idValue}>{entity.id}</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Monthly Benefit</div><div style={styles.summaryValue}>{fmt(monthlyBase)}</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Start</div><div style={styles.summaryValue}>{startMonth ? `${MONTHS[startMonth - 1]} ${startYear}` : startYear}</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>COLA</div><div style={styles.summaryValue}>{(socialSecurityCoLA * 100).toFixed(1)}%</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Tax Rate</div><div style={styles.summaryValue}>{(socialSecurityTaxRate * 100).toFixed(1)}%</div></div>
+      <div style={{ display: 'inline-grid', gridTemplateColumns: 'auto auto 20px auto auto 20px auto auto 20px auto auto', gap: '6px 4px', alignItems: 'center', marginBottom: 12 }}>
+        <span style={styles.label}>ID</span>
+        <span style={styles.val}>{entity.id}</span>
+        <span />
+        <span style={styles.label}>Monthly Benefit</span>
+        <span style={styles.val}>{fmt(monthlyBase)}</span>
+        <span />
+        <span style={styles.label}>Start</span>
+        <span style={styles.val}>{(() => {
+          const dob = entity.name === 'Erik' ? params.erikDOB : entity.name === 'Deb' ? params.debDOB : null;
+          if (dob) {
+            const d = new Date(dob);
+            return `${d.getMonth() + 1}/${d.getDate()}/${startYear}`;
+          }
+          return startMonth ? `${startMonth}/1/${startYear}` : startYear;
+        })()}</span>
+        <span />
+        <span style={styles.label}>Starts In</span>
+        <span style={styles.val}>{(() => {
+          const now = new Date();
+          const dob = entity.name === 'Erik' ? params.erikDOB : entity.name === 'Deb' ? params.debDOB : null;
+          const startDate = dob ? new Date(new Date(dob).getFullYear(), new Date(dob).getMonth(), new Date(dob).getDate()) : new Date(startYear, (startMonth || 1) - 1, 1);
+          startDate.setFullYear(startYear);
+          const diffMs = startDate - now;
+          if (diffMs <= 0) return 'Collecting';
+          const months = Math.round(diffMs / (1000 * 60 * 60 * 24 * 30.44));
+          const yrs = Math.floor(months / 12);
+          const mos = months % 12;
+          return yrs > 0 ? `${yrs}y ${mos}m` : `${mos}m`;
+        })()}</span>
       </div>
 
       <div style={styles.sectionLabel}>Annual Schedule</div>
@@ -70,6 +95,7 @@ function SSPanel({ entity, ssEvent, timelineRows, params }) {
 }
 
 export default function SocialSecurityPage() {
+  const dispatch = useDispatch();
   const entities = useSelector(s => s.entities.items);
   const events   = useSelector(s => s.events.items);
   const params   = useSelector(s => s.parameters.present.values);
@@ -88,6 +114,18 @@ export default function SocialSecurityPage() {
 
   return (
     <div style={styles.page}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 20 }}>
+        <span style={styles.label}>COLA</span>
+        <select
+          value={Math.round((params.socialSecurityCoLA ?? 0.025) * 1000)}
+          onChange={e => dispatch(updateParameters({ socialSecurityCoLA: parseInt(e.target.value) / 1000 }))}
+          style={styles.select}
+        >
+          {Array.from({ length: 51 }, (_, i) => i).map(v => (
+            <option key={v} value={v}>{(v / 10).toFixed(1)}%</option>
+          ))}
+        </select>
+      </div>
       <div style={styles.subtabs}>
         {ssEntities.map(entity => (
           <button
@@ -109,13 +147,11 @@ const styles = {
   subtabs: { display: 'flex', gap: 6, marginBottom: 12 },
   subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #334155', borderBottom: '2px solid #334155', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#94a3b8' },
   subtabActive: { color: '#e2e8f0', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
-  panel: { maxWidth: 600 },
-  summaryRow: { display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
-  summaryCell: { background: '#1e293b', borderRadius: 6, padding: '8px 12px', minWidth: 100 },
-  idCell: { background: '#0f172a', borderRadius: 6, padding: '8px 12px', minWidth: 50, border: '1px dashed #475569' },
-  summaryLabel: { fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },
-  summaryValue: { fontSize: 14, fontWeight: 700, color: '#e2e8f0' },
-  idValue: { fontSize: 14, fontWeight: 700, color: '#64748b', fontFamily: 'monospace' },
+  panel: { maxWidth: 600, border: '1px solid #334155', borderRadius: 6, padding: '12px 16px' },
+  grid: { display: 'inline-grid', gridTemplateColumns: 'auto auto 20px auto auto', gap: '6px 4px', alignItems: 'center', marginBottom: 12 },
+  label: { fontSize: 11, color: '#94a3b8', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', background: '#334155', padding: '2px 6px', borderRadius: 2 },
+  val: { fontSize: 11, color: '#e2e8f0' },
+  select: { fontSize: 11, border: '1px solid #475569', borderRadius: 3, padding: '0 2px', background: '#1e293b', color: '#e2e8f0' },
   sectionLabel: { fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '16px 0 6px' },
   table: { borderCollapse: 'collapse', width: '100%' },
   stickyTh: { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left', position: 'sticky', top: 0, background: '#1e293b', zIndex: 1 },

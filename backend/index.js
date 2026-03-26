@@ -277,12 +277,12 @@ function getRowEvent(year, events, entities, params) {
   });
   events.filter(e => e.type === 'real_estate_buy' && e.year === year && !e.hidden).forEach(e => {
     const en = entities.find(x => x.id === e.entity_id);
-    labels.push(`Buy ${en?.street_address || en?.name || '?'}`);
+    labels.push(`Buy ${en?.street_address ? en.street_address.split(',')[0] : (en?.name || '?')}`);
     type = type || 'real_estate_buy';
   });
   events.filter(e => e.type === 'real_estate_sell' && e.year === year && !e.hidden).forEach(e => {
     const en = entities.find(x => x.id === e.entity_id);
-    labels.push(`Sell ${en?.street_address || en?.name || '?'}`);
+    labels.push(`Sell ${en?.street_address ? en.street_address.split(',')[0] : (en?.name || '?')}`);
     type = type || 'real_estate_sell';
   });
   if (labels.length === 0) return null;
