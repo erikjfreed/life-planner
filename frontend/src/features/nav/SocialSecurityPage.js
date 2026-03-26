@@ -106,9 +106,9 @@ export default function SocialSecurityPage() {
 
 const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
-  subtabs: { display: 'flex', gap: 2, borderBottom: '1px solid #e5e7eb', marginBottom: 20 },
-  subtab: { padding: '6px 16px', fontSize: 13, fontWeight: 500, border: 'none', borderBottom: '2px solid transparent', background: 'none', cursor: 'pointer', color: '#6b7280', marginBottom: -1 },
-  subtabActive: { color: '#111827', borderBottom: '2px solid #2563eb', fontWeight: 600 },
+  subtabs: { display: 'flex', gap: 6, marginBottom: 12 },
+  subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #d1d5db', borderBottom: '2px solid #d1d5db', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#6b7280' },
+  subtabActive: { color: '#111827', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
   panel: { maxWidth: 600 },
   summaryRow: { display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
   summaryCell: { background: '#f3f4f6', borderRadius: 6, padding: '8px 12px', minWidth: 100 },

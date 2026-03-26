@@ -130,9 +130,9 @@ export default function PetsPage() {
 
 const styles = {
   page: { padding: '8px 16px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
-  subtabs: { display: 'flex', gap: 2, borderBottom: '1px solid #e5e7eb', marginBottom: 8 },
-  subtab: { padding: '6px 16px', fontSize: 13, fontWeight: 500, border: 'none', borderBottom: '2px solid transparent', background: 'none', cursor: 'pointer', color: '#6b7280', marginBottom: -1 },
-  subtabActive: { color: '#111827', borderBottom: '2px solid #2563eb', fontWeight: 600 },
+  subtabs: { display: 'flex', gap: 6, marginBottom: 8 },
+  subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #d1d5db', borderBottom: '2px solid #d1d5db', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#6b7280' },
+  subtabActive: { color: '#111827', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
   grid: { display: 'inline-grid', gridTemplateColumns: 'auto auto auto auto auto auto', gap: '2px 20px', alignItems: 'center', marginBottom: 8 },
   label: { fontSize: 11, color: '#6b7280', textAlign: 'right', whiteSpace: 'nowrap' },
   val: { fontSize: 11, color: '#111827', fontWeight: 600 },

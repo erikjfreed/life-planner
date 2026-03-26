@@ -10,18 +10,24 @@ function VehiclePanel({ entity, buyEvent }) {
 
   return (
     <div style={styles.panel}>
-      {/* Summary */}
-      <div style={styles.summaryRow}>
-        <div style={styles.idCell}><div style={styles.summaryLabel}>Entity ID</div><div style={styles.idValue}>{entity.id}</div></div>
-        {buyEvent.purchase_price != null && (
-          <div style={styles.summaryCell}><div style={styles.summaryLabel}>Purchase Price</div><div style={styles.summaryValue}>{fmt(buyEvent.purchase_price)}</div></div>
-        )}
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Year</div><div style={styles.summaryValue}>{buyEvent.year}</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Age</div><div style={styles.summaryValue}>{age} yrs</div></div>
+      <div style={styles.grid}>
+        <span style={styles.labelCell}>ID</span>
+        <span style={styles.val}>{entity.id}</span>
+        <span />
+        <span style={styles.labelCell}>Owner</span>
+        <span style={styles.val}>{entity.street_address || '—'}</span>
+        <span style={styles.labelCell}>Purchase Price</span>
+        <span style={styles.val}>{buyEvent.purchase_price != null ? fmt(buyEvent.purchase_price) : '—'}</span>
+        <span />
+        <span style={styles.labelCell}>Purchase Date</span>
+        <span style={styles.val}>{`${buyEvent.month || 1}/1/${buyEvent.year}`}</span>
+        <span style={styles.labelCell}>Age</span>
+        <span style={styles.val}>{age} yrs</span>
+        <span />
+        <span style={styles.labelCell}>Yearly Cost</span>
+        <span style={styles.val}>{fmt(totalExpense)}</span>
       </div>
 
-      {/* Annual Expenses */}
-      <div style={styles.sectionLabel}>Annual Expenses</div>
       <table style={styles.table}>
         <thead>
           <tr>
@@ -31,14 +37,14 @@ function VehiclePanel({ entity, buyEvent }) {
           </tr>
         </thead>
         <tbody>
-          {services.map(s => (
-            <tr key={s.label}>
+          {services.map((s, i) => (
+            <tr key={s.label} style={{ background: i % 2 === 0 ? '#fafafa' : '#fff' }}>
               <td style={styles.td}>{s.label}</td>
               <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(s.monthly)}</td>
               <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(s.yearly)}</td>
             </tr>
           ))}
-          <tr style={styles.totalRow}>
+          <tr style={{ background: '#f3f4f6' }}>
             <td style={styles.td}><strong>Total</strong></td>
             <td style={{ ...styles.td, textAlign: 'right' }}><strong>{fmt(totalExpense / 12)}</strong></td>
             <td style={{ ...styles.td, textAlign: 'right' }}><strong>{fmt(totalExpense)}</strong></td>
@@ -53,18 +59,17 @@ export default function VehiclesPage() {
   const entities = useSelector(s => s.entities.items);
   const events   = useSelector(s => s.events.items);
 
-  const vehicles = entities.filter(e => e.type === 'vehicle').filter(entity =>
-    events.some(ev => ev.type === 'vehicle_buy' && ev.entity_id === entity.id)
-  );
+  const vehicles = entities.filter(e => e.type === 'vehicle');
 
   const [activeId, setActiveId] = useState(null);
   const selected = vehicles.find(e => e.id === activeId) ?? vehicles[0];
 
   if (vehicles.length === 0) {
-    return <div style={styles.page}><p style={{ color: '#6b7280', fontSize: 13 }}>No vehicles with a buy event.</p></div>;
+    return <div style={styles.page}><p style={{ color: '#6b7280', fontSize: 13 }}>No vehicle entities.</p></div>;
   }
 
   const buyEvent = events.find(ev => ev.type === 'vehicle_buy' && ev.entity_id === selected?.id);
+  const notYetBought = !buyEvent;
 
   return (
     <div style={styles.page}>
@@ -80,26 +85,33 @@ export default function VehiclesPage() {
         ))}
       </div>
       {selected && buyEvent && <VehiclePanel entity={selected} buyEvent={buyEvent} />}
+      {selected && notYetBought && (
+        <div style={styles.panel}>
+          <div style={styles.grid}>
+            <span style={styles.labelCell}>ID</span>
+            <span style={styles.val}>{selected.id}</span>
+            <span />
+            <span style={styles.labelCell}>Owner</span>
+            <span style={styles.val}>{selected.street_address || '—'}</span>
+            <span style={styles.labelCell}>Status</span>
+            <span style={styles.val}>Not yet purchased</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
-  subtabs: { display: 'flex', gap: 2, borderBottom: '1px solid #e5e7eb', marginBottom: 20 },
-  subtab: { padding: '6px 16px', fontSize: 13, fontWeight: 500, border: 'none', borderBottom: '2px solid transparent', background: 'none', cursor: 'pointer', color: '#6b7280', marginBottom: -1 },
-  subtabActive: { color: '#111827', borderBottom: '2px solid #2563eb', fontWeight: 600 },
-  panel: { maxWidth: 600 },
-  summaryRow: { display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
-  summaryCell: { background: '#f3f4f6', borderRadius: 6, padding: '8px 12px', minWidth: 100 },
-  idCell: { background: '#f9fafb', borderRadius: 6, padding: '8px 12px', minWidth: 50, border: '1px dashed #d1d5db' },
-  summaryLabel: { fontSize: 10, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },
-  summaryValue: { fontSize: 14, fontWeight: 700, color: '#111827' },
-  idValue: { fontSize: 14, fontWeight: 700, color: '#9ca3af', fontFamily: 'monospace' },
-  sectionLabel: { fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '16px 0 6px' },
+  subtabs: { display: 'flex', gap: 6, marginBottom: 12 },
+  subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #d1d5db', borderBottom: '2px solid #d1d5db', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#6b7280' },
+  subtabActive: { color: '#111827', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
+  panel: { maxWidth: 600, border: '1px solid #e5e7eb', borderRadius: 6, padding: '12px 16px' },
+  grid: { display: 'inline-grid', gridTemplateColumns: 'auto auto 20px auto auto', gap: '6px 4px', alignItems: 'center', marginBottom: 12 },
+  labelCell: { fontSize: 11, color: '#6b7280', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', background: '#f3f4f6', padding: '2px 6px', borderRadius: 2 },
+  val: { fontSize: 11, color: '#111827' },
   table: { borderCollapse: 'collapse', width: '100%' },
-  th: { fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '4px 8px', textAlign: 'left' },
+  th: { fontSize: 11, fontWeight: 600, color: '#6b7280', borderBottom: '2px solid #e5e7eb', padding: '4px 8px', textAlign: 'left' },
   td: { fontSize: 12, padding: '3px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
-  subtotalRow: { background: '#f9fafb' },
-  totalRow: { background: '#f3f4f6' },
 };

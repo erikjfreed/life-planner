@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateEvent } from '../events/eventsSlice';
+import { updateEntity } from '../entities/entitiesSlice';
 
 const fmt  = v => `$${Math.round(v).toLocaleString()}`;
 
@@ -13,7 +15,7 @@ function buildValues(purchasePrice, purchaseYear, rate, endYear = 2060) {
   return rows;
 }
 
-function PropertyPanel({ entity, buyEvent, endYear }) {
+function PropertyPanel({ entity, buyEvent, endYear, dispatch }) {
   const [view, setView] = useState('expenses');
   const services = entity.services_json ? JSON.parse(entity.services_json) : [];
   const serviceTotal = services.reduce((s, i) => s + i.yearly, 0);
@@ -23,11 +25,46 @@ function PropertyPanel({ entity, buyEvent, endYear }) {
 
   return (
     <div style={styles.propertyPanel}>
-      <div style={styles.summaryRow}>
-        <div style={styles.idCell}><div style={styles.summaryLabel}>Entity ID</div><div style={styles.idValue}>{entity.id}</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Purchase Price</div><div style={styles.summaryValue}>{fmt(buyEvent.purchase_price)}</div></div>
-        <div style={styles.summaryCell}><div style={styles.summaryLabel}>Year</div><div style={styles.summaryValue}>{buyEvent.year}</div></div>
-        {entity.tax_rate != null && <div style={styles.summaryCell}><div style={styles.summaryLabel}>Tax Rate</div><div style={styles.summaryValue}>{(entity.tax_rate * 100).toFixed(1)}%</div></div>}
+      <div style={styles.grid}>
+        <span style={styles.label}>ID</span>
+        <span style={styles.val}>{entity.id}</span>
+        <span />
+        <span style={styles.label}>Address</span>
+        <span style={styles.val}>
+          <input
+            value={entity.street_address || ''}
+            onChange={e => dispatch(updateEntity({ ...entity, street_address: e.target.value }))}
+            style={{ ...styles.input, width: 280 }}
+            placeholder="Street address"
+          />
+        </span>
+        <span style={styles.label}>Purchase Price</span>
+        <span style={styles.val}>
+          <select
+            value={buyEvent.purchase_price}
+            onChange={e => dispatch(updateEvent({ ...buyEvent, purchase_price: parseInt(e.target.value) }))}
+            style={styles.select}
+          >
+            {Array.from({ length: 80 }, (_, i) => (i + 1) * 50000).map(v => (
+              <option key={v} value={v}>{fmt(v)}</option>
+            ))}
+          </select>
+        </span>
+        <span />
+        <span style={styles.label}>Buy Date</span>
+        <span style={styles.val}>{buyEvent.month ? `${buyEvent.month}/${buyEvent.year}` : buyEvent.year}</span>
+        <span style={styles.label}>Tax Rate</span>
+        <span style={styles.val}>
+          <select
+            value={Math.round((entity.tax_rate ?? 0) * 1000)}
+            onChange={e => dispatch(updateEntity({ ...entity, tax_rate: parseInt(e.target.value) / 1000 }))}
+            style={styles.select}
+          >
+            {Array.from({ length: 21 }, (_, i) => i + 5).map(v => (
+              <option key={v} value={v}>{(v / 10).toFixed(1)}%</option>
+            ))}
+          </select>
+        </span>
       </div>
 
       <div style={styles.innerTabs}>
@@ -96,6 +133,7 @@ function PropertyPanel({ entity, buyEvent, endYear }) {
 }
 
 export default function RealEstatePage() {
+  const dispatch = useDispatch();
   const entities = useSelector(s => s.entities.items);
   const events   = useSelector(s => s.events.items);
 
@@ -124,30 +162,29 @@ export default function RealEstatePage() {
             onClick={() => setActiveId(entity.id)}
             style={{ ...styles.subtab, ...(entity.id === selected?.id ? styles.subtabActive : {}) }}
           >
-            {entity.street_address || entity.name}
+            {entity.street_address ? entity.street_address.split(',')[0] : entity.name}
           </button>
         ))}
       </div>
-      {selected && buyEvent && <PropertyPanel entity={selected} buyEvent={buyEvent} endYear={endOfGame} />}
+      {selected && buyEvent && <PropertyPanel entity={selected} buyEvent={buyEvent} endYear={endOfGame} dispatch={dispatch} />}
     </div>
   );
 }
 
 const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
-  subtabs: { display: 'flex', gap: 2, borderBottom: '1px solid #e5e7eb', marginBottom: 20 },
-  subtab: { padding: '6px 16px', fontSize: 13, fontWeight: 500, border: 'none', borderBottom: '2px solid transparent', background: 'none', cursor: 'pointer', color: '#6b7280', marginBottom: -1 },
-  subtabActive: { color: '#111827', borderBottom: '2px solid #2563eb', fontWeight: 600 },
-  propertyPanel: { maxWidth: 600 },
+  subtabs: { display: 'flex', gap: 6, marginBottom: 12 },
+  subtab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #d1d5db', borderBottom: '2px solid #d1d5db', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#6b7280' },
+  subtabActive: { color: '#111827', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
+  propertyPanel: { maxWidth: 600, border: '1px solid #e5e7eb', borderRadius: 6, padding: '12px 16px' },
   innerTabs: { display: 'flex', gap: 6, marginBottom: 12 },
   innerTab: { padding: '4px 14px', fontSize: 12, fontWeight: 500, border: 'none', borderLeft: '2px solid #d1d5db', borderBottom: '2px solid #d1d5db', borderRadius: '0 0 0 8px', background: 'none', cursor: 'pointer', color: '#6b7280' },
   innerTabActive: { color: '#111827', borderLeftColor: '#2563eb', borderBottomColor: '#2563eb', fontWeight: 600 },
-  summaryRow: { display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
-  summaryCell: { background: '#f3f4f6', borderRadius: 6, padding: '8px 12px', minWidth: 100 },
-  idCell: { background: '#f9fafb', borderRadius: 6, padding: '8px 12px', minWidth: 50, border: '1px dashed #d1d5db' },
-  summaryLabel: { fontSize: 10, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },
-  summaryValue: { fontSize: 14, fontWeight: 700, color: '#111827' },
-  idValue: { fontSize: 14, fontWeight: 700, color: '#9ca3af', fontFamily: 'monospace' },
+  grid: { display: 'inline-grid', gridTemplateColumns: 'auto auto 20px auto auto', gap: '6px 4px', alignItems: 'center', marginBottom: 12 },
+  label: { fontSize: 11, color: '#6b7280', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', background: '#f3f4f6', padding: '2px 6px', borderRadius: 2 },
+  val: { fontSize: 11, color: '#111827' },
+  select: { fontSize: 11, border: '1px solid #d1d5db', borderRadius: 3, padding: '0 2px' },
+  input: { fontSize: 11, border: '1px solid #d1d5db', borderRadius: 3, padding: '1px 4px' },
   sectionLabel: { fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '16px 0 6px' },
   table: { borderCollapse: 'collapse', width: '100%' },
   th: { fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', padding: '4px 8px', textAlign: 'left' },
