@@ -15,17 +15,18 @@ const TYPE_LABELS = {
   social_security_start:    'social_security_start',
   vehicle_buy:              'vehicle_buy',
   vehicle_sell:             'vehicle_sell',
+  pet_death:                'pet_death',
 };
 
 function eventSummary(ev, entities, params) {
   const entity = entities.find(e => e.id === ev.entity_id);
   const rawName = entity ? (entity.street_address || entity.name) : ev.name || null;
   const name = ev.type === 'social_security_start' && ev.name ? `${ev.name} starts Social Security`
-    : ev.type === 'spouse_death' && ev.name ? `${ev.name} Passes`
+    : (ev.type === 'spouse_death' || ev.type === 'pet_death') && (ev.name || rawName) ? `RIP ${ev.name || rawName}`
     : (ev.type === 'real_estate_buy' || ev.type === 'vehicle_buy') && rawName ? `Purchase ${rawName}`
     : (ev.type === 'real_estate_sell' || ev.type === 'vehicle_sell') && rawName ? `Sale of ${rawName}` : rawName;
   const details = [];
-  if (ev.type === 'spouse_death' && ev.age != null) details.push(`age ${ev.age}`);
+  if ((ev.type === 'spouse_death' || ev.type === 'pet_death') && ev.age != null) details.push(`age ${ev.age}`);
   if (ev.type === 'social_security_start' && ev.name && params) {
     const age = personAge(ev.name, ev.year, params);
     if (age != null) details.push(`age ${age}`);

@@ -19,7 +19,7 @@ db.exec(`
     deb_age INTEGER,
     loans REAL,
     health REAL,
-    dogs REAL,
+    pets REAL,
     vehicles REAL,
     travel REAL,
     living REAL,
@@ -195,6 +195,29 @@ if (entityCount.cnt === 0) {
     const ridgeResult = insertEntity.run({ type: 'vehicle', name: '2021 Honda Ridgeline RTL-E', street_address: null, appreciation_rate: -0.15, services_json: vehicleServices, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
     insertEvent.run({ type: 'vehicle_buy', year: 2019, month: null, age: null, entity_id: cx5Result.lastInsertRowid,   name: null, purchase_price: 38000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 1 });
     insertEvent.run({ type: 'vehicle_buy', year: 2021, month: null, age: null, entity_id: ridgeResult.lastInsertRowid, name: null, purchase_price: 52000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 1 });
+
+    // -- PETS --
+    const petServicesShared = JSON.stringify([
+      { label: 'Food',      monthly: 250, yearly: 3000 },
+      { label: 'Insurance', monthly:  47, yearly:  564 },
+      { label: 'Misc Health', monthly: 50, yearly:  600 },
+      { label: 'Misc',      monthly:  50, yearly:  600 },
+      { label: 'Boarding',  monthly: 131, yearly: 1575 },
+      { label: 'Grooming',  monthly: 113, yearly: 1356 },
+    ]);
+    const petServicesTatia = JSON.stringify([
+      { label: 'Food',      monthly: 250, yearly: 3000 },
+      { label: 'Insurance', monthly:  47, yearly:  564 },
+      { label: 'Misc Health', monthly: 50, yearly:  600 },
+      { label: 'Misc',      monthly:  50, yearly:  600 },
+      { label: 'Boarding',  monthly: 131, yearly: 1575 },
+      { label: 'Grooming',  monthly: 113, yearly: 1356 },
+      { label: 'Teeth Cleaning', monthly: 83, yearly: 1000 },
+    ]);
+    const winnieResult = insertEntity.run({ type: 'pet', name: 'Winnie',  street_address: null, appreciation_rate: null, services_json: petServicesShared, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
+    const tatiaResult = insertEntity.run({ type: 'pet', name: 'Tatia', street_address: null, appreciation_rate: null, services_json: petServicesTatia, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
+    insertEvent.run({ type: 'pet_death', year: 2031, month: 2, age: 10, entity_id: winnieResult.lastInsertRowid, name: 'Winnie', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 0 });
+    insertEvent.run({ type: 'pet_death', year: 2032, month: 2, age: 10, entity_id: tatiaResult.lastInsertRowid, name: 'Tatia', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 0 });
 
     const insertLoan = db.prepare(`
       INSERT INTO loans (entity_id, name, rate, term_years, original_balance, current_balance, monthly_payment, start_year, start_month)

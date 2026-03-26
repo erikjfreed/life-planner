@@ -20,7 +20,6 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     allowancePerPersonPerMonth,
 
     healthBase,
-    dogsBase,
     travelBase,
     livingBase,
 
@@ -187,7 +186,16 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const debAliveForExpenses = year < debDeathYear || (year === debDeathYear && (debDeathEvent?.month ? debDeathEvent.month - 1 : 0) > 0);
     const peopleAlive = (erikAliveForExpenses ? 1 : 0) + (debAliveForExpenses ? 1 : 0);
     const health    = alive ? inf(healthBase, healthcareInflation, t) * (peopleAlive / 2) : 0;
-    const dogs      = alive ? inf(dogsBase,      generalInflation,    t) : 0;
+    const pets      = alive ? (() => {
+      let total = 0;
+      for (const entity of entities.filter(e => e.type === 'pet')) {
+        const deathEvent = events.find(e => e.type === 'pet_death' && e.entity_id === entity.id);
+        if (deathEvent && year >= deathEvent.year) continue;
+        const services = entity.services_json ? JSON.parse(entity.services_json) : [];
+        total += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, t);
+      }
+      return total;
+    })() : 0;
     // Vehicle costs from active vehicle entities
     const vehicles  = alive ? (() => {
       let total = 0;
@@ -227,7 +235,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const portland = alive && portlandExpProp ? inf(portlandExpProp.expenseBase, generalInflation, Math.max(0, year - portlandExpProp.yearBought)) * ((portlandExpProp.monthsActive ?? 0) / 12) : 0;
     const ltc      = 0;
 
-    const totalExpenses = loanPayments + health + dogs + vehicles + travel + living + allowance + realEstateCosts;
+    const totalExpenses = loanPayments + health + pets + vehicles + travel + living + allowance + realEstateCosts;
 
     // -- SOCIAL SECURITY --
     const erikAlive = year < erikDeathYear || (year === erikDeathYear && erikMonthsAlive > 0);
@@ -345,7 +353,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
 
     rows.push({
       year, yrs, erik_age: erikAge, deb_age: debAge,
-      loans: loanPayments, health, dogs, vehicles, travel, living, allowance, orcas, portland, ltc,
+      loans: loanPayments, health, pets, vehicles, travel, living, allowance, orcas, portland, ltc,
       total_expenses: totalExpenses,
       social_security_erik: socialSecurityErik, social_security_debbie: socialSecurityDebbie,
       social_security_subtotal: socialSecuritySubtotal, social_security_tax: socialSecurityTax, social_security_net: socialSecurityNet,

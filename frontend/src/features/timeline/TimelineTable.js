@@ -35,6 +35,12 @@ function getRowEvent(row, events, entities, params) {
     type = type || 'ss';
   });
 
+  events.filter(e => e.type === 'pet_death' && e.year === row.year).forEach(e => {
+    const entity = entities.find(en => en.id === e.entity_id);
+    labels.push(`RIP ${entity?.name || e.name || '?'} ${e.age || ''}`);
+    type = type || 'pet_death';
+  });
+
   events.filter(e => e.type === 'real_estate_buy' && e.year === row.year && !e.hidden).forEach(e => {
     const entity = entities.find(en => en.id === e.entity_id);
     labels.push(`Buy ${entity?.street_address || entity?.name || '?'}`);
@@ -65,7 +71,7 @@ const COLUMNS = [
   { key: 'loans', label: 'Loans', group: 'Real Estate', format: fmt },
   { key: 'real_estate_costs', label: 'Costs', group: 'Real Estate', format: fmt },
   { key: 'health', label: 'Health', group: 'Lifestyle', format: fmt },
-  { key: 'dogs', label: 'Dogs', group: 'Lifestyle', format: fmt },
+  { key: 'pets', label: 'Pets', group: 'Lifestyle', format: fmt },
   { key: 'vehicles', label: 'Vehicles', group: 'Lifestyle', format: fmt },
   { key: 'travel', label: 'Travel', group: 'Lifestyle', format: fmt },
   { key: 'living', label: 'General', group: 'Lifestyle', format: fmt },
@@ -138,12 +144,13 @@ export default function TimelineTable() {
           {rows.map((row, i) => {
             const event = getRowEvent(row, events, entities, params);
             const isDeath = event?.type === 'spouse_death';
+            const isPetDeath = event?.type === 'pet_death';
             const isEog   = event?.type === 'eog';
             const isSS    = event?.type === 'ss';
             const isSell  = event?.type === 'real_estate_sell';
             const isBuy   = event?.type === 'real_estate_buy';
-            const outline = isDeath ? '1.5px solid #ef4444' : isEog ? '1.5px solid #16a34a' : isSS ? '1.5px solid #2563eb' : isSell ? '1.5px solid #16a34a' : isBuy ? '1.5px solid #7c3aed' : undefined;
-            const eventColor = isDeath ? '#ef4444' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : undefined;
+            const outline = isDeath ? '1.5px solid #ef4444' : isPetDeath ? '1.5px solid #f97316' : isEog ? '1.5px solid #16a34a' : isSS ? '1.5px solid #2563eb' : isSell ? '1.5px solid #16a34a' : isBuy ? '1.5px solid #7c3aed' : undefined;
+            const eventColor = isDeath ? '#ef4444' : isPetDeath ? '#f97316' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : undefined;
             return (
               <tr key={row.year} style={{ background: i % 2 === 0 ? '#f9f9f9' : '#fff', outline }}>
                 {COLUMNS.map((col) => (

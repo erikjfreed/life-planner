@@ -6,7 +6,7 @@ const TABS = [
   { id: 'living',      label: 'Living' },
   { id: 'travel',      label: 'Travel' },
   { id: 'health',      label: 'Health' },
-  { id: 'dogs',        label: 'Dogs' },
+  { id: 'pets',        label: 'Pets' },
   { id: 'vehicles',    label: 'Vehicles' },
   { id: 'real-estate', label: 'Real Estate' },
   { id: 'loans',       label: 'Loans' },

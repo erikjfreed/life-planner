@@ -86,11 +86,12 @@ export default function TaxPage() {
               const last = i === taxData.length - 1;
               const b = last ? styles.bb : {};
               const isDeath = ev?.type === 'spouse_death';
+              const isPetDeath = ev?.type === 'pet_death';
               const isEog = ev?.type === 'eog';
               const isSS = ev?.type === 'ss';
               const isSell = ev?.type === 'real_estate_sell';
               const isBuy = ev?.type === 'real_estate_buy';
-              const eventColor = isDeath ? '#ef4444' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : undefined;
+              const eventColor = isDeath ? '#ef4444' : isPetDeath ? '#f97316' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : undefined;
               return (
                 <tr key={row.year} style={{ background: i % 2 === 0 ? '#fafafa' : '#fff' }} title={est?.explanation || ''}>
                   <td style={styles.td}>{row.year}</td>

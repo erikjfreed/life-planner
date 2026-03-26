@@ -269,6 +269,11 @@ function getRowEvent(year, events, entities, params) {
     labels.push(`SS ${e.name}${e.month ? ' ' + MONTHS[e.month - 1] : ''}`);
     type = type || 'ss';
   });
+  events.filter(e => e.type === 'pet_death' && e.year === year).forEach(e => {
+    const en = entities.find(x => x.id === e.entity_id);
+    labels.push(`RIP ${en?.name || e.name || '?'} ${e.age || ''}`);
+    type = type || 'pet_death';
+  });
   events.filter(e => e.type === 'real_estate_buy' && e.year === year && !e.hidden).forEach(e => {
     const en = entities.find(x => x.id === e.entity_id);
     labels.push(`Buy ${en?.street_address || en?.name || '?'}`);
