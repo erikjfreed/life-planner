@@ -35,10 +35,12 @@ function getRowEvent(row, events, entities, params) {
     type = type || 'ss';
   });
 
-  events.filter(e => e.type === 'pet_death' && e.year === row.year).forEach(e => {
-    const entity = entities.find(en => en.id === e.entity_id);
-    labels.push(`RIP ${entity?.name || e.name || '?'} ${e.age || ''}`);
-    type = type || 'pet_death';
+  entities.filter(e => e.type === 'pet' && e.appreciation_rate && e.term_years).forEach(e => {
+    const deathYear = Math.round(e.appreciation_rate + e.term_years);
+    if (deathYear === row.year) {
+      labels.push(`RIP ${e.name} ${e.term_years}`);
+      type = type || 'pet_death';
+    }
   });
 
   events.filter(e => e.type === 'real_estate_buy' && e.year === row.year && !e.hidden).forEach(e => {

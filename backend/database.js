@@ -214,10 +214,8 @@ if (entityCount.cnt === 0) {
       { label: 'Grooming',  monthly: 113, yearly: 1356 },
       { label: 'Teeth Cleaning', monthly: 83, yearly: 1000 },
     ]);
-    const winnieResult = insertEntity.run({ type: 'pet', name: 'Winnie',  street_address: null, appreciation_rate: null, services_json: petServicesShared, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
-    const tatiaResult = insertEntity.run({ type: 'pet', name: 'Tatia', street_address: null, appreciation_rate: null, services_json: petServicesTatia, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
-    insertEvent.run({ type: 'pet_death', year: 2031, month: 2, age: 10, entity_id: winnieResult.lastInsertRowid, name: 'Winnie', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 0 });
-    insertEvent.run({ type: 'pet_death', year: 2032, month: 2, age: 10, entity_id: tatiaResult.lastInsertRowid, name: 'Tatia', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 0 });
+    insertEntity.run({ type: 'pet', name: 'Winnie', street_address: null, appreciation_rate: 2021, services_json: petServicesShared, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: 12.5 });
+    insertEntity.run({ type: 'pet', name: 'Tatia',  street_address: null, appreciation_rate: 2022, services_json: petServicesTatia, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: 12.5 });
 
     const insertLoan = db.prepare(`
       INSERT INTO loans (entity_id, name, rate, term_years, original_balance, current_balance, monthly_payment, start_year, start_month)

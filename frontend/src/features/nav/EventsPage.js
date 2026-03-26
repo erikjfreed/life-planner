@@ -15,7 +15,6 @@ const TYPE_LABELS = {
   social_security_start:    'social_security_start',
   vehicle_buy:              'vehicle_buy',
   vehicle_sell:             'vehicle_sell',
-  pet_death:                'pet_death',
 };
 
 function eventSummary(ev, entities, params) {

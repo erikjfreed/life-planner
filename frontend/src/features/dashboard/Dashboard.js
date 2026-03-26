@@ -27,7 +27,6 @@ export default function Dashboard() {
   const debBirthYear  = params?.debDOB  ? new Date(params.debDOB).getFullYear()  : null;
   const ssEvents      = events.filter(e => e.type === 'social_security_start');
   const reEvents      = events.filter(e => (e.type === 'real_estate_buy' || e.type === 'real_estate_sell') && !e.hidden);
-  const petDeathEvents = events.filter(e => e.type === 'pet_death');
   const entities      = useSelector(s => s.entities.items);
 
   return (
@@ -47,7 +46,7 @@ export default function Dashboard() {
               <div style={styles.chartSlot}><ExpenseChart rows={rows} params={params} /></div>
               <ChartEventLinesOverlay
                 deathEvents={deathEvents}
-                petDeathEvents={petDeathEvents}
+
                 erikBirthYear={erikBirthYear}
                 debBirthYear={debBirthYear}
                 ssEvents={ssEvents}

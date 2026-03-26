@@ -30,7 +30,7 @@ function EventLabel({ x, label, color, labelOffset = 0 }) {
   );
 }
 
-export function ChartEventLinesOverlay({ deathEvents, petDeathEvents, erikBirthYear, debBirthYear, ssEvents, reEvents, entities, minYear, maxYear, stripHeight = 50 }) {
+export function ChartEventLinesOverlay({ deathEvents, erikBirthYear, debBirthYear, ssEvents, reEvents, entities, minYear, maxYear, stripHeight = 50 }) {
   const ref = useRef(null);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
@@ -73,11 +73,9 @@ export function ChartEventLinesOverlay({ deathEvents, petDeathEvents, erikBirthY
     if (debDeath && debAge) {
       allEvents.push({ key: 'death-deb', x: xPixel(debDeathYear + (debDeath.month ? (debDeath.month - 1) / 12 : 0), minYear, maxYear, width), label: `RIP Deb ${debAge}`, color: '#8b5cf6' });
     }
-    (petDeathEvents ?? []).forEach(ev => {
-      const entity = (entities ?? []).find(en => en.id === ev.entity_id);
-      const name = entity?.name || ev.name || '?';
-      const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
-      allEvents.push({ key: `pet-death-${ev.entity_id}`, x: xPixel(fractionalYear, minYear, maxYear, width), label: `RIP ${name} ${ev.age || ''}`, color: '#f97316' });
+    (entities ?? []).filter(e => e.type === 'pet' && e.appreciation_rate && e.term_years).forEach(e => {
+      const deathYear = Math.round(e.appreciation_rate + e.term_years);
+      allEvents.push({ key: `pet-death-${e.id}`, x: xPixel(deathYear, minYear, maxYear, width), label: `RIP ${e.name} ${e.term_years}`, color: '#f97316' });
     });
     allEvents.sort((a, b) => a.x - b.x);
     const staggerRows = [];

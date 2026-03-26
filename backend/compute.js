@@ -189,8 +189,9 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const pets      = alive ? (() => {
       let total = 0;
       for (const entity of entities.filter(e => e.type === 'pet')) {
-        const deathEvent = events.find(e => e.type === 'pet_death' && e.entity_id === entity.id);
-        if (deathEvent && year >= deathEvent.year) continue;
+        const birthYear = entity.appreciation_rate;
+        const lifespan = entity.term_years;
+        if (birthYear && lifespan && year >= Math.round(birthYear + lifespan)) continue;
         const services = entity.services_json ? JSON.parse(entity.services_json) : [];
         total += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, t);
       }

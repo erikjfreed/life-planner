@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateEntity } from '../entities/entitiesSlice';
 
 const fmt = v => `$${Math.round(v).toLocaleString()}`;
 
 export default function PetsPage() {
+  const dispatch = useDispatch();
   const entities = useSelector(s => s.entities.items);
   const petEntities = entities.filter(e => e.type === 'pet');
   const [activeId, setActiveId] = useState(null);
@@ -35,6 +37,24 @@ export default function PetsPage() {
           <div style={styles.summaryRow}>
             <div style={styles.idCell}><div style={styles.summaryLabel}>Entity ID</div><div style={styles.idValue}>{selected.id}</div></div>
             <div style={styles.summaryCell}><div style={styles.summaryLabel}>Name</div><div style={styles.summaryValue}>{selected.name}</div></div>
+            {selected.appreciation_rate && <div style={styles.summaryCell}><div style={styles.summaryLabel}>Born</div><div style={styles.summaryValue}>{selected.appreciation_rate}</div></div>}
+            <div style={styles.summaryCell}>
+              <div style={styles.summaryLabel}>Lifespan</div>
+              <div style={styles.summaryValue}>
+                <select
+                  value={selected.term_years || 12.5}
+                  onChange={e => dispatch(updateEntity({ ...selected, id: selected.id, term_years: parseFloat(e.target.value) }))}
+                  style={styles.select}
+                >
+                  {Array.from({ length: 31 }, (_, i) => 5 + i * 0.5).map(v => (
+                    <option key={v} value={v}>{v} yrs</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {selected.appreciation_rate && selected.term_years && (
+              <div style={styles.summaryCell}><div style={styles.summaryLabel}>RIP</div><div style={styles.summaryValue}>{selected.appreciation_rate + selected.term_years}</div></div>
+            )}
             <div style={styles.summaryCell}><div style={styles.summaryLabel}>Yearly Cost</div><div style={styles.summaryValue}>{fmt(totalYearly)}</div></div>
           </div>
 
@@ -81,4 +101,5 @@ const styles = {
   table: { borderCollapse: 'collapse', width: 'auto' },
   th: { fontSize: 12, fontWeight: 600, color: '#6b7280', borderBottom: '2px solid #e5e7eb', padding: '4px 8px', textAlign: 'left' },
   td: { fontSize: 12, padding: '4px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827' },
+  select: { fontSize: 14, fontWeight: 700, border: '1px solid #d1d5db', borderRadius: 3, padding: '1px 4px' },
 };
