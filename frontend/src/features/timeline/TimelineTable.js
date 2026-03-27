@@ -85,9 +85,9 @@ const fmt = (val) =>
 const pct = (val) => (val == null || val === 0 ? '—' : `${(val * 100).toFixed(0)}%`);
 
 const COLUMNS = [
-  { key: 'year', label: 'Year', format: (v) => v },
-  { key: 'erik_age', label: 'Erik', format: (v) => v },
-  { key: 'deb_age', label: 'Deb', format: (v) => v },
+  { key: 'year', label: '', group: 'Year', format: (v) => v },
+  { key: 'erik_age', label: 'Erik', group: 'Year', format: (v) => v },
+  { key: 'deb_age', label: 'Deb', group: 'Year', format: (v) => v },
   { key: 'loans', label: 'Loans', group: 'Real Estate', format: fmt },
   { key: 'real_estate_costs', label: 'Costs', group: 'Real Estate', format: fmt },
   { key: 'living', label: 'General', group: 'Expenses', format: fmt },
@@ -137,6 +137,7 @@ export default function TimelineTable() {
               while (i < COLUMNS.length) {
                 const col = COLUMNS[i];
                 const groupColors = {
+                  'Year': '#334155',
                   'Real Estate': '#2d3a4a',
                   'Expenses': '#2d3748',
                   'Tax': '#3b2d2d',
