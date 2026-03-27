@@ -7,7 +7,6 @@ export default function IncomeChart({ rows, params, sharedYMax }) {
     'SS': Math.round(r.social_security_subtotal / 1000),
     'ROI': Math.round(r.roi / 1000),
     'Cap Spend': Math.round(r.capital_spend / 1000),
-    'Total Tax': Math.round((r.total_tax || 0) / 1000),
   }));
 
   const minYear = data.length > 0 ? data[0].year : 2026;
@@ -28,14 +27,14 @@ export default function IncomeChart({ rows, params, sharedYMax }) {
             if (!active || !payload?.length) return null;
             const erikAge = label - new Date(params?.erikDOB).getFullYear();
             const debAge = label - new Date(params?.debDOB).getFullYear();
-            const total = payload.filter(p => p.dataKey !== 'Total Tax').reduce((s, p) => s + (p.value || 0), 0);
+            const total = payload.reduce((s, p) => s + (p.value || 0), 0);
             return (
               <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 4, padding: '8px 12px', fontSize: 15 }}>
                 <div style={{ color: '#e2e8f0', fontWeight: 600, marginBottom: 2 }}>{label} (Erik {erikAge}, Deb {debAge})</div>
                 {payload.map(p => (
                   <div key={p.dataKey} style={{ color: p.color, display: 'flex', gap: 8, justifyContent: 'space-between' }}>
                     <span>{p.dataKey}</span>
-                    <span>${p.value}K {p.dataKey !== 'Total Tax' && total > 0 ? `(${Math.round(p.value / total * 100)}%)` : ''}</span>
+                    <span>${p.value}K {total > 0 ? `(${Math.round(p.value / total * 100)}%)` : ''}</span>
                   </div>
                 ))}
                 <div style={{ color: '#e2e8f0', fontWeight: 600, borderTop: '1px solid #334155', marginTop: 2, paddingTop: 2, display: 'flex', justifyContent: 'space-between' }}>
@@ -48,7 +47,6 @@ export default function IncomeChart({ rows, params, sharedYMax }) {
           <Area type="linear" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
           <Area type="linear" dataKey="ROI"       stackId="1" stroke="#86efac" fill="#86efac" fillOpacity={0.7} />
           <Area type="linear" dataKey="Cap Spend" stackId="1" stroke="#dc2626" fill="#dc2626" fillOpacity={0.7} />
-          <Line type="linear" dataKey="Total Tax" stroke="#e2e8f0" strokeWidth={2} dot={false} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
