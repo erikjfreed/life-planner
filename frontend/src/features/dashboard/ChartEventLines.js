@@ -70,7 +70,7 @@ export function ChartEventLinesOverlay({ deathEvents, erikBirthYear, debBirthYea
     (vehicleEvents ?? []).forEach(ev => {
       const entity = (entities ?? []).find(en => en.id === ev.entity_id);
       const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
-      const label = ev.type === 'vehicle_tradeup' ? `Tradeup ${entity?.name || '?'}`
+      const label = ev.type === 'vehicle_tradeup' ? `Tradeup ${entity?.street_address || '?'}'s vehicle`
         : ev.type === 'vehicle_sell' ? `Sell ${entity?.name || '?'}`
         : `Buy ${entity?.name || '?'}`;
       allEvents.push({ key: `${ev.type}-${ev.entity_id}`, x: xPixel(fractionalYear, minYear, maxYear, width), label, color: '#ec4899' });

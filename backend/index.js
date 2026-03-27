@@ -324,7 +324,8 @@ function getRowEvent(year, events, entities, params) {
   });
   events.filter(e => e.type === 'vehicle_tradeup' && e.year === year).forEach(e => {
     const en = entities.find(x => x.id === e.entity_id);
-    labels.push(`Tradeup ${en?.name || '?'}`);
+    const owner = en?.street_address || '?';
+    labels.push(`Tradeup ${owner}'s vehicle`);
     type = type || 'vehicle_tradeup';
   });
   if (labels.length === 0) return null;
