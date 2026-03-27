@@ -77,7 +77,7 @@ function NextVehiclePanel({ entity, currentEntity, tradeupEvent, events, dispatc
       await fetch('/lifeplanner/api/vehicle-tradeup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sell_entity_id: currentEntity.id, buy_entity_id: entity.id, year: parseInt(yearVal), purchase_price: buyEvent?.purchase_price || 50000 }),
+        body: JSON.stringify({ sell_entity_id: currentEntity.id, buy_entity_id: entity.id, year: parseInt(yearVal), purchase_price: tradeupEvent?.purchase_price || 50000 }),
       });
     }
     dispatch(fetchEvents());
