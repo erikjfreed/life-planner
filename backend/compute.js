@@ -314,6 +314,9 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const filingStatus = bothAlive ? (params.filingStatus || 'married_filing_jointly') : 'single';
 
     // -- TAX: iterative solver using bracket math --
+    // Equation: grossDraw + SS_gross = totalExpenses + totalTax
+    // So: grossDraw = totalExpenses + totalTax - SS_gross
+    // Where totalTax depends on grossDraw (circular)
     let grossDraw = Math.max(0, totalExpenses - socialSecuritySubtotal);
     let taxResult = null;
     for (let iter = 0; iter < 10; iter++) {
@@ -324,11 +327,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         mortgage_interest: mortgageInterest, property_taxes: propertyTaxes,
         inflation_rate: generalInflation,
       });
-      const drawTaxRate = taxResult.draw_fed_rate + taxResult.draw_state_rate;
-      const ssTax = socialSecuritySubtotal * (taxResult.ss_fed_rate + taxResult.ss_state_rate);
-      const ssNet = socialSecuritySubtotal - ssTax;
-      const expensesAfterSS = Math.max(0, totalExpenses - ssNet);
-      const newGrossDraw = drawTaxRate < 1 ? expensesAfterSS / (1 - drawTaxRate) : expensesAfterSS;
+      const newGrossDraw = Math.max(0, totalExpenses + taxResult.total_tax - socialSecuritySubtotal);
       if (Math.abs(newGrossDraw - grossDraw) < 1) { grossDraw = newGrossDraw; break; }
       grossDraw = newGrossDraw;
     }
@@ -342,7 +341,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     });
 
     const socialSecurityTax = socialSecuritySubtotal * (taxResult.ss_fed_rate + taxResult.ss_state_rate);
-    const socialSecurityNet = socialSecuritySubtotal - socialSecurityTax;
+    const socialSecurityNet = socialSecuritySubtotal;
     const drawTax = grossDraw * (taxResult.draw_fed_rate + taxResult.draw_state_rate);
     const netDraw = grossDraw + drawTax;
 
