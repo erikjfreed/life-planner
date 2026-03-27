@@ -6,7 +6,7 @@ const DEFAULT_PARAMS = {
   healthcareInflation: 0.06,
   allowanceDeflation: 0.01,
   realEstateAppreciation: 0.05,
-  investmentROI: 0.075,
+  investmentROI: 0.06,
   socialSecurityCoLA: 0.025,
 
   drawFedTaxRate: 0.16,
