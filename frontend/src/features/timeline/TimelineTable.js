@@ -105,8 +105,8 @@ const COLUMNS = [
   { key: 'social_security_net', label: 'SS', group: 'Income', format: fmt },
   { key: 'gross_draw', label: 'Gross', group: 'Draw', format: fmt },
   { key: 'net_draw', label: 'NET', group: 'Draw', format: fmt },
-  { key: 'capital_spend', label: 'Spend', group: 'Capital', format: fmt },
-  { key: 'draw_rate', label: 'Rate', group: 'Capital', format: pct },
+  { key: 'capital_spend', label: 'Capital', group: 'Spend', format: fmt },
+  { key: 'draw_rate', label: 'Rate', group: 'Spend', format: pct },
   { key: 'investment_balance', label: 'Investments', group: 'Wealth', format: fmt },
   { key: 'real_estate', label: 'Real Estate', group: 'Wealth', format: fmt },
   { key: 'invest_plus_re', label: 'NET', group: 'Wealth', format: fmt },
@@ -142,7 +142,7 @@ export default function TimelineTable() {
                   'Tax': '#3b2d2d',
                   'Income': '#2d3b2d',
                   'Draw': '#2d2d3b',
-                  'Capital': '#3b2d3b',
+                  'Spend': '#3b2d3b',
                   'Wealth': '#2d3b3b',
                 };
                 if (col.group) {
