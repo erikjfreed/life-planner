@@ -5,12 +5,13 @@ export default function IncomeChart({ rows, params, sharedYMax }) {
   const data = rows.map(r => ({
     year: r.year,
     'SS': Math.round(r.social_security_subtotal / 1000),
-    'IRA Draw': Math.round(r.gross_draw / 1000),
+    'IRA ROI': Math.round(Math.min(r.gross_draw, r.roi) / 1000),
+    'Cap Spend': Math.round(Math.max(0, r.gross_draw - r.roi) / 1000),
   }));
 
   const minYear = data.length > 0 ? data[0].year : 2026;
   const maxYear = data.length > 0 ? data[data.length - 1].year : 2060;
-  const maxVal = Math.max(...data.map(r => (r['SS'] || 0) + (r['IRA Draw'] || 0)));
+  const maxVal = Math.max(...data.map(r => (r['SS'] || 0) + (r['IRA ROI'] || 0) + (r['Cap Spend'] || 0)));
   const yMax = sharedYMax || Math.ceil(maxVal / 100) * 100;
   const yTicks = Array.from({ length: yMax / 100 + 1 }, (_, i) => i * 100);
 
@@ -43,7 +44,8 @@ export default function IncomeChart({ rows, params, sharedYMax }) {
             );
           }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} />
-          <Area type="linear" dataKey="IRA Draw"  stackId="1" stroke="#16a34a" fill="#16a34a" fillOpacity={0.6} />
+          <Area type="linear" dataKey="Cap Spend" stackId="1" stroke="#dc2626" fill="#dc2626" fillOpacity={0.7} />
+          <Area type="linear" dataKey="IRA ROI"   stackId="1" stroke="#16a34a" fill="#16a34a" fillOpacity={0.6} />
           <Area type="linear" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
         </AreaChart>
       </ResponsiveContainer>
