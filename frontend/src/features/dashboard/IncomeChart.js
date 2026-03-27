@@ -4,7 +4,7 @@ import { AreaChart, Area, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContain
 export default function IncomeChart({ rows, params, sharedYMax }) {
   const data = rows.map(r => ({
     year: r.year,
-    'SS': Math.round(r.social_security_net / 1000),
+    'SS': Math.round(r.social_security_subtotal / 1000),
     'ROI': Math.round(r.roi / 1000),
     'Cap Spend': Math.round(r.capital_spend / 1000),
     'Total Tax': Math.round((r.total_tax || 0) / 1000),
