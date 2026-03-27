@@ -75,6 +75,6 @@ const styles = {
   page: { padding: '16px 24px', fontFamily: 'sans-serif', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
   title: { margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#e2e8f0' },
   table: { borderCollapse: 'collapse', width: '100%', maxWidth: 700 },
-  th: { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
+  th: { fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
   td: { fontSize: 12, padding: '4px 8px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
 };

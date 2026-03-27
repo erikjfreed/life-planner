@@ -114,8 +114,8 @@ const styles = {
   header:{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 },
   title: { margin: 0, fontSize: 16, fontWeight: 700, color: '#e2e8f0' },
   table: { borderCollapse: 'collapse', width: 'auto' },
-  th:    { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 6px', textAlign: 'left' },
-  thId:  { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 6px', textAlign: 'center' },
+  th:    { fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 6px', textAlign: 'left' },
+  thId:  { fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 6px', textAlign: 'center' },
   td:    { fontSize: 12, padding: '3px 6px', borderBottom: '1px solid #334155', color: '#e2e8f0' },
   tdId:  { fontSize: 12, padding: '3px 6px', borderBottom: '1px solid #334155', color: '#e2e8f0', textAlign: 'center' },
 };

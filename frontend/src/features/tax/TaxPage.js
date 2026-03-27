@@ -168,5 +168,5 @@ const styles = {
   bl: { borderLeft: '1px solid #475569' },
   br: { borderRight: '1px solid #475569' },
   bb: { borderBottom: '1px solid #475569' },
-  calcBtn: { padding: '2px 8px', fontSize: 11, border: '1px solid #475569', borderRadius: 3, background: '#1e293b', cursor: 'pointer', color: '#e2e8f0' },
+  calcBtn: { padding: '2px 8px', fontSize: 12, border: '1px solid #475569', borderRadius: 3, background: '#1e293b', cursor: 'pointer', color: '#e2e8f0' },
 };
