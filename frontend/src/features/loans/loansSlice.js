@@ -1,26 +1,26 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 export const fetchLoans = createAsyncThunk('loans/fetch', async () => {
-  const res = await fetch('/api/loans');
+  const res = await fetch('/lifeplanner/api/loans');
   return res.json();
 });
 
 export const createLoan = createAsyncThunk('loans/create', async (loan) => {
-  const res = await fetch('/api/loans', {
+  const res = await fetch('/lifeplanner/api/loans', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(loan)
   });
   return res.json();
 });
 
 export const updateLoan = createAsyncThunk('loans/update', async ({ id, ...data }) => {
-  const res = await fetch(`/api/loans/${id}`, {
+  const res = await fetch(`/lifeplanner/api/loans/${id}`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
   });
   return res.json();
 });
 
 export const deleteLoan = createAsyncThunk('loans/delete', async (id) => {
-  const res = await fetch(`/api/loans/${id}`, { method: 'DELETE' });
+  const res = await fetch(`/lifeplanner/api/loans/${id}`, { method: 'DELETE' });
   return res.json();
 });
 

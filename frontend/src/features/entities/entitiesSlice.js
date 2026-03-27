@@ -1,26 +1,26 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 export const fetchEntities = createAsyncThunk('entities/fetch', async () => {
-  const res = await fetch('/api/entities');
+  const res = await fetch('/lifeplanner/api/entities');
   return res.json();
 });
 
 export const createEntity = createAsyncThunk('entities/create', async (entity) => {
-  const res = await fetch('/api/entities', {
+  const res = await fetch('/lifeplanner/api/entities', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entity)
   });
   return res.json();
 });
 
 export const updateEntity = createAsyncThunk('entities/update', async ({ id, ...data }) => {
-  const res = await fetch(`/api/entities/${id}`, {
+  const res = await fetch(`/lifeplanner/api/entities/${id}`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
   });
   return res.json();
 });
 
 export const deleteEntity = createAsyncThunk('entities/delete', async (id) => {
-  const res = await fetch(`/api/entities/${id}`, { method: 'DELETE' });
+  const res = await fetch(`/lifeplanner/api/entities/${id}`, { method: 'DELETE' });
   return res.json();
 });
 

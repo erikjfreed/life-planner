@@ -16,7 +16,7 @@ export default function TaxPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch('/api/tax-computed')
+    fetch('/lifeplanner/api/tax-computed')
       .then(r => r.json())
       .then(data => {
         setTaxData(data.map(r => ({ ...r, estimate: undefined, ...r })));

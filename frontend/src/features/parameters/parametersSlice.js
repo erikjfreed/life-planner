@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 export const fetchParameters = createAsyncThunk('parameters/fetch', async () => {
-  const res = await fetch('/api/parameters');
+  const res = await fetch('/lifeplanner/api/parameters');
   return res.json();
 });
 
 export const updateParameters = createAsyncThunk('parameters/update', async (updates) => {
-  const res = await fetch('/api/parameters', {
+  const res = await fetch('/lifeplanner/api/parameters', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
