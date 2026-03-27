@@ -2,15 +2,15 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Ca
 
 
 const CATEGORIES = [
-  { key: 'total_tax', label: 'Taxes',     color: '#dc2626' },
   { key: 'allowance', label: 'Allowance', color: '#3b82f6' },
-  { key: 'real_estate_costs',  label: 'Housing',  color: '#ef4444' },
-  { key: 'loans',     label: 'Loans',     color: '#22c55e' },
-  { key: 'travel',    label: 'Travel',    color: '#f97316' },
-  { key: 'living',    label: 'General',   color: '#8b5cf6' },
-  { key: 'health',    label: 'Health',    color: '#eab308' },
-  { key: 'pets',      label: 'Pets',      color: '#06b6d4' },
-  { key: 'vehicles',  label: 'Vehicles',  color: '#ec4899' },
+  { key: 'real_estate_costs',  label: 'Housing',  color: '#22c55e' },
+  { key: 'total_tax', label: 'Taxes',     color: '#dc2626' },
+  { key: 'loans',     label: 'Loans',     color: '#f97316' },
+  { key: 'travel',    label: 'Travel',    color: '#8b5cf6' },
+  { key: 'living',    label: 'General',   color: '#eab308' },
+  { key: 'health',    label: 'Health',    color: '#06b6d4' },
+  { key: 'pets',      label: 'Pets',      color: '#ec4899' },
+  { key: 'vehicles',  label: 'Vehicles',  color: '#a3e635' },
 ];
 
 export default function ExpenseChart({ rows, params }) {
