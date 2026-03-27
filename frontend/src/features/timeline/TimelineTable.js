@@ -97,7 +97,7 @@ const COLUMNS = [
   { key: 'travel', label: 'Travel', group: 'Expenses', format: fmt },
   { key: 'allowance', label: 'Allowance', group: 'Expenses', format: fmt },
   { key: 'cap_expense', label: 'Capital', group: 'Expenses', format: fmt },
-  { key: 'total_expenses', label: 'Total Exp', format: fmt },
+  { key: 'total_expenses', label: 'Total', group: 'Expenses', format: fmt },
   { key: 'roi', label: 'ROI', group: 'Income', format: fmt },
   { key: 'social_security_net', label: 'SS', group: 'Income', format: fmt },
   { key: 'social_security_tax', label: 'SS Tax', group: 'Income', format: fmt },
