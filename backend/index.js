@@ -417,7 +417,7 @@ app.post('/api/tax-estimate', (req, res) => {
 // Serve React build in production
 const buildPath = path.join(__dirname, '..', 'frontend', 'build');
 app.use(express.static(buildPath));
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(buildPath, 'index.html'));
 });
 
