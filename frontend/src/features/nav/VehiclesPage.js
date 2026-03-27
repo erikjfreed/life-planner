@@ -135,6 +135,8 @@ function NextVehiclePanel({ entity, currentEntity, buyEvent, events, dispatch })
           <span />
           <span style={styles.labelCell}>Trade-In Value</span>
           <span style={styles.val}>{fmt(estimatedSalePrice)}</span>
+          <span style={styles.labelCell}>Net Cost</span>
+          <span style={styles.val}>{fmt((buyEvent?.purchase_price ?? 50000) - estimatedSalePrice)}</span>
         </>}
         <span style={styles.labelCell}>Yearly Cost</span>
         <span style={styles.val}>{fmt(totalExpense)}</span>
