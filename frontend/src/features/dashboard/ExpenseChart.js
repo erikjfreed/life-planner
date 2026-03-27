@@ -2,9 +2,10 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Ca
 
 
 const CATEGORIES = [
+  { key: 'draw_tax',  label: 'Tax Draw',  color: '#991b1b' },
+  { key: 'total_tax', label: 'Taxes',     color: '#dc2626' },
   { key: 'allowance', label: 'Allowance', color: '#3b82f6' },
   { key: 'real_estate_costs',  label: 'Housing',  color: '#22c55e' },
-  { key: 'total_tax', label: 'Taxes',     color: '#dc2626' },
   { key: 'loans',     label: 'Loans',     color: '#f97316' },
   { key: 'travel',    label: 'Travel',    color: '#8b5cf6' },
   { key: 'living',    label: 'General',   color: '#eab308' },
