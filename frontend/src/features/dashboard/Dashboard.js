@@ -22,6 +22,12 @@ export default function Dashboard() {
   const minYear = rows.length > 0 ? rows[0].year : 2026;
   const maxYear = rows.length > 0 ? rows[rows.length - 1].year : 2060;
 
+  // Shared Y-axis max for income and expense charts ($K)
+  const sharedYMax = rows.length > 0 ? Math.ceil(Math.max(
+    ...rows.map(r => ((r.social_security_net || 0) + (r.roi || 0) + (r.capital_spend || 0)) / 1000),
+    ...rows.map(r => ((r.draw_tax || 0) + (r.total_tax || 0) + (r.allowance || 0) + (r.real_estate_costs || 0) + (r.loans || 0) + (r.travel || 0) + (r.living || 0) + (r.health || 0) + (r.pets || 0) + (r.vehicles || 0)) / 1000)
+  ) / 100) * 100 : 500;
+
   const deathEvents   = events.filter(e => e.type === 'spouse_death');
   const erikBirthYear = params?.erikDOB ? new Date(params.erikDOB).getFullYear() : null;
   const debBirthYear  = params?.debDOB  ? new Date(params.debDOB).getFullYear()  : null;
@@ -40,8 +46,8 @@ export default function Dashboard() {
             <>
               <div style={styles.eventStrip} />
               <div style={styles.chartSlot}><WealthChart rows={rows} params={params} events={events} /></div>
-              <div style={styles.chartSlot}><IncomeChart rows={rows} params={params} /></div>
-              <div style={styles.chartSlot}><ExpenseChart rows={rows} params={params} /></div>
+              <div style={styles.chartSlot}><IncomeChart rows={rows} params={params} sharedYMax={sharedYMax} /></div>
+              <div style={styles.chartSlot}><ExpenseChart rows={rows} params={params} sharedYMax={sharedYMax} /></div>
               <ChartEventLinesOverlay
                 deathEvents={deathEvents}
 

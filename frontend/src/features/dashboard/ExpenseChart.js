@@ -14,7 +14,7 @@ const CATEGORIES = [
   { key: 'vehicles',  label: 'Vehicles',  color: '#a3e635' },
 ];
 
-export default function ExpenseChart({ rows, params }) {
+export default function ExpenseChart({ rows, params, sharedYMax }) {
   const data = rows.map(r => {
     const entry = { year: r.year };
     CATEGORIES.forEach(c => { entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) / 1000); });
@@ -24,7 +24,7 @@ export default function ExpenseChart({ rows, params }) {
   const minYear = data.length > 0 ? data[0].year : 2026;
   const maxYear = data.length > 0 ? data[data.length - 1].year : 2060;
   const maxVal = Math.max(...data.map(r => CATEGORIES.reduce((s, c) => s + (r[c.label] || 0), 0)));
-  const yMax = Math.ceil(maxVal / 100) * 100;
+  const yMax = sharedYMax || Math.ceil(maxVal / 100) * 100;
   const yTicks = Array.from({ length: yMax / 100 + 1 }, (_, i) => i * 100);
 
   return (

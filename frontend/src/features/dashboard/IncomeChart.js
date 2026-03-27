@@ -1,7 +1,7 @@
 import { AreaChart, Area, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 
-export default function IncomeChart({ rows, params }) {
+export default function IncomeChart({ rows, params, sharedYMax }) {
   const data = rows.map(r => ({
     year: r.year,
     'SS': Math.round(r.social_security_net / 1000),
@@ -13,7 +13,7 @@ export default function IncomeChart({ rows, params }) {
   const minYear = data.length > 0 ? data[0].year : 2026;
   const maxYear = data.length > 0 ? data[data.length - 1].year : 2060;
   const maxVal = Math.max(...data.map(r => (r['SS'] || 0) + (r['ROI'] || 0) + (r['Cap Spend'] || 0)));
-  const yMax = Math.ceil(maxVal / 100) * 100;
+  const yMax = sharedYMax || Math.ceil(maxVal / 100) * 100;
   const yTicks = Array.from({ length: yMax / 100 + 1 }, (_, i) => i * 100);
 
   return (
