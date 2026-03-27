@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateEvent, fetchEvents } from '../events/eventsSlice';
+import { fetchTimeline } from '../timeline/timelineSlice';
 
 const fmt = v => `$${Math.round(v).toLocaleString()}`;
 
@@ -81,6 +82,7 @@ function NextVehiclePanel({ entity, currentEntity, tradeupEvent, events, dispatc
       });
     }
     dispatch(fetchEvents());
+    dispatch(fetchTimeline());
   };
 
   const handlePurchasePriceChange = async (price) => {
