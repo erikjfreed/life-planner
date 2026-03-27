@@ -67,6 +67,12 @@ function getRowEvent(row, events, entities, params) {
     type = type || 'vehicle_sell';
   });
 
+  events.filter(e => e.type === 'vehicle_tradeup' && e.year === row.year).forEach(e => {
+    const newEntity = entities.find(en => en.id === e.entity_id);
+    labels.push(`Tradeup ${newEntity?.name || '?'}`);
+    type = type || 'vehicle_tradeup';
+  });
+
   if (labels.length === 0) return null;
   return { label: labels.join(', '), type };
 }
@@ -165,8 +171,8 @@ export default function TimelineTable() {
             const isBuy   = event?.type === 'real_estate_buy';
             const isVSell = event?.type === 'vehicle_sell';
             const isVBuy  = event?.type === 'vehicle_buy';
-            const outline = isDeath ? '1.5px solid #ef4444' : isPetDeath ? '1.5px solid #f97316' : isEog ? '1.5px solid #16a34a' : isSS ? '1.5px solid #2563eb' : isSell ? '1.5px solid #16a34a' : isBuy ? '1.5px solid #7c3aed' : isVSell ? '1.5px solid #ec4899' : isVBuy ? '1.5px solid #ec4899' : undefined;
-            const eventColor = isDeath ? '#ef4444' : isPetDeath ? '#f97316' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : isVSell ? '#ec4899' : isVBuy ? '#ec4899' : undefined;
+            const isVTradeup = event?.type === 'vehicle_tradeup';
+            const eventColor = isDeath ? '#ef4444' : isPetDeath ? '#f97316' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : (isVSell || isVBuy || isVTradeup) ? '#ec4899' : undefined;
             return (
               <tr key={row.year} style={{ background: i % 2 === 0 ? '#1e293b' : '#0f172a', color: '#e2e8f0' }}>
                 {COLUMNS.map((col) => {

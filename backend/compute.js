@@ -140,7 +140,11 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       }
     }
 
-    // Vehicle buy/sell cash flows
+    // Vehicle tradeup cash flows (net cost = purchase_price - sale_price)
+    events.filter(e => e.type === 'vehicle_tradeup' && e.year === year).forEach(e => {
+      saleProceeds -= ((e.purchase_price ?? 0) - (e.sale_price ?? 0));
+    });
+    // Legacy vehicle buy/sell cash flows
     events.filter(e => e.type === 'vehicle_sell' && e.year === year).forEach(e => {
       saleProceeds += (e.sale_price ?? 0);
     });
@@ -209,11 +213,16 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const vehicles  = alive ? (() => {
       let total = 0;
       for (const entity of entities.filter(e => e.type === 'vehicle')) {
+        // Check if vehicle is active: bought (via buy event or tradeup) and not traded away
         const bought = events.some(e => e.type === 'vehicle_buy' && e.entity_id === entity.id && e.year <= year);
+        const tradedIn = events.some(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id && e.year <= year);
+        const tradedAway = events.some(e => e.type === 'vehicle_tradeup' && (e.down_payment === entity.id) && e.year <= year);
         const sold = events.some(e => e.type === 'vehicle_sell' && e.entity_id === entity.id && e.year <= year);
-        if (bought && !sold) {
+        const isActive = (bought || tradedIn) && !tradedAway && !sold;
+        if (isActive) {
           const services = entity.services_json ? JSON.parse(entity.services_json) : [];
-          const buyEvent = events.find(e => e.type === 'vehicle_buy' && e.entity_id === entity.id);
+          const buyEvent = events.find(e => e.type === 'vehicle_buy' && e.entity_id === entity.id)
+            || events.find(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id);
           const yearsSinceBuy = Math.max(0, year - (buyEvent?.year || startYear));
           total += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, yearsSinceBuy);
         }

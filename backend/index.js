@@ -127,37 +127,30 @@ app.delete('/api/events/:id', (req, res) => {
   res.json(loadEvents());
 });
 
-// POST /api/vehicle-tradeup — create sell event for old vehicle + buy event for next vehicle
+// POST /api/vehicle-tradeup — create a single tradeup event
 app.post('/api/vehicle-tradeup', (req, res) => {
   const { sell_entity_id, buy_entity_id, year, purchase_price } = req.body;
   const sellEntity = db.prepare('SELECT * FROM entities WHERE id = ?').get(sell_entity_id);
-  const buyEvent = db.prepare('SELECT * FROM events WHERE type = ? AND entity_id = ?').get('vehicle_buy', sell_entity_id);
+  const oldBuyEvent = db.prepare('SELECT * FROM events WHERE type = ? AND entity_id = ?').get('vehicle_buy', sell_entity_id);
 
-  // Compute depreciated sale price
   const depRate = sellEntity?.appreciation_rate ?? -0.075;
-  const buyYear = buyEvent?.year ?? year;
-  const salePrice = Math.round((buyEvent?.purchase_price ?? 0) * Math.pow(1 + depRate, year - buyYear) / 1000) * 1000;
+  const buyYear = oldBuyEvent?.year ?? year;
+  const salePrice = Math.round((oldBuyEvent?.purchase_price ?? 0) * Math.pow(1 + depRate, year - buyYear) / 1000) * 1000;
 
-  // Remove any existing sell/buy events for these entities
-  db.prepare('DELETE FROM events WHERE type = ? AND entity_id = ?').run('vehicle_sell', sell_entity_id);
-  db.prepare('DELETE FROM events WHERE type = ? AND entity_id = ?').run('vehicle_buy', buy_entity_id);
+  // Remove any existing tradeup for this new vehicle
+  db.prepare('DELETE FROM events WHERE type = ? AND entity_id = ?').run('vehicle_tradeup', buy_entity_id);
 
-  // Create sell event
-  db.prepare(`INSERT INTO events (type, year, month, entity_id, sale_price, hidden) VALUES (?, ?, 1, ?, ?, 0)`)
-    .run('vehicle_sell', year, sell_entity_id, salePrice);
-
-  // Create buy event for next vehicle
-  db.prepare(`INSERT INTO events (type, year, month, entity_id, purchase_price, hidden) VALUES (?, ?, 1, ?, ?, 0)`)
-    .run('vehicle_buy', year, buy_entity_id, purchase_price || 50000);
+  // Create single tradeup event: entity_id=new vehicle, down_payment=old vehicle id
+  db.prepare(`INSERT INTO events (type, year, month, entity_id, down_payment, purchase_price, sale_price, hidden) VALUES (?, ?, 1, ?, ?, ?, ?, 0)`)
+    .run('vehicle_tradeup', year, buy_entity_id, sell_entity_id, purchase_price || 50000, salePrice);
 
   res.json(loadEvents());
 });
 
-// DELETE /api/vehicle-tradeup — remove sell event for old vehicle + buy event for next vehicle
+// DELETE /api/vehicle-tradeup — remove tradeup event
 app.delete('/api/vehicle-tradeup', (req, res) => {
-  const { sell_entity_id, buy_entity_id } = req.body;
-  db.prepare('DELETE FROM events WHERE type = ? AND entity_id = ?').run('vehicle_sell', sell_entity_id);
-  db.prepare('DELETE FROM events WHERE type = ? AND entity_id = ?').run('vehicle_buy', buy_entity_id);
+  const { buy_entity_id } = req.body;
+  db.prepare('DELETE FROM events WHERE type = ? AND entity_id = ?').run('vehicle_tradeup', buy_entity_id);
   res.json(loadEvents());
 });
 
@@ -328,6 +321,11 @@ function getRowEvent(year, events, entities, params) {
     const en = entities.find(x => x.id === e.entity_id);
     labels.push(`Sell ${en?.name || '?'}`);
     type = type || 'vehicle_sell';
+  });
+  events.filter(e => e.type === 'vehicle_tradeup' && e.year === year).forEach(e => {
+    const en = entities.find(x => x.id === e.entity_id);
+    labels.push(`Tradeup ${en?.name || '?'}`);
+    type = type || 'vehicle_tradeup';
   });
   if (labels.length === 0) return null;
   return { label: labels.join(', '), type };

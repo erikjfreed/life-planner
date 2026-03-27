@@ -15,7 +15,7 @@ const TYPE_LABELS = {
   social_security_start:    'social_security_start',
   vehicle_buy:              'vehicle_buy',
   vehicle_sell:             'vehicle_sell',
-  vehicle_tradeup:          'vehicle_tradeup',
+  vehicle_tradeup:         'vehicle_tradeup',
 };
 
 function eventSummary(ev, entities, params) {

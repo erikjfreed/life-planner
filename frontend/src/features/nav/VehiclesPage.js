@@ -59,7 +59,7 @@ function CurrentVehiclePanel({ entity, buyEvent, sellEvent, dispatch }) {
   );
 }
 
-function NextVehiclePanel({ entity, currentEntity, buyEvent, events, dispatch }) {
+function NextVehiclePanel({ entity, currentEntity, tradeupEvent, events, dispatch }) {
   const services = entity.services_json ? JSON.parse(entity.services_json) : [];
   const totalExpense = services.reduce((s, i) => s + i.yearly, 0);
 
@@ -71,7 +71,7 @@ function NextVehiclePanel({ entity, currentEntity, buyEvent, events, dispatch })
       await fetch('/lifeplanner/api/vehicle-tradeup', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sell_entity_id: currentEntity.id, buy_entity_id: entity.id }),
+        body: JSON.stringify({ buy_entity_id: entity.id }),
       });
     } else {
       await fetch('/lifeplanner/api/vehicle-tradeup', {
@@ -84,12 +84,12 @@ function NextVehiclePanel({ entity, currentEntity, buyEvent, events, dispatch })
   };
 
   const handlePurchasePriceChange = async (price) => {
-    if (buyEvent) {
-      dispatch(updateEvent({ ...buyEvent, purchase_price: price }));
+    if (tradeupEvent) {
+      dispatch(updateEvent({ ...tradeupEvent, purchase_price: price }));
     }
   };
 
-  const tradeupYear = buyEvent?.year;
+  const tradeupYear = tradeupEvent?.year;
   const depRate = currentEntity?.appreciation_rate ?? -0.075;
   const estimatedSalePrice = currentBuyEvent
     ? Math.round(currentBuyEvent.purchase_price * Math.pow(1 + depRate, (tradeupYear || new Date().getFullYear()) - currentBuyEvent.year) / 1000) * 1000
@@ -120,7 +120,7 @@ function NextVehiclePanel({ entity, currentEntity, buyEvent, events, dispatch })
         <span style={styles.labelCell}>Purchase Price</span>
         <span style={styles.val}>
           <select
-            value={buyEvent?.purchase_price ?? 50000}
+            value={tradeupEvent?.purchase_price ?? 50000}
             onChange={e => handlePurchasePriceChange(parseInt(e.target.value))}
             style={styles.select}
           >
@@ -129,17 +129,21 @@ function NextVehiclePanel({ entity, currentEntity, buyEvent, events, dispatch })
             ))}
           </select>
         </span>
-        {tradeupYear && currentBuyEvent && <>
+        {tradeupYear && currentBuyEvent ? <>
           <span style={styles.labelCell}>Trades In</span>
           <span style={styles.val}>{currentEntity.name}</span>
           <span />
           <span style={styles.labelCell}>Trade-In Value</span>
           <span style={styles.val}>{fmt(estimatedSalePrice)}</span>
           <span style={styles.labelCell}>Net Cost</span>
-          <span style={styles.val}>{fmt((buyEvent?.purchase_price ?? 50000) - estimatedSalePrice)}</span>
+          <span style={styles.val}>{fmt((tradeupEvent?.purchase_price ?? 50000) - estimatedSalePrice)}</span>
+          <span />
+          <span style={styles.labelCell}>Yearly Cost</span>
+          <span style={styles.val}>{fmt(totalExpense)}</span>
+        </> : <>
+          <span style={styles.labelCell}>Yearly Cost</span>
+          <span style={styles.val}>{fmt(totalExpense)}</span>
         </>}
-        <span style={styles.labelCell}>Yearly Cost</span>
-        <span style={styles.val}>{fmt(totalExpense)}</span>
       </div>
 
       <table style={styles.table}>
@@ -184,9 +188,11 @@ export default function VehiclesPage() {
   }
 
   const buyEvent = events.find(ev => ev.type === 'vehicle_buy' && ev.entity_id === selected?.id);
-  const sellEvent = events.find(ev => ev.type === 'vehicle_sell' && ev.entity_id === selected?.id);
+  const tradeupEvent = events.find(ev => ev.type === 'vehicle_tradeup' && ev.entity_id === selected?.id);
+  const tradedAwayEvent = events.find(ev => ev.type === 'vehicle_tradeup' && ev.down_payment === selected?.id);
+  const sellEvent = tradedAwayEvent;
   const isCurrentVehicle = buyEvent && buyEvent.hidden;
-  const isNextVehicle = !buyEvent || !buyEvent.hidden;
+  const isNextVehicle = !isCurrentVehicle;
 
   // Find the current vehicle for this owner (the one with a hidden buy event)
   const owner = selected?.street_address;
@@ -209,7 +215,7 @@ export default function VehiclesPage() {
         <CurrentVehiclePanel entity={selected} buyEvent={buyEvent} sellEvent={sellEvent} dispatch={dispatch} />
       )}
       {selected && isNextVehicle && (
-        <NextVehiclePanel entity={selected} currentEntity={currentVehicle} buyEvent={buyEvent} events={events} dispatch={dispatch} />
+        <NextVehiclePanel entity={selected} currentEntity={currentVehicle} tradeupEvent={tradeupEvent} events={events} dispatch={dispatch} />
       )}
     </div>
   );

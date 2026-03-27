@@ -33,7 +33,7 @@ export default function Dashboard() {
   const debBirthYear  = params?.debDOB  ? new Date(params.debDOB).getFullYear()  : null;
   const ssEvents      = events.filter(e => e.type === 'social_security_start');
   const reEvents      = events.filter(e => (e.type === 'real_estate_buy' || e.type === 'real_estate_sell') && !e.hidden);
-  const vehicleEvents = events.filter(e => (e.type === 'vehicle_buy' || e.type === 'vehicle_sell') && !e.hidden);
+  const vehicleEvents = events.filter(e => (e.type === 'vehicle_buy' || e.type === 'vehicle_sell' || e.type === 'vehicle_tradeup') && !e.hidden);
   const entities      = useSelector(s => s.entities.items);
 
   return (

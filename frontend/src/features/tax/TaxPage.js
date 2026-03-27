@@ -91,7 +91,8 @@ export default function TaxPage() {
               const isSS = ev?.type === 'ss';
               const isSell = ev?.type === 'real_estate_sell';
               const isBuy = ev?.type === 'real_estate_buy';
-              const eventColor = isDeath ? '#ef4444' : isPetDeath ? '#f97316' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : undefined;
+              const isVTradeup = ev?.type === 'vehicle_tradeup';
+              const eventColor = isDeath ? '#ef4444' : isPetDeath ? '#f97316' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : isVTradeup ? '#ec4899' : undefined;
               return (
                 <tr key={row.year} style={{ background: i % 2 === 0 ? '#1e293b' : '#0f172a' }} title={est?.explanation || ''}>
                   <td style={styles.td}>{row.year}</td>

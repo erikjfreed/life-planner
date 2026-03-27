@@ -69,9 +69,11 @@ export function ChartEventLinesOverlay({ deathEvents, erikBirthYear, debBirthYea
     });
     (vehicleEvents ?? []).forEach(ev => {
       const entity = (entities ?? []).find(en => en.id === ev.entity_id);
-      const isSell = ev.type === 'vehicle_sell';
       const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
-      allEvents.push({ key: `${ev.type}-${ev.entity_id}`, x: xPixel(fractionalYear, minYear, maxYear, width), label: `${isSell ? 'Sell' : 'Buy'} ${entity?.name || '?'}`, color: '#ec4899' });
+      const label = ev.type === 'vehicle_tradeup' ? `Tradeup ${entity?.name || '?'}`
+        : ev.type === 'vehicle_sell' ? `Sell ${entity?.name || '?'}`
+        : `Buy ${entity?.name || '?'}`;
+      allEvents.push({ key: `${ev.type}-${ev.entity_id}`, x: xPixel(fractionalYear, minYear, maxYear, width), label, color: '#ec4899' });
     });
     if (erikDeath && erikAge) {
       allEvents.push({ key: 'death-erik', x: xPixel(erikDeathYear + (erikDeath.month ? (erikDeath.month - 1) / 12 : 0), minYear, maxYear, width), label: `RIP Erik ${erikAge}`, color: '#ef4444' });
