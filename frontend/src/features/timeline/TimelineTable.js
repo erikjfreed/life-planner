@@ -126,50 +126,65 @@ export default function TimelineTable() {
   if (status === 'loading') return <p>Loading...</p>;
   if (status === 'failed') return <p>Error: {error}</p>;
 
+  // Precompute group boundaries
+  const groups = [];
+  let gi = 0;
+  while (gi < COLUMNS.length) {
+    const g = COLUMNS[gi].group;
+    if (g) {
+      let span = 1;
+      while (gi + span < COLUMNS.length && COLUMNS[gi + span].group === g) span++;
+      groups.push({ name: g, start: gi, span });
+      gi += span;
+    } else {
+      gi++;
+    }
+  }
+  const groupColors = {
+    'Year': '#334155', 'Real Estate': '#2d3a4a', 'Expenses': '#2d3748',
+    'Tax': '#3b2d2d', 'Income': '#2d3b2d', 'Draw': '#2d2d3b',
+    'Spend': '#3b2d3b', 'Wealth': '#2d3b3b',
+  };
+  const isFirstInGroup = (idx) => groups.some(g => g.start === idx);
+  const isLastInGroup = (idx) => groups.some(g => g.start + g.span - 1 === idx);
+
   return (
     <div style={{ overflowX: 'auto', paddingTop: 12, paddingLeft: 16 }}>
       <table style={{ borderCollapse: 'collapse', fontSize: '11px', whiteSpace: 'nowrap' }}>
         <thead>
-          <tr style={{ background: '#334155', color: '#e2e8f0' }}>
+          <tr style={{ color: '#e2e8f0' }}>
             {(() => {
               const cells = [];
-              let i = 0;
-              while (i < COLUMNS.length) {
-                const col = COLUMNS[i];
-                const groupColors = {
-                  'Year': '#334155',
-                  'Real Estate': '#2d3a4a',
-                  'Expenses': '#2d3748',
-                  'Tax': '#3b2d2d',
-                  'Income': '#2d3b2d',
-                  'Draw': '#2d2d3b',
-                  'Spend': '#3b2d3b',
-                  'Wealth': '#2d3b3b',
-                };
-                if (col.group) {
-                  let span = 1;
-                  while (i + span < COLUMNS.length && COLUMNS[i + span].group === col.group) span++;
-                  cells.push(
-                    <th key={col.group} colSpan={span} style={{ padding: '2px 8px', textAlign: 'center', border: '1px solid #475569', fontSize: 10, fontWeight: 700, background: groupColors[col.group] || '#334155' }}>
-                      {col.group}
-                    </th>
-                  );
-                  i += span;
-                } else {
-                  cells.push(<th key={col.key} rowSpan={2} style={{ padding: '4px 2px', textAlign: 'center', borderBottom: '2px solid #475569' }}>{col.label}</th>);
-                  i++;
-                }
+              let prevGroup = null;
+              for (const g of groups) {
+                if (prevGroup !== null) cells.push(<th key={`gap-${g.name}`} style={{ width: 6, padding: 0, border: 'none' }} rowSpan={2} />);
+                cells.push(
+                  <th key={g.name} colSpan={g.span} style={{ padding: '2px 8px', textAlign: 'center', border: '1px solid #475569', fontSize: 10, fontWeight: 700, background: groupColors[g.name] || '#334155' }}>
+                    {g.name}
+                  </th>
+                );
+                prevGroup = g.name;
               }
-              cells.push(<th key="event" rowSpan={2} style={{ padding: '4px 8px', textAlign: 'left', borderBottom: '2px solid #475569' }}>Event</th>);
+              cells.push(<th key="gap-event" style={{ width: 6, padding: 0, border: 'none' }} rowSpan={2} />);
+              cells.push(<th key="event" rowSpan={2} style={{ padding: '4px 8px', textAlign: 'left', borderBottom: '2px solid #475569', background: '#334155' }}>Event</th>);
               return cells;
             })()}
           </tr>
-          <tr style={{ background: '#334155', color: '#e2e8f0' }}>
-            {COLUMNS.filter(c => c.group).map(col => (
-              <th key={col.key} style={{ padding: '2px 8px', textAlign: 'center', border: '1px solid #475569', fontSize: 10 }}>
-                {col.label}
-              </th>
-            ))}
+          <tr style={{ color: '#e2e8f0' }}>
+            {COLUMNS.filter(c => c.group).map((col, idx) => {
+              const g = groups.find(g2 => COLUMNS.slice(g2.start, g2.start + g2.span).includes(col));
+              return (
+                <th key={col.key} style={{
+                  padding: '2px 6px', textAlign: 'center', fontSize: 10,
+                  background: groupColors[col.group] || '#334155',
+                  borderBottom: '1px solid #475569',
+                  borderLeft: isFirstInGroup(COLUMNS.indexOf(col)) ? '1px solid #475569' : 'none',
+                  borderRight: isLastInGroup(COLUMNS.indexOf(col)) ? '1px solid #475569' : 'none',
+                }}>
+                  {col.label}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -185,16 +200,27 @@ export default function TimelineTable() {
             const isVBuy  = event?.type === 'vehicle_buy';
             const isVTradeup = event?.type === 'vehicle_tradeup';
             const eventColor = isDeath ? '#ef4444' : isPetDeath ? '#f97316' : isEog ? '#16a34a' : isSS ? '#2563eb' : isSell ? '#16a34a' : isBuy ? '#7c3aed' : (isVSell || isVBuy || isVTradeup) ? '#ec4899' : undefined;
+            const isLast = i === rows.length - 1;
             return (
               <tr key={row.year} style={{ background: i % 2 === 0 ? '#1e293b' : '#0f172a', color: '#e2e8f0' }}>
-                {COLUMNS.map((col) => {
-                  const narrow = col.key === 'year' || col.key === 'erik_age' || col.key === 'deb_age';
-                  return (
-                    <td key={col.key} style={{ padding: narrow ? '2px 3px' : '2px 8px', textAlign: 'right', borderBottom: '1px solid #334155' }}>
+                {COLUMNS.map((col, ci) => {
+                  const first = isFirstInGroup(ci);
+                  const last = isLastInGroup(ci);
+                  const needsGap = first && ci > 0 && COLUMNS[ci - 1].group !== col.group;
+                  return [
+                    needsGap && <td key={`gap-${ci}`} style={{ width: 6, padding: 0, border: 'none' }} />,
+                    <td key={col.key} style={{
+                      padding: '2px 6px', textAlign: 'right',
+                      borderBottom: isLast ? '1px solid #475569' : '1px solid #334155',
+                      borderLeft: first ? '1px solid #475569' : 'none',
+                      borderRight: last ? '1px solid #475569' : 'none',
+                    }}>
                       {col.format(col.compute ? col.compute(row) : row[col.key])}
                     </td>
-                  );
+                  ];
                 })}
+                {/* gap before event */}
+                <td style={{ width: 6, padding: 0, border: 'none' }} />
                 <td style={{ padding: '2px 8px', textAlign: 'left', borderBottom: '1px solid #334155', color: eventColor, fontWeight: event ? 600 : undefined, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={event?.label || ''}>
                   {event?.label || ''}
                 </td>
