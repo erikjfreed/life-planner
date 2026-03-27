@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "proxy": "http://localhost:3001",
+  "homepage": "/lifeplanner",
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
     "cra-template-redux": "2.0.0",
