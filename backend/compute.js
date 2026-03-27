@@ -84,6 +84,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
 
   for (let year = startYear; year <= endOfGameYear + 2; year++) {
     saleProceeds = 0;
+    let reNetCost = 0;
     const yrs     = year - startYear;
     const erikAge = year - new Date(erikDOB).getFullYear();
     const debAge  = year - new Date(debDOB).getFullYear();
@@ -121,7 +122,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           monthsActive: monthsOwned,
         });
         const loanTotal = propLoans.reduce((s, l) => s + l.principal, 0);
-        saleProceeds -= (e.purchase_price - loanTotal);
+        reNetCost += (e.purchase_price - loanTotal);
       }
     }
 
@@ -136,15 +137,19 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         const sellingCostsPct = sell.selling_costs_pct != null ? sell.selling_costs_pct : 0;
         const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
         const proceeds = (salePrice - totalPrincipal) * (1 - sellingCostsPct);
-        saleProceeds += proceeds;
+        reNetCost -= proceeds;
       }
     }
 
-    // Vehicle tradeup net cost added to expenses (so it flows through draw/tax)
+    // Capital expenses: vehicle tradeup + RE net cost
     let vehicleTradeupCost = 0;
     events.filter(e => e.type === 'vehicle_tradeup' && e.year === year).forEach(e => {
       vehicleTradeupCost += (e.purchase_price ?? 0) - (e.sale_price ?? 0);
     });
+    const netCapCost = reNetCost + vehicleTradeupCost;
+    const capExpense = Math.max(0, netCapCost);
+    // If net is negative (more sale proceeds than purchases), surplus goes to investments
+    if (netCapCost < 0) saleProceeds += Math.abs(netCapCost);
     // Legacy vehicle buy/sell cash flows
     events.filter(e => e.type === 'vehicle_sell' && e.year === year).forEach(e => {
       saleProceeds += (e.sale_price ?? 0);
@@ -254,7 +259,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const portland = alive && portlandExpProp ? inf(portlandExpProp.expenseBase, generalInflation, Math.max(0, year - portlandExpProp.yearBought)) * ((portlandExpProp.monthsActive ?? 0) / 12) : 0;
     const ltc      = 0;
 
-    const totalExpenses = loanPayments + health + pets + vehicles + travel + living + allowance + realEstateCosts + vehicleTradeupCost;
+    const totalExpenses = loanPayments + health + pets + vehicles + travel + living + allowance + realEstateCosts + capExpense;
 
     // -- SOCIAL SECURITY --
     const erikAlive = year < erikDeathYear || (year === erikDeathYear && erikMonthsAlive > 0);
@@ -371,7 +376,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
 
     rows.push({
       year, yrs, erik_age: erikAge, deb_age: debAge,
-      loans: loanPayments, health, pets, vehicles, travel, living, allowance, capital_purchases: vehicleTradeupCost, orcas, portland, ltc,
+      loans: loanPayments, health, pets, vehicles, travel, living, allowance, cap_expense: capExpense, orcas, portland, ltc,
       total_expenses: totalExpenses,
       social_security_erik: socialSecurityErik, social_security_debbie: socialSecurityDebbie,
       social_security_subtotal: socialSecuritySubtotal, social_security_tax: socialSecurityTax, social_security_net: socialSecurityNet,
