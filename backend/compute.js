@@ -357,7 +357,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const investPlusRealEstate = investmentBalance + realEstate;
     const effectiveNetDraw = investmentBalance === 0 ? 0 : netDraw;
     const drawRate     = investPlusRealEstate > 0 ? effectiveNetDraw / investPlusRealEstate : 0;
-    const capitalSpend = Math.max(0, effectiveNetDraw - roi);
+    const capitalSpend = Math.max(0, grossDraw - roi);
 
     rows.push({
       year, yrs, erik_age: erikAge, deb_age: debAge,
