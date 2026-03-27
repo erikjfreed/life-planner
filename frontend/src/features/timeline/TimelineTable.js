@@ -96,6 +96,7 @@ const COLUMNS = [
   { key: 'travel', label: 'Travel', group: 'Lifestyle', format: fmt },
   { key: 'living', label: 'General', group: 'Lifestyle', format: fmt },
   { key: 'allowance', label: 'Allowance', group: 'Lifestyle', format: fmt },
+  { key: 'capital_purchases', label: 'Cap Purch', group: 'Lifestyle', format: fmt },
   { key: 'total_expenses', label: 'Total Exp', format: fmt },
   { key: 'roi', label: 'ROI', group: 'Income', format: fmt },
   { key: 'social_security_net', label: 'SS', group: 'Income', format: fmt },

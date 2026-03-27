@@ -25,7 +25,7 @@ export default function Dashboard() {
   // Shared Y-axis max for income and expense charts ($K)
   const sharedYMax = rows.length > 0 ? Math.ceil(Math.max(
     ...rows.map(r => ((r.social_security_subtotal || 0) + (r.gross_draw || 0)) / 1000),
-    ...rows.map(r => ((r.total_tax || 0) + (r.allowance || 0) + (r.real_estate_costs || 0) + (r.loans || 0) + (r.travel || 0) + (r.living || 0) + (r.health || 0) + (r.pets || 0) + (r.vehicles || 0)) / 1000)
+    ...rows.map(r => ((r.total_tax || 0) + (r.allowance || 0) + (r.real_estate_costs || 0) + (r.loans || 0) + (r.travel || 0) + (r.living || 0) + (r.health || 0) + (r.pets || 0) + (r.vehicles || 0) + (r.capital_purchases || 0)) / 1000)
   ) / 100) * 100 : 500;
 
   const deathEvents   = events.filter(e => e.type === 'spouse_death');

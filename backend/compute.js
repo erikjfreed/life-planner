@@ -140,9 +140,10 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       }
     }
 
-    // Vehicle tradeup cash flows (net cost = purchase_price - sale_price)
+    // Vehicle tradeup net cost added to expenses (so it flows through draw/tax)
+    let vehicleTradeupCost = 0;
     events.filter(e => e.type === 'vehicle_tradeup' && e.year === year).forEach(e => {
-      saleProceeds -= ((e.purchase_price ?? 0) - (e.sale_price ?? 0));
+      vehicleTradeupCost += (e.purchase_price ?? 0) - (e.sale_price ?? 0);
     });
     // Legacy vehicle buy/sell cash flows
     events.filter(e => e.type === 'vehicle_sell' && e.year === year).forEach(e => {
@@ -253,7 +254,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const portland = alive && portlandExpProp ? inf(portlandExpProp.expenseBase, generalInflation, Math.max(0, year - portlandExpProp.yearBought)) * ((portlandExpProp.monthsActive ?? 0) / 12) : 0;
     const ltc      = 0;
 
-    const totalExpenses = loanPayments + health + pets + vehicles + travel + living + allowance + realEstateCosts;
+    const totalExpenses = loanPayments + health + pets + vehicles + travel + living + allowance + realEstateCosts + vehicleTradeupCost;
 
     // -- SOCIAL SECURITY --
     const erikAlive = year < erikDeathYear || (year === erikDeathYear && erikMonthsAlive > 0);
@@ -370,7 +371,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
 
     rows.push({
       year, yrs, erik_age: erikAge, deb_age: debAge,
-      loans: loanPayments, health, pets, vehicles, travel, living, allowance, orcas, portland, ltc,
+      loans: loanPayments, health, pets, vehicles, travel, living, allowance, capital_purchases: vehicleTradeupCost, orcas, portland, ltc,
       total_expenses: totalExpenses,
       social_security_erik: socialSecurityErik, social_security_debbie: socialSecurityDebbie,
       social_security_subtotal: socialSecuritySubtotal, social_security_tax: socialSecurityTax, social_security_net: socialSecurityNet,
