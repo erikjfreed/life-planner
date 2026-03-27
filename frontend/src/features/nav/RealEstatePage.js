@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateEvent } from '../events/eventsSlice';
+import { updateEvent, createEvent, deleteEvent, fetchEvents } from '../events/eventsSlice';
 import { updateEntity } from '../entities/entitiesSlice';
+import { fetchTimeline } from '../timeline/timelineSlice';
 
 const fmt  = v => `$${Math.round(v).toLocaleString()}`;
 
@@ -15,7 +16,7 @@ function buildValues(purchasePrice, purchaseYear, rate, endYear = 2060) {
   return rows;
 }
 
-function PropertyPanel({ entity, buyEvent, endYear, dispatch }) {
+function PropertyPanel({ entity, buyEvent, sellEvent, endYear, dispatch }) {
   const [view, setView] = useState('expenses');
   const services = entity.services_json ? JSON.parse(entity.services_json) : [];
   const serviceTotal = services.reduce((s, i) => s + i.yearly, 0);
@@ -52,7 +53,30 @@ function PropertyPanel({ entity, buyEvent, endYear, dispatch }) {
         </span>
         <span />
         <span style={styles.label}>Buy Date</span>
-        <span style={styles.val}>{buyEvent.month ? `${buyEvent.month}/${buyEvent.year}` : buyEvent.year}</span>
+        <span style={styles.val}>
+          <select value={buyEvent.month || 1} onChange={e => dispatch(updateEvent({ ...buyEvent, month: parseInt(e.target.value) })).then(() => dispatch(fetchTimeline()))} style={styles.select}>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          /
+          <select value={buyEvent.year} onChange={e => dispatch(updateEvent({ ...buyEvent, year: parseInt(e.target.value) })).then(() => dispatch(fetchTimeline()))} style={styles.select}>
+            {Array.from({ length: 30 }, (_, i) => 2020 + i).map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </span>
+        <span style={styles.label}>Sell Date</span>
+        <span style={styles.val}>
+          {sellEvent ? <>
+            <select value={sellEvent.month || 1} onChange={e => dispatch(updateEvent({ ...sellEvent, month: parseInt(e.target.value) })).then(() => dispatch(fetchTimeline()))} style={styles.select}>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+            /
+            <select value={sellEvent.year} onChange={e => dispatch(updateEvent({ ...sellEvent, year: parseInt(e.target.value) })).then(() => dispatch(fetchTimeline()))} style={styles.select}>
+              {Array.from({ length: 30 }, (_, i) => 2020 + i).map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            {' '}
+            <button onClick={() => dispatch(deleteEvent(sellEvent.id)).then(() => dispatch(fetchTimeline()))} style={styles.clearBtn}>x</button>
+          </> : <button onClick={() => dispatch(createEvent({ type: 'real_estate_sell', year: buyEvent.year + 1, month: 6, entity_id: entity.id })).then(() => dispatch(fetchTimeline()))} style={styles.select}>Set</button>}
+        </span>
+        <span />
         <span style={styles.label}>Tax Rate</span>
         <span style={styles.val}>
           <select
@@ -152,6 +176,7 @@ export default function RealEstatePage() {
   }
 
   const buyEvent = events.find(ev => ev.type === 'real_estate_buy' && ev.entity_id === selected?.id);
+  const sellEvent = events.find(ev => ev.type === 'real_estate_sell' && ev.entity_id === selected?.id);
 
   return (
     <div style={styles.page}>
@@ -166,7 +191,7 @@ export default function RealEstatePage() {
           </button>
         ))}
       </div>
-      {selected && buyEvent && <PropertyPanel entity={selected} buyEvent={buyEvent} endYear={endOfGame} dispatch={dispatch} />}
+      {selected && buyEvent && <PropertyPanel entity={selected} buyEvent={buyEvent} sellEvent={sellEvent} endYear={endOfGame} dispatch={dispatch} />}
     </div>
   );
 }
@@ -185,6 +210,7 @@ const styles = {
   val: { fontSize: 12, color: '#e2e8f0' },
   select: { fontSize: 12, border: '1px solid #475569', borderRadius: 3, padding: '0 2px', background: '#1e293b', color: '#e2e8f0' },
   input: { fontSize: 12, border: '1px solid #475569', borderRadius: 3, padding: '1px 4px', background: '#1e293b', color: '#e2e8f0' },
+  clearBtn: { fontSize: 10, border: '1px solid #475569', borderRadius: 3, padding: '0 4px', background: '#1e293b', color: '#ef4444', cursor: 'pointer' },
   sectionLabel: { fontSize: 12, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '16px 0 6px' },
   table: { borderCollapse: 'collapse', width: '100%' },
   th: { fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
