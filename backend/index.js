@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const db = require('./database');
 const { computeTimeline } = require('./compute');
 const { buildTaxData } = require('./taxHelpers');
@@ -8,7 +9,6 @@ const { computeTaxes } = require('./taxBrackets');
 const DEFAULT_PARAMS = require('./defaultParams');
 
 const app = express();
-const PORT = 3001;
 
 app.use(cors());
 app.use(express.json());
@@ -414,6 +414,14 @@ app.post('/api/tax-estimate', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
+// Serve React build in production
+const buildPath = path.join(__dirname, '..', 'frontend', 'build');
+app.use(express.static(buildPath));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(buildPath, 'index.html'));
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });

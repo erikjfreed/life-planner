@@ -13,7 +13,7 @@ function VehiclePanel({ entity, buyEvent, sellEvent, nextEntity, dispatch }) {
     if (yearVal === '') {
       // Clear tradeup
       if (nextEntity) {
-        await fetch('http://localhost:3001/api/vehicle-tradeup', {
+        await fetch('/api/vehicle-tradeup', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sell_entity_id: entity.id, buy_entity_id: nextEntity.id }),
@@ -22,7 +22,7 @@ function VehiclePanel({ entity, buyEvent, sellEvent, nextEntity, dispatch }) {
     } else {
       // Create tradeup
       if (nextEntity) {
-        await fetch('http://localhost:3001/api/vehicle-tradeup', {
+        await fetch('/api/vehicle-tradeup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sell_entity_id: entity.id, buy_entity_id: nextEntity.id, year: parseInt(yearVal), purchase_price: 50000 }),

@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { updateParameters } from '../parameters/parametersSlice';
 
 export const fetchTimeline = createAsyncThunk('timeline/fetch', async () => {
-  const res = await fetch('http://localhost:3001/api/timeline');
+  const res = await fetch('/api/timeline');
   return res.json();
 });
 

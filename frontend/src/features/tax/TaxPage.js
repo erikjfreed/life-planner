@@ -16,7 +16,7 @@ export default function TaxPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch('http://localhost:3001/api/tax-computed')
+    fetch('/api/tax-computed')
       .then(r => r.json())
       .then(data => {
         setTaxData(data.map(r => ({ ...r, estimate: undefined, ...r })));
