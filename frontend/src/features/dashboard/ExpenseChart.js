@@ -2,6 +2,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Ca
 
 
 const CATEGORIES = [
+  { key: 'total_tax', label: 'Taxes',     color: '#111827' },
   { key: 'allowance', label: 'Allowance', color: '#3b82f6' },
   { key: 'real_estate_costs',  label: 'Housing',  color: '#ef4444' },
   { key: 'loans',     label: 'Loans',     color: '#22c55e' },
