@@ -136,11 +136,20 @@ export default function TimelineTable() {
               let i = 0;
               while (i < COLUMNS.length) {
                 const col = COLUMNS[i];
+                const groupColors = {
+                  'Real Estate': '#2d3a4a',
+                  'Expenses': '#2d3748',
+                  'Tax': '#3b2d2d',
+                  'Income': '#2d3b2d',
+                  'Draw': '#2d2d3b',
+                  'Capital': '#3b2d3b',
+                  'Wealth': '#2d3b3b',
+                };
                 if (col.group) {
                   let span = 1;
                   while (i + span < COLUMNS.length && COLUMNS[i + span].group === col.group) span++;
                   cells.push(
-                    <th key={col.group} colSpan={span} style={{ padding: '2px 8px', textAlign: 'center', border: '1px solid #475569', fontSize: 10, fontWeight: 700 }}>
+                    <th key={col.group} colSpan={span} style={{ padding: '2px 8px', textAlign: 'center', border: '1px solid #475569', fontSize: 10, fontWeight: 700, background: groupColors[col.group] || '#334155' }}>
                       {col.group}
                     </th>
                   );
