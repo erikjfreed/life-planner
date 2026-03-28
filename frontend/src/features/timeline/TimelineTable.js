@@ -10,28 +10,31 @@ function getRowEvent(row, events, entities, params) {
 
   const erikDeathEvent = events.find(e => e.type === 'spouse_death' && e.name === 'Erik');
   const debDeathEvent  = events.find(e => e.type === 'spouse_death' && e.name === 'Deb');
+  const erikDeathYear = erikDeathEvent?.date ? parseInt(erikDeathEvent.date.split('-')[0]) : null;
+  const debDeathYear = debDeathEvent?.date ? parseInt(debDeathEvent.date.split('-')[0]) : null;
 
-  if (erikDeathEvent && row.year === erikDeathEvent.year) {
-    const age = params?.erikDOB ? erikDeathEvent.year - new Date(params.erikDOB).getFullYear() : '';
+  if (erikDeathEvent && row.year === erikDeathYear) {
+    const age = params?.erikDOB ? erikDeathYear - new Date(params.erikDOB).getFullYear() : '';
     labels.push(`RIP Erik ${age}`);
     type = 'spouse_death';
   }
-  if (debDeathEvent && row.year === debDeathEvent.year) {
-    const age = params?.debDOB ? debDeathEvent.year - new Date(params.debDOB).getFullYear() : '';
+  if (debDeathEvent && row.year === debDeathYear) {
+    const age = params?.debDOB ? debDeathYear - new Date(params.debDOB).getFullYear() : '';
     labels.push(`RIP Deb ${age}`);
     type = 'spouse_death';
   }
 
-  const endOfGameYear = erikDeathEvent && debDeathEvent
-    ? Math.max(erikDeathEvent.year, debDeathEvent.year) + 2
+  const endOfGameYear = erikDeathYear && debDeathYear
+    ? Math.max(erikDeathYear, debDeathYear) + 2
     : null;
   if (endOfGameYear && row.year === endOfGameYear) {
     labels.push('EndGame');
     type = type || 'eog';
   }
 
-  events.filter(e => e.type === 'social_security_start' && e.year === row.year).forEach(e => {
-    labels.push(`SS ${e.name}${e.month ? ' ' + MONTHS[e.month - 1] : ''}`);
+  events.filter(e => e.type === 'social_security_start' && e.date && parseInt(e.date.split('-')[0]) === row.year).forEach(e => {
+    const eMonth = e.date ? parseInt(e.date.split('-')[1]) : null;
+    labels.push(`SS ${e.name}${eMonth ? ' ' + MONTHS[eMonth - 1] : ''}`);
     type = type || 'ss';
   });
 
@@ -43,31 +46,31 @@ function getRowEvent(row, events, entities, params) {
     }
   });
 
-  events.filter(e => e.type === 'real_estate_buy' && e.year === row.year && !e.hidden).forEach(e => {
+  events.filter(e => e.type === 'real_estate_buy' && e.date && parseInt(e.date.split('-')[0]) === row.year && !e.hidden).forEach(e => {
     const entity = entities.find(en => en.id === e.entity_id);
     labels.push(`Buy ${entity?.street_address ? entity.street_address.split(',')[0] : (entity?.name || '?')}`);
     type = type || 'real_estate_buy';
   });
 
-  events.filter(e => e.type === 'real_estate_sell' && e.year === row.year && !e.hidden).forEach(e => {
+  events.filter(e => e.type === 'real_estate_sell' && e.date && parseInt(e.date.split('-')[0]) === row.year && !e.hidden).forEach(e => {
     const entity = entities.find(en => en.id === e.entity_id);
     labels.push(`Sell ${entity?.street_address ? entity.street_address.split(',')[0] : (entity?.name || '?')}`);
     type = type || 'real_estate_sell';
   });
 
-  events.filter(e => e.type === 'vehicle_buy' && e.year === row.year && !e.hidden).forEach(e => {
+  events.filter(e => e.type === 'vehicle_buy' && e.date && parseInt(e.date.split('-')[0]) === row.year && !e.hidden).forEach(e => {
     const entity = entities.find(en => en.id === e.entity_id);
     labels.push(`Buy ${entity?.name || '?'}`);
     type = type || 'vehicle_buy';
   });
 
-  events.filter(e => e.type === 'vehicle_sell' && e.year === row.year).forEach(e => {
+  events.filter(e => e.type === 'vehicle_sell' && e.date && parseInt(e.date.split('-')[0]) === row.year).forEach(e => {
     const entity = entities.find(en => en.id === e.entity_id);
     labels.push(`Sell ${entity?.name || '?'}`);
     type = type || 'vehicle_sell';
   });
 
-  events.filter(e => e.type === 'vehicle_tradeup' && e.year === row.year).forEach(e => {
+  events.filter(e => e.type === 'vehicle_tradeup' && e.date && parseInt(e.date.split('-')[0]) === row.year).forEach(e => {
     const newEntity = entities.find(en => en.id === e.entity_id);
     const owner = newEntity?.street_address || '?';
     labels.push(`Tradeup ${owner}'s vehicle`);

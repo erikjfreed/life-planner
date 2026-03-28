@@ -23,6 +23,8 @@ function computeMortgageInterest(loan, startYear, endYear) {
   return results;
 }
 
+const { eventYear } = require('./dateUtils');
+
 /**
  * Build tax data rows from timeline, entities, events, loans, and params.
  * Returns one row per timeline year with tax-relevant fields.
@@ -41,12 +43,12 @@ function buildTaxData(timelineRows, entities, events, loans, params) {
   function activeEntityIds(year) {
     const ids = new Set();
     for (const ev of events) {
-      if ((ev.type === 'real_estate_buy' || ev.type === 'vehicle_buy') && ev.year <= year) {
+      if ((ev.type === 'real_estate_buy' || ev.type === 'vehicle_buy') && eventYear(ev) <= year) {
         ids.add(ev.entity_id);
       }
     }
     for (const ev of events) {
-      if ((ev.type === 'real_estate_sell' || ev.type === 'vehicle_sell') && ev.year <= year) {
+      if ((ev.type === 'real_estate_sell' || ev.type === 'vehicle_sell') && eventYear(ev) <= year) {
         ids.delete(ev.entity_id);
       }
     }
@@ -58,8 +60,8 @@ function buildTaxData(timelineRows, entities, events, loans, params) {
   const debDeath = events.find(e => e.type === 'spouse_death' && e.name === 'Deb');
   const erikBirthYear = params.erikDOB ? new Date(params.erikDOB).getFullYear() : null;
   const debBirthYear = params.debDOB ? new Date(params.debDOB).getFullYear() : null;
-  const erikDeathYear = erikDeath ? (erikDeath.age != null && erikBirthYear ? erikBirthYear + erikDeath.age : erikDeath.year) : null;
-  const debDeathYear = debDeath ? (debDeath.age != null && debBirthYear ? debBirthYear + debDeath.age : debDeath.year) : null;
+  const erikDeathYear = erikDeath ? (erikDeath.age != null && erikBirthYear ? erikBirthYear + erikDeath.age : eventYear(erikDeath)) : null;
+  const debDeathYear = debDeath ? (debDeath.age != null && debBirthYear ? debBirthYear + debDeath.age : eventYear(debDeath)) : null;
 
   return timelineRows.map(row => {
     const activeIds = activeEntityIds(row.year);

@@ -6,8 +6,8 @@ const fmt = v => `$${Math.round(v).toLocaleString()}`;
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function SSPanel({ entity, ssEvent, timelineRows, params }) {
-  const startYear = ssEvent.year;
-  const startMonth = ssEvent.month;
+  const startYear = ssEvent.date ? parseInt(ssEvent.date.split('-')[0]) : null;
+  const startMonth = ssEvent.date ? parseInt(ssEvent.date.split('-')[1]) : null;
   const monthlyBase = ssEvent.monthly_payment;
   const socialSecurityCoLA = params.socialSecurityCoLA ?? 0;
   const socialSecurityFedTaxRate = params.socialSecurityFedTaxRate ?? 0;

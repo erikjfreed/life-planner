@@ -20,13 +20,13 @@ function CurrentVehiclePanel({ entity, buyEvent, sellEvent, dispatch }) {
         <span style={styles.val}>{buyEvent.purchase_price != null ? fmt(buyEvent.purchase_price) : '—'}</span>
         <span />
         <span style={styles.labelCell}>Purchase Date</span>
-        <span style={styles.val}>{`${buyEvent.month || 1}/1/${buyEvent.year}`}</span>
+        <span style={styles.val}>{buyEvent.date ? `${parseInt(buyEvent.date.split('-')[1])}/${parseInt(buyEvent.date.split('-')[2])}/${parseInt(buyEvent.date.split('-')[0])}` : '—'}</span>
         <span style={styles.labelCell}>Yearly Cost</span>
         <span style={styles.val}>{fmt(totalExpense)}</span>
         {sellEvent && <>
           <span />
           <span style={styles.labelCell}>Tradeup</span>
-          <span style={styles.val}>{`${sellEvent.month || 1}/1/${sellEvent.year}`}</span>
+          <span style={styles.val}>{sellEvent.date ? `${parseInt(sellEvent.date.split('-')[1])}/${parseInt(sellEvent.date.split('-')[2])}/${parseInt(sellEvent.date.split('-')[0])}` : '—'}</span>
           <span style={styles.labelCell}>Sale Price</span>
           <span style={styles.val}>{sellEvent.sale_price != null ? fmt(sellEvent.sale_price) : '—'}</span>
         </>}
@@ -89,10 +89,11 @@ function NextVehiclePanel({ entity, currentEntity, tradeupEvent, events, dispatc
     }
   };
 
-  const tradeupYear = tradeupEvent?.year;
+  const tradeupYear = tradeupEvent?.date ? parseInt(tradeupEvent.date.split('-')[0]) : null;
   const depRate = currentEntity?.appreciation_rate ?? -0.075;
+  const currentBuyYear = currentBuyEvent?.date ? parseInt(currentBuyEvent.date.split('-')[0]) : new Date().getFullYear();
   const estimatedSalePrice = currentBuyEvent
-    ? Math.round(currentBuyEvent.purchase_price * Math.pow(1 + depRate, (tradeupYear || new Date().getFullYear()) - currentBuyEvent.year) / 1000) * 1000
+    ? Math.round(currentBuyEvent.purchase_price * Math.pow(1 + depRate, (tradeupYear || new Date().getFullYear()) - currentBuyYear) / 1000) * 1000
     : 0;
 
   return (
@@ -105,17 +106,22 @@ function NextVehiclePanel({ entity, currentEntity, tradeupEvent, events, dispatc
         <span style={styles.val}>{entity.street_address || '—'}</span>
         <span style={styles.labelCell}>Tradeup Date</span>
         <span style={styles.val}>
-          {tradeupEvent ? <>
-            <select value={tradeupEvent.month || 1} onChange={e => dispatch(updateEvent({ ...tradeupEvent, month: parseInt(e.target.value) }))} style={styles.select}>
+          {tradeupEvent ? (() => {
+            const tuMonth = tradeupEvent.date ? parseInt(tradeupEvent.date.split('-')[1]) : 1;
+            const tuYear = tradeupEvent.date ? parseInt(tradeupEvent.date.split('-')[0]) : new Date().getFullYear();
+            const tuDay = tradeupEvent.date ? parseInt(tradeupEvent.date.split('-')[2]) : 1;
+            return <>
+            <select value={tuMonth} onChange={e => { const m = parseInt(e.target.value); dispatch(updateEvent({ ...tradeupEvent, date: `${String(tuYear).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(tuDay).padStart(2,'0')}` })); }} style={styles.select}>
               {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
             </select>
             /
-            <select value={tradeupEvent.year} onChange={e => handleTradeupYearChange(e.target.value)} style={styles.select}>
+            <select value={tuYear} onChange={e => handleTradeupYearChange(e.target.value)} style={styles.select}>
               {Array.from({ length: 20 }, (_, i) => new Date().getFullYear() + i).map(y => <option key={y} value={y}>{y}</option>)}
             </select>
             {' '}
             <button onClick={() => handleTradeupYearChange('')} style={styles.clearBtn}>x</button>
-          </> : <button onClick={() => handleTradeupYearChange(String(new Date().getFullYear() + 2))} style={styles.select}>Set</button>}
+          </>;
+          })() : <button onClick={() => handleTradeupYearChange(String(new Date().getFullYear() + 2))} style={styles.select}>Set</button>}
         </span>
         <span />
         <span style={styles.labelCell}>Purchase Price</span>

@@ -48,8 +48,8 @@ export function ChartEventLinesOverlay({ deathEvents, erikBirthYear, debBirthYea
 
   const erikDeath = (deathEvents ?? []).find(e => e.name === 'Erik');
   const debDeath  = (deathEvents ?? []).find(e => e.name === 'Deb');
-  const erikDeathYear = erikDeath?.year;
-  const debDeathYear  = debDeath?.year;
+  const erikDeathYear = erikDeath?.date ? parseInt(erikDeath.date.split('-')[0]) : null;
+  const debDeathYear  = debDeath?.date ? parseInt(debDeath.date.split('-')[0]) : null;
   const erikAge = erikBirthYear && erikDeathYear ? erikDeathYear - erikBirthYear : null;
   const debAge  = debBirthYear  && debDeathYear  ? debDeathYear  - debBirthYear  : null;
 
@@ -57,29 +57,37 @@ export function ChartEventLinesOverlay({ deathEvents, erikBirthYear, debBirthYea
   const allEvents = [];
   if (width > 0) {
     (ssEvents ?? []).forEach(ev => {
-      const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
-      allEvents.push({ key: `ss-${ev.name}`, x: xPixel(fractionalYear, minYear, maxYear, width), label: `SS ${ev.name}${ev.month ? ' ' + MONTHS[ev.month - 1] : ''}`, color: '#2563eb' });
+      const evYear = ev.date ? parseInt(ev.date.split('-')[0]) : 0;
+      const evMonth = ev.date ? parseInt(ev.date.split('-')[1]) : 0;
+      const fractionalYear = evYear + (evMonth ? (evMonth - 1) / 12 : 0);
+      allEvents.push({ key: `ss-${ev.name}`, x: xPixel(fractionalYear, minYear, maxYear, width), label: `SS ${ev.name}${evMonth ? ' ' + MONTHS[evMonth - 1] : ''}`, color: '#2563eb' });
     });
     (reEvents ?? []).forEach(ev => {
       const entity = (entities ?? []).find(en => en.id === ev.entity_id);
       const name = entity?.street_address ? entity.street_address.split(',')[0] : (entity?.name || '?');
       const isSell = ev.type === 'real_estate_sell';
-      const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
+      const evYear = ev.date ? parseInt(ev.date.split('-')[0]) : 0;
+      const evMonth = ev.date ? parseInt(ev.date.split('-')[1]) : 0;
+      const fractionalYear = evYear + (evMonth ? (evMonth - 1) / 12 : 0);
       allEvents.push({ key: `${ev.type}-${ev.entity_id}`, x: xPixel(fractionalYear, minYear, maxYear, width), label: `${isSell ? 'Sell' : 'Buy'} ${name}`, color: isSell ? '#16a34a' : '#7c3aed' });
     });
     (vehicleEvents ?? []).forEach(ev => {
       const entity = (entities ?? []).find(en => en.id === ev.entity_id);
-      const fractionalYear = ev.year + (ev.month ? (ev.month - 1) / 12 : 0);
+      const evYear = ev.date ? parseInt(ev.date.split('-')[0]) : 0;
+      const evMonth = ev.date ? parseInt(ev.date.split('-')[1]) : 0;
+      const fractionalYear = evYear + (evMonth ? (evMonth - 1) / 12 : 0);
       const label = ev.type === 'vehicle_tradeup' ? `Tradeup ${entity?.street_address || '?'}'s vehicle`
         : ev.type === 'vehicle_sell' ? `Sell ${entity?.name || '?'}`
         : `Buy ${entity?.name || '?'}`;
       allEvents.push({ key: `${ev.type}-${ev.entity_id}`, x: xPixel(fractionalYear, minYear, maxYear, width), label, color: '#ec4899' });
     });
     if (erikDeath && erikAge) {
-      allEvents.push({ key: 'death-erik', x: xPixel(erikDeathYear + (erikDeath.month ? (erikDeath.month - 1) / 12 : 0), minYear, maxYear, width), label: `RIP Erik ${erikAge}`, color: '#ef4444' });
+      const erikDeathMonth = erikDeath.date ? parseInt(erikDeath.date.split('-')[1]) : 0;
+      allEvents.push({ key: 'death-erik', x: xPixel(erikDeathYear + (erikDeathMonth ? (erikDeathMonth - 1) / 12 : 0), minYear, maxYear, width), label: `RIP Erik ${erikAge}`, color: '#ef4444' });
     }
     if (debDeath && debAge) {
-      allEvents.push({ key: 'death-deb', x: xPixel(debDeathYear + (debDeath.month ? (debDeath.month - 1) / 12 : 0), minYear, maxYear, width), label: `RIP Deb ${debAge}`, color: '#8b5cf6' });
+      const debDeathMonth = debDeath.date ? parseInt(debDeath.date.split('-')[1]) : 0;
+      allEvents.push({ key: 'death-deb', x: xPixel(debDeathYear + (debDeathMonth ? (debDeathMonth - 1) / 12 : 0), minYear, maxYear, width), label: `RIP Deb ${debAge}`, color: '#8b5cf6' });
     }
     (entities ?? []).filter(e => e.type === 'pet' && e.appreciation_rate && e.term_years).forEach(e => {
       const deathYear = Math.round(e.appreciation_rate + e.term_years);

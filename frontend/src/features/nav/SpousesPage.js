@@ -24,8 +24,9 @@ export default function SpousesPage() {
     const ev = deathEvents.find(e => e.entity_id === entity.id);
     const dob = firstName === 'Erik' ? erikDOB : firstName === 'Deborah' ? debDOB : null;
     const birthYear = firstName === 'Erik' ? erikBirthYear : firstName === 'Deborah' ? debBirthYear : null;
-    const deathYear = ev ? (ev.age != null && birthYear ? birthYear + ev.age : ev.year) : null;
-    const deathMonth = ev?.month;
+    const evYear = ev?.date ? parseInt(ev.date.split('-')[0]) : null;
+    const deathYear = ev ? (ev.age != null && birthYear ? birthYear + ev.age : evYear) : null;
+    const deathMonth = ev?.date ? parseInt(ev.date.split('-')[1]) : null;
     const age = ev?.age != null ? ev.age : (deathYear && birthYear ? deathYear - birthYear : null);
     const dobParsed = dob ? new Date(dob) : null;
     const dobFormatted = dobParsed ? `${dobParsed.getMonth() + 1}/${dobParsed.getDate()}/${dobParsed.getFullYear()}` : null;

@@ -76,8 +76,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,
-    year INTEGER,
-    month INTEGER,
+    date TEXT,
     age INTEGER,
     entity_id INTEGER REFERENCES entities(id),
     name TEXT,
@@ -114,8 +113,8 @@ if (entityCount.cnt === 0) {
     VALUES (@type, @name, @street_address, @appreciation_rate, @services_json, @tax_yearly, @insurance_yearly, @tax_rate, @mortgage_rate, @term_years)
   `);
   const insertEvent = db.prepare(`
-    INSERT INTO events (type, year, month, age, entity_id, name, purchase_price, down_payment, principal_balance, monthly_payment, sale_price, selling_costs_pct, hidden)
-    VALUES (@type, @year, @month, @age, @entity_id, @name, @purchase_price, @down_payment, @principal_balance, @monthly_payment, @sale_price, @selling_costs_pct, @hidden)
+    INSERT INTO events (type, date, age, entity_id, name, purchase_price, down_payment, principal_balance, monthly_payment, sale_price, selling_costs_pct, hidden)
+    VALUES (@type, @date, @age, @entity_id, @name, @purchase_price, @down_payment, @principal_balance, @monthly_payment, @sale_price, @selling_costs_pct, @hidden)
   `);
 
   db.transaction(() => {
@@ -166,25 +165,25 @@ if (entityCount.cnt === 0) {
     });
     const portlandId = portlandResult.lastInsertRowid;
 
-    insertEvent.run({ type: 'real_estate_buy',   year: 2026, month: null, age: null, entity_id: orcasId,    name: null, purchase_price: 2000000, down_payment: null, principal_balance: 449764, monthly_payment: 2186, sale_price: null, selling_costs_pct: null, hidden: 1 });
-    insertEvent.run({ type: 'real_estate_buy',   year: 2026, month: null, age: null, entity_id: portlandId, name: null, purchase_price: 600000,  down_payment: null, principal_balance: 264655, monthly_payment: 1235, sale_price: null, selling_costs_pct: null, hidden: 1 });
+    insertEvent.run({ type: 'real_estate_buy',   date: '2026-01-01', age: null, entity_id: orcasId,    name: null, purchase_price: 2000000, down_payment: null, principal_balance: 449764, monthly_payment: 2186, sale_price: null, selling_costs_pct: null, hidden: 1 });
+    insertEvent.run({ type: 'real_estate_buy',   date: '2026-01-01', age: null, entity_id: portlandId, name: null, purchase_price: 600000,  down_payment: null, principal_balance: 264655, monthly_payment: 1235, sale_price: null, selling_costs_pct: null, hidden: 1 });
     const erikSpouseResult = insertEntity.run({ type: 'spouse', name: 'Erik James Freed',    street_address: null, appreciation_rate: null, services_json: null, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
     const debSpouseResult  = insertEntity.run({ type: 'spouse', name: 'Deborah Sue Emery',  street_address: null, appreciation_rate: null, services_json: null, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
 
-    insertEvent.run({ type: 'spouse_death',    year: 2041, month: 12, age: 85, entity_id: erikSpouseResult.lastInsertRowid, name: 'Erik', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null,  sale_price: null, selling_costs_pct: null, hidden: 0 });
-    insertEvent.run({ type: 'spouse_death',    year: 2048, month: 10, age: 87, entity_id: debSpouseResult.lastInsertRowid,  name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null,  sale_price: null, selling_costs_pct: null, hidden: 0 });
+    insertEvent.run({ type: 'spouse_death',    date: '2041-12-27', age: 85, entity_id: erikSpouseResult.lastInsertRowid, name: 'Erik', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null,  sale_price: null, selling_costs_pct: null, hidden: 0 });
+    insertEvent.run({ type: 'spouse_death',    date: '2048-10-18', age: 87, entity_id: debSpouseResult.lastInsertRowid,  name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null,  sale_price: null, selling_costs_pct: null, hidden: 0 });
     const ssErikResult = insertEntity.run({ type: 'social_security', name: 'Erik', street_address: null, appreciation_rate: null, services_json: null, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
     const ssDebResult  = insertEntity.run({ type: 'social_security', name: 'Deb',  street_address: null, appreciation_rate: null, services_json: null, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
 
-    insertEvent.run({ type: 'social_security_start', year: 2026, month: 12, age: null, entity_id: ssErikResult.lastInsertRowid, name: 'Erik', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5215, sale_price: null, selling_costs_pct: null, hidden: 0 });
-    insertEvent.run({ type: 'social_security_start', year: 2031, month: 10, age: null, entity_id: ssDebResult.lastInsertRowid,  name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5392, sale_price: null, selling_costs_pct: null, hidden: 0 });
-    insertEvent.run({ type: 'real_estate_sell',  year: 2027, month: 6,  age: null, entity_id: orcasId,    name: null, purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: 2100000, selling_costs_pct: null, hidden: 0 });
-    insertEvent.run({ type: 'real_estate_sell',  year: 2027, month: 6,  age: null, entity_id: portlandId, name: null, purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: 950000,  selling_costs_pct: null, hidden: 0 });
+    insertEvent.run({ type: 'social_security_start', date: '2026-12-27', age: null, entity_id: ssErikResult.lastInsertRowid, name: 'Erik', purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5215, sale_price: null, selling_costs_pct: null, hidden: 0 });
+    insertEvent.run({ type: 'social_security_start', date: '2031-10-18', age: null, entity_id: ssDebResult.lastInsertRowid,  name: 'Deb',  purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: 5392, sale_price: null, selling_costs_pct: null, hidden: 0 });
+    insertEvent.run({ type: 'real_estate_sell',  date: '2027-06-01', age: null, entity_id: orcasId,    name: null, purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: 2100000, selling_costs_pct: null, hidden: 0 });
+    insertEvent.run({ type: 'real_estate_sell',  date: '2027-06-01', age: null, entity_id: portlandId, name: null, purchase_price: null, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: 950000,  selling_costs_pct: null, hidden: 0 });
 
     const portlandServices = JSON.parse(portlandResult ? db.prepare('SELECT services_json FROM entities WHERE id = ?').get(portlandId).services_json : '[]');
     const dreamResult = insertEntity.run({ type: 'real_estate', name: 'San Rafael', street_address: '1820 Point San Pedro Rd, San Rafael, CA 94901', appreciation_rate: 0.05, services_json: JSON.stringify(portlandServices), tax_yearly: 31200, insurance_yearly: 1039, tax_rate: 0.013, mortgage_rate: null, term_years: null });
     const dreamId = dreamResult.lastInsertRowid;
-    insertEvent.run({ type: 'real_estate_buy',   year: 2027, month: 8,  age: null, entity_id: dreamId,    name: null, purchase_price: 2400000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 0 });
+    insertEvent.run({ type: 'real_estate_buy',   date: '2027-08-01',  age: null, entity_id: dreamId,    name: null, purchase_price: 2400000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 0 });
 
     const vehicleServices = JSON.stringify([
       { label: 'Insurance', monthly: 100, yearly: 1200 },
@@ -195,8 +194,8 @@ if (entityCount.cnt === 0) {
     const ridgeResult = insertEntity.run({ type: 'vehicle', name: '2021 Honda Ridgeline RTL-E', street_address: 'Erik', appreciation_rate: -0.075, services_json: vehicleServices, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
     const erikNextResult = insertEntity.run({ type: 'vehicle', name: "Erik's Tradeup", street_address: 'Erik', appreciation_rate: -0.075, services_json: vehicleServices, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
     const debNextResult = insertEntity.run({ type: 'vehicle', name: "Deb's Tradeup", street_address: 'Deb', appreciation_rate: -0.075, services_json: vehicleServices, tax_yearly: null, insurance_yearly: null, tax_rate: null, mortgage_rate: null, term_years: null });
-    insertEvent.run({ type: 'vehicle_buy', year: 2019, month: 1, age: null, entity_id: cx5Result.lastInsertRowid,   name: null, purchase_price: 38000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 1 });
-    insertEvent.run({ type: 'vehicle_buy', year: 2021, month: 1, age: null, entity_id: ridgeResult.lastInsertRowid, name: null, purchase_price: 48000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 1 });
+    insertEvent.run({ type: 'vehicle_buy', date: '2019-01-01', age: null, entity_id: cx5Result.lastInsertRowid,   name: null, purchase_price: 38000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 1 });
+    insertEvent.run({ type: 'vehicle_buy', date: '2021-01-01', age: null, entity_id: ridgeResult.lastInsertRowid, name: null, purchase_price: 48000, down_payment: null, principal_balance: null, monthly_payment: null, sale_price: null, selling_costs_pct: null, hidden: 1 });
 
     // -- PETS --
     const petServicesShared = JSON.stringify([

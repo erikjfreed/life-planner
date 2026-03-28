@@ -29,9 +29,11 @@ function eventSummary(ev, entities, params) {
   const details = [];
   if ((ev.type === 'spouse_death' || ev.type === 'pet_death') && ev.age != null) details.push(`age ${ev.age}`);
   if (ev.type === 'social_security_start' && ev.name && params) {
-    const age = personAge(ev.name, ev.year, params);
+    const evYear = ev.date ? parseInt(ev.date.split('-')[0]) : null;
+    const evMonth = ev.date ? parseInt(ev.date.split('-')[1]) : null;
+    const age = personAge(ev.name, evYear, params);
     if (age != null) details.push(`age ${age}`);
-    if (ev.month != null) details.push(MONTHS[ev.month - 1]);
+    if (evMonth != null) details.push(MONTHS[evMonth - 1]);
   }
   if (ev.principal_balance != null) details.push(`bal $${Math.round(ev.principal_balance).toLocaleString()}`);
   return { name, details: details.join(' · ') };
@@ -44,7 +46,7 @@ export default function EventsPage() {
   const params   = useSelector(s => s.parameters.present.values);
 
 
-  const sorted = [...events].sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || (a.month ?? 1) - (b.month ?? 1) || a.type.localeCompare(b.type));
+  const sorted = [...events].sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999') || a.type.localeCompare(b.type));
 
 
   return (
@@ -72,7 +74,7 @@ export default function EventsPage() {
               <tr key={ev.id} style={{ background: idx % 2 === 0 ? '#1e293b' : '#0f172a' }}>
                 <td style={styles.tdId}>{ev.id}</td>
                 <td style={styles.td}>{TYPE_LABELS[ev.type] ?? ev.type}</td>
-                <td style={styles.td}>{`${ev.month || 1}/1/${ev.year}`}</td>
+                <td style={styles.td}>{ev.date ? `${parseInt(ev.date.split('-')[1])}/${parseInt(ev.date.split('-')[2])}/${parseInt(ev.date.split('-')[0])}` : '—'}</td>
                 <td style={styles.td}>{eventSummary(ev, entities, params).name}</td>
                 <td style={styles.tdId}>{ev.entity_id ?? '—'}</td>
                 <td style={styles.td}>{ev.entity_id ? (entities.find(e => e.id === ev.entity_id)?.type ?? '—') : '—'}</td>

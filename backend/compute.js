@@ -2,6 +2,7 @@
  * Financial timeline computation engine.
  * Accepts params and events array. Events drive property state and death years.
  */
+const { eventYear, eventMonth } = require('./dateUtils');
 
 const { computeTaxes } = require('./taxBrackets');
 
@@ -40,10 +41,10 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
   const erikDeathEvent = events.find(e => e.type === 'spouse_death' && e.name === 'Erik');
   const debDeathEvent  = events.find(e => e.type === 'spouse_death' && e.name === 'Deb');
   const erikDeathYear  = erikDeathEvent
-    ? (erikDeathEvent.age != null ? erikBirthYear + erikDeathEvent.age : erikDeathEvent.year)
+    ? (erikDeathEvent.age != null ? erikBirthYear + erikDeathEvent.age : eventYear(erikDeathEvent))
     : 2060;
   const debDeathYear   = debDeathEvent
-    ? (debDeathEvent.age  != null ? debBirthYear  + debDeathEvent.age  : debDeathEvent.year)
+    ? (debDeathEvent.age  != null ? debBirthYear  + debDeathEvent.age  : eventYear(debDeathEvent))
     : 2060;
   const endOfGameYear  = Math.max(erikDeathYear, debDeathYear);
 
@@ -57,7 +58,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
 
   const inf = (base, rate, t) => base * Math.pow(1 + rate, t);
 
-  const initialBuys = events.filter(e => e.type === 'real_estate_buy' && e.year <= startYear);
+  const initialBuys = events.filter(e => e.type === 'real_estate_buy' && eventYear(e) <= startYear);
   const properties = initialBuys.map(e => {
     const entity = entities.find(en => en.id === e.entity_id) ?? {};
     const services = entity.services_json ? JSON.parse(entity.services_json) : [];
@@ -73,7 +74,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       value: e.purchase_price,
       appreciationRate: entity.appreciation_rate,
       expenseBase,
-      yearBought: e.year,
+      yearBought: eventYear(e),
       active: true,
       loans: propLoans,
     };
@@ -98,7 +99,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const preEventRealEstateValue = properties.filter(p => p.active).reduce((sum, p) => sum + p.value, 0);
 
     if (year > startYear) {
-      const newBuys = events.filter(e => e.type === 'real_estate_buy' && e.year === year);
+      const newBuys = events.filter(e => e.type === 'real_estate_buy' && eventYear(e) === year);
       for (const e of newBuys) {
         const entity = entities.find(en => en.id === e.entity_id) ?? {};
         const services = entity.services_json ? JSON.parse(entity.services_json) : [];
@@ -108,7 +109,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           rate: l.rate,
           payment: l.monthly_payment,
         }));
-        const buyMonth = e.month || 1;
+        const buyMonth = eventMonth(e) || 1;
         const monthsOwned = 13 - buyMonth;
         properties.push({
           name: entity.name ?? e.name,
@@ -116,7 +117,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           value: e.purchase_price,
           appreciationRate: entity.appreciation_rate,
           expenseBase,
-          yearBought: e.year,
+          yearBought: eventYear(e),
           active: true,
           loans: propLoans,
           monthsActive: monthsOwned,
@@ -126,12 +127,12 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       }
     }
 
-    const sells = events.filter(e => e.type === 'real_estate_sell' && e.year === year);
+    const sells = events.filter(e => e.type === 'real_estate_sell' && eventYear(e) === year);
     for (const sell of sells) {
       const prop = properties.find(p => p.entityId === sell.entity_id && p.active);
       if (prop) {
         prop.active = false;
-        const sellMonth = sell.month || 1;
+        const sellMonth = eventMonth(sell) || 1;
         prop.monthsActive = sellMonth - 1;
         const salePrice = sell.sale_price != null ? sell.sale_price : prop.value;
         const sellingCostsPct = sell.selling_costs_pct != null ? sell.selling_costs_pct : 0;
@@ -143,7 +144,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
 
     // Capital expenses: vehicle tradeup + RE net cost
     let vehicleTradeupCost = 0;
-    events.filter(e => e.type === 'vehicle_tradeup' && e.year === year).forEach(e => {
+    events.filter(e => e.type === 'vehicle_tradeup' && eventYear(e) === year).forEach(e => {
       vehicleTradeupCost += (e.purchase_price ?? 0) - (e.sale_price ?? 0);
     });
     const netCapCost = reNetCost + vehicleTradeupCost;
@@ -151,10 +152,10 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     // If net is negative (more sale proceeds than purchases), surplus goes to investments
     if (netCapCost < 0) saleProceeds += Math.abs(netCapCost);
     // Legacy vehicle buy/sell cash flows
-    events.filter(e => e.type === 'vehicle_sell' && e.year === year).forEach(e => {
+    events.filter(e => e.type === 'vehicle_sell' && eventYear(e) === year).forEach(e => {
       saleProceeds += (e.sale_price ?? 0);
     });
-    events.filter(e => e.type === 'vehicle_buy' && e.year === year && !e.hidden).forEach(e => {
+    events.filter(e => e.type === 'vehicle_buy' && eventYear(e) === year && !e.hidden).forEach(e => {
       saleProceeds -= (e.purchase_price ?? 0);
     });
 
@@ -200,8 +201,8 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         }, 0)
       : 0;
 
-    const erikAliveForExpenses = year < erikDeathYear || (year === erikDeathYear && (erikDeathEvent?.month ? erikDeathEvent.month - 1 : 0) > 0);
-    const debAliveForExpenses = year < debDeathYear || (year === debDeathYear && (debDeathEvent?.month ? debDeathEvent.month - 1 : 0) > 0);
+    const erikAliveForExpenses = year < erikDeathYear || (year === erikDeathYear && (eventMonth(erikDeathEvent) ? eventMonth(erikDeathEvent) - 1 : 0) > 0);
+    const debAliveForExpenses = year < debDeathYear || (year === debDeathYear && (eventMonth(debDeathEvent) ? eventMonth(debDeathEvent) - 1 : 0) > 0);
     const peopleAlive = (erikAliveForExpenses ? 1 : 0) + (debAliveForExpenses ? 1 : 0);
     const health    = alive ? inf(healthBase, healthcareInflation, t) * (peopleAlive / 2) : 0;
     const pets      = alive ? (() => {
@@ -220,16 +221,16 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       let total = 0;
       for (const entity of entities.filter(e => e.type === 'vehicle')) {
         // Check if vehicle is active: bought (via buy event or tradeup) and not traded away
-        const bought = events.some(e => e.type === 'vehicle_buy' && e.entity_id === entity.id && e.year <= year);
-        const tradedIn = events.some(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id && e.year <= year);
-        const tradedAway = events.some(e => e.type === 'vehicle_tradeup' && (e.down_payment === entity.id) && e.year <= year);
-        const sold = events.some(e => e.type === 'vehicle_sell' && e.entity_id === entity.id && e.year <= year);
+        const bought = events.some(e => e.type === 'vehicle_buy' && e.entity_id === entity.id && eventYear(e) <= year);
+        const tradedIn = events.some(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id && eventYear(e) <= year);
+        const tradedAway = events.some(e => e.type === 'vehicle_tradeup' && (e.down_payment === entity.id) && eventYear(e) <= year);
+        const sold = events.some(e => e.type === 'vehicle_sell' && e.entity_id === entity.id && eventYear(e) <= year);
         const isActive = (bought || tradedIn) && !tradedAway && !sold;
         if (isActive) {
           const services = entity.services_json ? JSON.parse(entity.services_json) : [];
           const buyEvent = events.find(e => e.type === 'vehicle_buy' && e.entity_id === entity.id)
             || events.find(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id);
-          const yearsSinceBuy = Math.max(0, year - (buyEvent?.year || startYear));
+          const yearsSinceBuy = Math.max(0, year - (eventYear(buyEvent) || startYear));
           total += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, yearsSinceBuy);
         }
       }
@@ -238,9 +239,9 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const travel    = alive ? inf(travelBase,    generalInflation,    t) * (peopleAlive / 2) : 0;
     const living    = alive ? inf(livingBase,    generalInflation,    t) : 0;
     const erikMonthsAlive = year < erikDeathYear ? 12
-      : year === erikDeathYear && erikDeathEvent?.month ? erikDeathEvent.month - 1 : 0;
+      : year === erikDeathYear && eventMonth(erikDeathEvent) ? eventMonth(erikDeathEvent) - 1 : 0;
     const debMonthsAlive = year < debDeathYear ? 12
-      : year === debDeathYear && debDeathEvent?.month ? debDeathEvent.month - 1 : 0;
+      : year === debDeathYear && eventMonth(debDeathEvent) ? eventMonth(debDeathEvent) - 1 : 0;
     const allowancePerPerson = inf(allowancePerPersonPerMonth * 12, allowanceNetRate, t);
     const allowance = allowancePerPerson * (erikMonthsAlive / 12) + allowancePerPerson * (debMonthsAlive / 12);
 
@@ -265,14 +266,14 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     const erikAlive = year < erikDeathYear || (year === erikDeathYear && erikMonthsAlive > 0);
     const debAlive  = year < debDeathYear  || (year === debDeathYear  && debMonthsAlive > 0);
 
-    const socialSecurityErikFull = socialSecurityErikEvent && year >= socialSecurityErikEvent.year
-      ? inf(socialSecurityErikEvent.monthly_payment * 12, socialSecurityCoLA, year - socialSecurityErikEvent.year) : 0;
-    const socialSecurityDebbieFull = socialSecurityDebbieEvent && year >= socialSecurityDebbieEvent.year
-      ? inf(socialSecurityDebbieEvent.monthly_payment * 12, socialSecurityCoLA, year - socialSecurityDebbieEvent.year) : 0;
+    const socialSecurityErikFull = socialSecurityErikEvent && year >= eventYear(socialSecurityErikEvent)
+      ? inf(socialSecurityErikEvent.monthly_payment * 12, socialSecurityCoLA, year - eventYear(socialSecurityErikEvent)) : 0;
+    const socialSecurityDebbieFull = socialSecurityDebbieEvent && year >= eventYear(socialSecurityDebbieEvent)
+      ? inf(socialSecurityDebbieEvent.monthly_payment * 12, socialSecurityCoLA, year - eventYear(socialSecurityDebbieEvent)) : 0;
 
     const socialSecurityErik = erikAlive && socialSecurityErikFull > 0
       ? (() => {
-          if (year === socialSecurityErikEvent.year && socialSecurityErikEvent.month) return socialSecurityErikEvent.monthly_payment * (13 - socialSecurityErikEvent.month);
+          if (year === eventYear(socialSecurityErikEvent) && eventMonth(socialSecurityErikEvent)) return socialSecurityErikEvent.monthly_payment * (13 - eventMonth(socialSecurityErikEvent));
           if (year === erikDeathYear) return socialSecurityErikFull * (erikMonthsAlive / 12);
           return socialSecurityErikFull;
         })() : 0;
@@ -282,9 +283,9 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           const ownBenefit = socialSecurityDebbieFull;
           const survivorBenefit = !erikAlive ? socialSecurityErikFull : 0;
           const effectiveFull = Math.max(ownBenefit, survivorBenefit);
-          if (year === socialSecurityDebbieEvent?.year && socialSecurityDebbieEvent.month) return socialSecurityDebbieEvent.monthly_payment * (13 - socialSecurityDebbieEvent.month);
-          if (year === erikDeathYear && erikDeathEvent?.month) {
-            const monthsBefore = erikDeathEvent.month - 1;
+          if (year === eventYear(socialSecurityDebbieEvent) && eventMonth(socialSecurityDebbieEvent)) return socialSecurityDebbieEvent.monthly_payment * (13 - eventMonth(socialSecurityDebbieEvent));
+          if (year === erikDeathYear && eventMonth(erikDeathEvent)) {
+            const monthsBefore = eventMonth(erikDeathEvent) - 1;
             const monthsAfter = 12 - monthsBefore;
             return ownBenefit * (monthsBefore / 12) + Math.max(ownBenefit, socialSecurityErikFull) * (monthsAfter / 12);
           }

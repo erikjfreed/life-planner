@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { eventYear, eventMonth, parseDate, formatDate } = require('./dateUtils');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -22,7 +23,7 @@ function loadParams() {
 
 // Load all events ordered by year
 function loadEvents() {
-  return db.prepare('SELECT * FROM events ORDER BY year').all();
+  return db.prepare('SELECT * FROM events ORDER BY date').all();
 }
 
 // Load all entities ordered by name
@@ -68,14 +69,13 @@ app.get('/api/events', (req, res) => {
 app.post('/api/events', (req, res) => {
   const e = req.body;
   db.prepare(`
-    INSERT INTO events (type, year, month, age, entity_id, name, purchase_price, down_payment, principal_balance,
+    INSERT INTO events (type, date, age, entity_id, name, purchase_price, down_payment, principal_balance,
       monthly_payment, sale_price, selling_costs_pct, hidden)
-    VALUES (@type, @year, @month, @age, @entity_id, @name, @purchase_price, @down_payment, @principal_balance,
+    VALUES (@type, @date, @age, @entity_id, @name, @purchase_price, @down_payment, @principal_balance,
       @monthly_payment, @sale_price, @selling_costs_pct, @hidden)
   `).run({
     type: e.type ?? null,
-    year: e.year ?? null,
-    month: e.month ?? null,
+    date: e.date ?? null,
     age: e.age ?? null,
     entity_id: e.entity_id ?? null,
     name: e.name ?? null,
@@ -96,7 +96,7 @@ app.put('/api/events/:id', (req, res) => {
   const e = req.body;
   db.prepare(`
     UPDATE events SET
-      type = @type, year = @year, month = @month, age = @age, entity_id = @entity_id, name = @name,
+      type = @type, date = @date, age = @age, entity_id = @entity_id, name = @name,
       purchase_price = @purchase_price, down_payment = @down_payment,
       principal_balance = @principal_balance, monthly_payment = @monthly_payment,
       sale_price = @sale_price, selling_costs_pct = @selling_costs_pct, hidden = @hidden
@@ -104,8 +104,7 @@ app.put('/api/events/:id', (req, res) => {
   `).run({
     id: parseInt(id),
     type: e.type ?? null,
-    year: e.year ?? null,
-    month: e.month ?? null,
+    date: e.date ?? null,
     age: e.age ?? null,
     entity_id: e.entity_id ?? null,
     name: e.name ?? null,
@@ -134,15 +133,15 @@ app.post('/api/vehicle-tradeup', (req, res) => {
   const oldBuyEvent = db.prepare('SELECT * FROM events WHERE type = ? AND entity_id = ?').get('vehicle_buy', sell_entity_id);
 
   const depRate = sellEntity?.appreciation_rate ?? -0.075;
-  const buyYear = oldBuyEvent?.year ?? year;
+  const buyYear = oldBuyEvent ? eventYear(oldBuyEvent) : year;
   const salePrice = Math.round((oldBuyEvent?.purchase_price ?? 0) * Math.pow(1 + depRate, year - buyYear) / 1000) * 1000;
 
   // Remove any existing tradeup for this new vehicle
   db.prepare('DELETE FROM events WHERE type = ? AND entity_id = ?').run('vehicle_tradeup', buy_entity_id);
 
   // Create single tradeup event: entity_id=new vehicle, down_payment=old vehicle id
-  db.prepare(`INSERT INTO events (type, year, month, entity_id, down_payment, purchase_price, sale_price, hidden) VALUES (?, ?, 1, ?, ?, ?, ?, 0)`)
-    .run('vehicle_tradeup', year, buy_entity_id, sell_entity_id, purchase_price || 50000, salePrice);
+  db.prepare(`INSERT INTO events (type, date, entity_id, down_payment, purchase_price, sale_price, hidden) VALUES (?, ?, ?, ?, ?, ?, 0)`)
+    .run('vehicle_tradeup', formatDate(year, 1, 1), buy_entity_id, sell_entity_id, purchase_price || 50000, salePrice);
 
   res.json(loadEvents());
 });
@@ -279,21 +278,21 @@ function getRowEvent(year, events, entities, params) {
   const debBirthYear = params.debDOB ? new Date(params.debDOB).getFullYear() : null;
 
   if (erikDeath) {
-    const dy = erikDeath.age != null && erikBirthYear ? erikBirthYear + erikDeath.age : erikDeath.year;
+    const dy = erikDeath.age != null && erikBirthYear ? erikBirthYear + erikDeath.age : eventYear(erikDeath);
     if (dy === year) { labels.push(`RIP Erik ${erikBirthYear ? dy - erikBirthYear : ''}`); type = 'spouse_death'; }
   }
   if (debDeath) {
-    const dy = debDeath.age != null && debBirthYear ? debBirthYear + debDeath.age : debDeath.year;
+    const dy = debDeath.age != null && debBirthYear ? debBirthYear + debDeath.age : eventYear(debDeath);
     if (dy === year) { labels.push(`RIP Deb ${debBirthYear ? dy - debBirthYear : ''}`); type = 'spouse_death'; }
   }
   const eogYear = erikDeath && debDeath ? Math.max(
-    erikDeath.age != null && erikBirthYear ? erikBirthYear + erikDeath.age : erikDeath.year,
-    debDeath.age != null && debBirthYear ? debBirthYear + debDeath.age : debDeath.year
+    erikDeath.age != null && erikBirthYear ? erikBirthYear + erikDeath.age : eventYear(erikDeath),
+    debDeath.age != null && debBirthYear ? debBirthYear + debDeath.age : eventYear(debDeath)
   ) + 2 : null;
   if (eogYear && year === eogYear) { labels.push('EndGame'); type = type || 'eog'; }
 
-  events.filter(e => e.type === 'social_security_start' && e.year === year).forEach(e => {
-    labels.push(`SS ${e.name}${e.month ? ' ' + MONTHS[e.month - 1] : ''}`);
+  events.filter(e => e.type === 'social_security_start' && eventYear(e) === year).forEach(e => {
+    labels.push(`SS ${e.name}${eventMonth(e) ? ' ' + MONTHS[eventMonth(e) - 1] : ''}`);
     type = type || 'ss';
   });
   entities.filter(e => e.type === 'pet' && e.appreciation_rate && e.term_years).forEach(e => {
@@ -302,27 +301,27 @@ function getRowEvent(year, events, entities, params) {
       type = type || 'pet_death';
     }
   });
-  events.filter(e => e.type === 'real_estate_buy' && e.year === year && !e.hidden).forEach(e => {
+  events.filter(e => e.type === 'real_estate_buy' && eventYear(e) === year && !e.hidden).forEach(e => {
     const en = entities.find(x => x.id === e.entity_id);
     labels.push(`Buy ${en?.street_address ? en.street_address.split(',')[0] : (en?.name || '?')}`);
     type = type || 'real_estate_buy';
   });
-  events.filter(e => e.type === 'real_estate_sell' && e.year === year && !e.hidden).forEach(e => {
+  events.filter(e => e.type === 'real_estate_sell' && eventYear(e) === year && !e.hidden).forEach(e => {
     const en = entities.find(x => x.id === e.entity_id);
     labels.push(`Sell ${en?.street_address ? en.street_address.split(',')[0] : (en?.name || '?')}`);
     type = type || 'real_estate_sell';
   });
-  events.filter(e => e.type === 'vehicle_buy' && e.year === year && !e.hidden).forEach(e => {
+  events.filter(e => e.type === 'vehicle_buy' && eventYear(e) === year && !e.hidden).forEach(e => {
     const en = entities.find(x => x.id === e.entity_id);
     labels.push(`Buy ${en?.name || '?'}`);
     type = type || 'vehicle_buy';
   });
-  events.filter(e => e.type === 'vehicle_sell' && e.year === year).forEach(e => {
+  events.filter(e => e.type === 'vehicle_sell' && eventYear(e) === year).forEach(e => {
     const en = entities.find(x => x.id === e.entity_id);
     labels.push(`Sell ${en?.name || '?'}`);
     type = type || 'vehicle_sell';
   });
-  events.filter(e => e.type === 'vehicle_tradeup' && e.year === year).forEach(e => {
+  events.filter(e => e.type === 'vehicle_tradeup' && eventYear(e) === year).forEach(e => {
     const en = entities.find(x => x.id === e.entity_id);
     const owner = en?.street_address || '?';
     labels.push(`Tradeup ${owner}'s vehicle`);

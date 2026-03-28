@@ -21,7 +21,10 @@ function PropertyPanel({ entity, buyEvent, sellEvent, endYear, dispatch }) {
   const serviceTotal = services.reduce((s, i) => s + i.yearly, 0);
   const totalExpense = serviceTotal + (entity.tax_yearly ?? 0) + (entity.insurance_yearly ?? 0);
   const rate = entity.appreciation_rate ?? 0.05;
-  const values = buildValues(buyEvent.purchase_price, buyEvent.year, rate, endYear);
+  const buyYear = buyEvent.date ? parseInt(buyEvent.date.split('-')[0]) : 2020;
+  const buyMonth = buyEvent.date ? parseInt(buyEvent.date.split('-')[1]) : 1;
+  const buyDay = buyEvent.date ? parseInt(buyEvent.date.split('-')[2]) : 1;
+  const values = buildValues(buyEvent.purchase_price, buyYear, rate, endYear);
 
   return (
     <div style={styles.propertyPanel}>
@@ -53,34 +56,39 @@ function PropertyPanel({ entity, buyEvent, sellEvent, endYear, dispatch }) {
         <span />
         <span style={styles.label}>Buy Date</span>
         <span style={styles.val}>
-          <select value={buyEvent.month || 1} onChange={e => dispatch(updateEvent({ ...buyEvent, month: parseInt(e.target.value) }))} style={styles.select}>
+          <select value={buyMonth} onChange={e => { const m = parseInt(e.target.value); dispatch(updateEvent({ ...buyEvent, date: `${String(buyYear).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(buyDay).padStart(2,'0')}` })); }} style={styles.select}>
             {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
           </select>
           /
-          <select value={buyEvent.year} onChange={e => dispatch(updateEvent({ ...buyEvent, year: parseInt(e.target.value) }))} style={styles.select}>
+          <select value={buyYear} onChange={e => { const y = parseInt(e.target.value); dispatch(updateEvent({ ...buyEvent, date: `${String(y).padStart(4,'0')}-${String(buyMonth).padStart(2,'0')}-${String(buyDay).padStart(2,'0')}` })); }} style={styles.select}>
             {Array.from({ length: 30 }, (_, i) => 2020 + i).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </span>
         <span style={styles.label}>Sell Date</span>
         <span style={styles.val}>
-          {sellEvent ? <>
-            <select value={sellEvent.month || 1} onChange={e => dispatch(updateEvent({ ...sellEvent, month: parseInt(e.target.value) }))} style={styles.select}>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
-            /
-            <select value={sellEvent.year} onChange={e => {
-              const newYear = parseInt(e.target.value);
-              const newPrice = Math.round(buyEvent.purchase_price * Math.pow(1 + rate, newYear - buyEvent.year) / 50000) * 50000;
-              dispatch(updateEvent({ ...sellEvent, year: newYear, sale_price: newPrice }));
-            }} style={styles.select}>
-              {Array.from({ length: 30 }, (_, i) => 2020 + i).map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-            {' '}
-            <button onClick={() => dispatch(deleteEvent(sellEvent.id))} style={styles.clearBtn}>x</button>
-          </> : <button onClick={() => {
-            const sellYear = buyEvent.year + 1;
-            const salePrice = Math.round(buyEvent.purchase_price * Math.pow(1 + rate, sellYear - buyEvent.year) / 50000) * 50000;
-            dispatch(createEvent({ type: 'real_estate_sell', year: sellYear, month: 6, entity_id: entity.id, sale_price: salePrice }));
+          {sellEvent ? (() => {
+            const sellMonth = sellEvent.date ? parseInt(sellEvent.date.split('-')[1]) : 1;
+            const sellYear = sellEvent.date ? parseInt(sellEvent.date.split('-')[0]) : 2020;
+            const sellDay = sellEvent.date ? parseInt(sellEvent.date.split('-')[2]) : 1;
+            return <>
+              <select value={sellMonth} onChange={e => { const m = parseInt(e.target.value); dispatch(updateEvent({ ...sellEvent, date: `${String(sellYear).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(sellDay).padStart(2,'0')}` })); }} style={styles.select}>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+              /
+              <select value={sellYear} onChange={e => {
+                const newYear = parseInt(e.target.value);
+                const newPrice = Math.round(buyEvent.purchase_price * Math.pow(1 + rate, newYear - buyYear) / 50000) * 50000;
+                dispatch(updateEvent({ ...sellEvent, date: `${String(newYear).padStart(4,'0')}-${String(sellMonth).padStart(2,'0')}-${String(sellDay).padStart(2,'0')}`, sale_price: newPrice }));
+              }} style={styles.select}>
+                {Array.from({ length: 30 }, (_, i) => 2020 + i).map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+              {' '}
+              <button onClick={() => dispatch(deleteEvent(sellEvent.id))} style={styles.clearBtn}>x</button>
+            </>;
+          })() : <button onClick={() => {
+            const sellYear = buyYear + 1;
+            const salePrice = Math.round(buyEvent.purchase_price * Math.pow(1 + rate, sellYear - buyYear) / 50000) * 50000;
+            dispatch(createEvent({ type: 'real_estate_sell', date: `${String(sellYear).padStart(4,'0')}-06-01`, entity_id: entity.id, sale_price: salePrice }));
           }} style={styles.select}>Set</button>}
         </span>
         <span />
@@ -88,7 +96,7 @@ function PropertyPanel({ entity, buyEvent, sellEvent, endYear, dispatch }) {
         <span style={styles.val}>
           {sellEvent ?
             <select
-              value={sellEvent.sale_price ?? Math.round(buyEvent.purchase_price * Math.pow(1 + rate, sellEvent.year - buyEvent.year) / 50000) * 50000}
+              value={sellEvent.sale_price ?? Math.round(buyEvent.purchase_price * Math.pow(1 + rate, (sellEvent.date ? parseInt(sellEvent.date.split('-')[0]) : 2020) - buyYear) / 50000) * 50000}
               onChange={e => dispatch(updateEvent({ ...sellEvent, sale_price: parseInt(e.target.value) }))}
               style={styles.select}
             >
@@ -186,7 +194,7 @@ export default function RealEstatePage() {
     events.some(ev => ev.type === 'real_estate_buy' && ev.entity_id === entity.id)
   );
 
-  const deathYears = events.filter(e => e.type === 'spouse_death').map(e => e.year);
+  const deathYears = events.filter(e => e.type === 'spouse_death').map(e => e.date ? parseInt(e.date.split('-')[0]) : 9999);
   const endOfGame = deathYears.length > 0 ? Math.max(...deathYears) + 2 : 2060;
 
   const [activeId, setActiveId] = useState(null);
