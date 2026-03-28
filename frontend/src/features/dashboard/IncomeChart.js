@@ -44,9 +44,9 @@ export default function IncomeChart({ rows, params, sharedYMax }) {
             );
           }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} payload={[
-            { value: 'SS', type: 'square', color: '#2563eb' },
-            { value: 'ROI', type: 'square', color: '#16a34a' },
             { value: 'Cap Spend', type: 'square', color: '#dc2626' },
+            { value: 'ROI', type: 'square', color: '#16a34a' },
+            { value: 'SS', type: 'square', color: '#2563eb' },
           ]} />
           <Area type="linear" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
           <Area type="linear" dataKey="ROI"   stackId="1" stroke="#16a34a" fill="#16a34a" fillOpacity={0.6} />
