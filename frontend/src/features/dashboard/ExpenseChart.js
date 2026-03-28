@@ -1,7 +1,8 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 
-const CATEGORIES = [
+// Order: top-to-bottom on chart (last renders on top)
+const CHART_ORDER = [
   { key: 'allowance', label: 'Allowance', color: '#3b82f6' },
   { key: 'total_tax', label: 'Taxes',     color: '#dc2626' },
   { key: 'real_estate_costs',  label: 'Housing',  color: '#22c55e' },
@@ -13,17 +14,19 @@ const CATEGORIES = [
   { key: 'vehicles',  label: 'Vehicles',  color: '#a3e635' },
   { key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' },
 ];
+// Legend order: top-to-bottom = left-to-right
+const LEGEND_ORDER = [...CHART_ORDER].reverse();
 
 export default function ExpenseChart({ rows, params, sharedYMax }) {
   const data = rows.map(r => {
     const entry = { year: r.year };
-    CATEGORIES.forEach(c => { entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) / 1000); });
+    CHART_ORDER.forEach(c => { entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) / 1000); });
     return entry;
   });
 
   const minYear = data.length > 0 ? data[0].year : 2026;
   const maxYear = data.length > 0 ? data[data.length - 1].year : 2060;
-  const maxVal = Math.max(...data.map(r => CATEGORIES.reduce((s, c) => s + (r[c.label] || 0), 0)));
+  const maxVal = Math.max(...data.map(r => CHART_ORDER.reduce((s, c) => s + (r[c.label] || 0), 0)));
   const yMax = sharedYMax || Math.ceil(maxVal / 100) * 100;
   const yTicks = Array.from({ length: yMax / 100 + 1 }, (_, i) => i * 100);
 
@@ -55,8 +58,8 @@ export default function ExpenseChart({ rows, params, sharedYMax }) {
               </div>
             );
           }} />
-          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} payload={[...CATEGORIES].reverse().map(c => ({ value: c.label, type: 'square', color: c.color }))} />
-          {CATEGORIES.map(c => (
+          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} payload={LEGEND_ORDER.map(c => ({ value: c.label, type: 'square', color: c.color }))} />
+          {CHART_ORDER.map(c => (
             <Area key={c.key} type="linear" dataKey={c.label} stackId="1"
               stroke={c.color} fill={c.color} fillOpacity={0.75} />
           ))}
