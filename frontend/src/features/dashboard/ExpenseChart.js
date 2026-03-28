@@ -2,7 +2,6 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Ca
 
 
 const CATEGORIES = [
-  { key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' },
   { key: 'total_tax', label: 'Taxes',     color: '#dc2626' },
   { key: 'allowance', label: 'Allowance', color: '#3b82f6' },
   { key: 'real_estate_costs',  label: 'Housing',  color: '#22c55e' },
@@ -12,6 +11,7 @@ const CATEGORIES = [
   { key: 'health',    label: 'Health',    color: '#06b6d4' },
   { key: 'pets',      label: 'Pets',      color: '#ec4899' },
   { key: 'vehicles',  label: 'Vehicles',  color: '#a3e635' },
+  { key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' },
 ];
 
 export default function ExpenseChart({ rows, params, sharedYMax }) {
