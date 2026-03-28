@@ -26,7 +26,7 @@ function CurrentVehiclePanel({ entity, buyEvent, sellEvent, dispatch }) {
         {sellEvent && <>
           <span />
           <span style={styles.labelCell}>Tradeup</span>
-          <span style={styles.val}>{sellEvent.year}</span>
+          <span style={styles.val}>{`${sellEvent.month || 1}/1/${sellEvent.year}`}</span>
           <span style={styles.labelCell}>Sale Price</span>
           <span style={styles.val}>{sellEvent.sale_price != null ? fmt(sellEvent.sale_price) : '—'}</span>
         </>}
@@ -103,18 +103,19 @@ function NextVehiclePanel({ entity, currentEntity, tradeupEvent, events, dispatc
         <span />
         <span style={styles.labelCell}>Owner</span>
         <span style={styles.val}>{entity.street_address || '—'}</span>
-        <span style={styles.labelCell}>Tradeup Year</span>
+        <span style={styles.labelCell}>Tradeup Date</span>
         <span style={styles.val}>
-          <select
-            value={tradeupYear ?? ''}
-            onChange={e => handleTradeupYearChange(e.target.value)}
-            style={styles.select}
-          >
-            <option value="">—</option>
-            {Array.from({ length: 20 }, (_, i) => new Date().getFullYear() + i).map(v => (
-              <option key={v} value={v}>{v}</option>
-            ))}
-          </select>
+          {tradeupEvent ? <>
+            <select value={tradeupEvent.month || 1} onChange={e => dispatch(updateEvent({ ...tradeupEvent, month: parseInt(e.target.value) }))} style={styles.select}>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+            /
+            <select value={tradeupEvent.year} onChange={e => handleTradeupYearChange(e.target.value)} style={styles.select}>
+              {Array.from({ length: 20 }, (_, i) => new Date().getFullYear() + i).map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            {' '}
+            <button onClick={() => handleTradeupYearChange('')} style={styles.clearBtn}>x</button>
+          </> : <button onClick={() => handleTradeupYearChange(String(new Date().getFullYear() + 2))} style={styles.select}>Set</button>}
         </span>
         <span />
         <span style={styles.labelCell}>Purchase Price</span>
@@ -231,6 +232,7 @@ const styles = {
   labelCell: { fontSize: 12, color: '#94a3b8', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', background: '#334155', padding: '2px 6px', borderRadius: 2 },
   val: { fontSize: 12, color: '#e2e8f0' },
   select: { fontSize: 12, border: '1px solid #475569', borderRadius: 3, padding: '0 2px', background: '#1e293b', color: '#e2e8f0' },
+  clearBtn: { fontSize: 10, border: '1px solid #475569', borderRadius: 3, padding: '0 4px', background: '#1e293b', color: '#ef4444', cursor: 'pointer' },
   table: { borderCollapse: 'collapse', width: '100%' },
   th: { fontSize: 12, fontWeight: 600, color: '#94a3b8', borderBottom: '2px solid #334155', padding: '4px 8px', textAlign: 'left' },
   td: { fontSize: 12, padding: '3px 8px', borderBottom: '1px solid #334155', color: '#e2e8f0' },

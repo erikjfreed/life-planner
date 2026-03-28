@@ -64,7 +64,10 @@ export default function WealthChart({ rows, params, events }) {
               </div>
             );
           }} />
-          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} />
+          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} payload={[
+            { value: 'Investments', type: 'square', color: '#16a34a' },
+            { value: 'Real Estate', type: 'square', color: '#7c3aed' },
+          ]} />
           <Area type="linear" dataKey="Real Estate" stackId="1" stroke="#7c3aed" fill="#7c3aed" fillOpacity={0.7} />
           <Area type="linear" dataKey="Investments" stackId="1" stroke="#16a34a" fill="#16a34a" fillOpacity={0.6} />
         </AreaChart>
