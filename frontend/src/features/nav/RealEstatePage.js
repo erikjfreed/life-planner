@@ -61,9 +61,9 @@ function PropertyPanel({ entity, buyEvent, sellEvent, endYear, dispatch }) {
             {Array.from({ length: 30 }, (_, i) => 2020 + i).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </span>
-        {sellEvent ? <>
-          <span style={styles.label}>Sell Date</span>
-          <span style={styles.val}>
+        <span style={styles.label}>Sell Date</span>
+        <span style={styles.val}>
+          {sellEvent ? <>
             <select value={sellEvent.month || 1} onChange={e => dispatch(updateEvent({ ...sellEvent, month: parseInt(e.target.value) }))} style={styles.select}>
               {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
             </select>
@@ -77,9 +77,16 @@ function PropertyPanel({ entity, buyEvent, sellEvent, endYear, dispatch }) {
             </select>
             {' '}
             <button onClick={() => dispatch(deleteEvent(sellEvent.id))} style={styles.clearBtn}>x</button>
-          </span>
-          <span style={styles.label}>Sale Price</span>
-          <span style={styles.val}>
+          </> : <button onClick={() => {
+            const sellYear = buyEvent.year + 1;
+            const salePrice = Math.round(buyEvent.purchase_price * Math.pow(1 + rate, sellYear - buyEvent.year) / 50000) * 50000;
+            dispatch(createEvent({ type: 'real_estate_sell', year: sellYear, month: 6, entity_id: entity.id, sale_price: salePrice }));
+          }} style={styles.select}>Set</button>}
+        </span>
+        <span />
+        <span style={styles.label}>Sale Price</span>
+        <span style={styles.val}>
+          {sellEvent ?
             <select
               value={sellEvent.sale_price ?? Math.round(buyEvent.purchase_price * Math.pow(1 + rate, sellEvent.year - buyEvent.year) / 50000) * 50000}
               onChange={e => dispatch(updateEvent({ ...sellEvent, sale_price: parseInt(e.target.value) }))}
@@ -89,17 +96,8 @@ function PropertyPanel({ entity, buyEvent, sellEvent, endYear, dispatch }) {
                 <option key={v} value={v}>{fmt(v)}</option>
               ))}
             </select>
-          </span>
-        </> : <>
-          <span style={styles.label}>Sell Date</span>
-          <span style={styles.val}>
-            <button onClick={() => {
-              const sellYear = buyEvent.year + 1;
-              const salePrice = Math.round(buyEvent.purchase_price * Math.pow(1 + rate, sellYear - buyEvent.year) / 50000) * 50000;
-              dispatch(createEvent({ type: 'real_estate_sell', year: sellYear, month: 6, entity_id: entity.id, sale_price: salePrice }));
-            }} style={styles.select}>Set</button>
-          </span>
-        </>}
+          : '—'}
+        </span>
         <span style={styles.label}>Tax Rate</span>
         <span style={styles.val}>
           <select
