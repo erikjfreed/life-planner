@@ -58,7 +58,16 @@ export default function ExpenseChart({ rows, params, sharedYMax }) {
               </div>
             );
           }} />
-          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} payload={LEGEND_ORDER.map(c => ({ value: c.label, type: 'square', color: c.color }))} />
+          <Legend content={() => (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, fontSize: 11, color: '#94a3b8', flexWrap: 'wrap' }}>
+              {LEGEND_ORDER.map(c => (
+                <span key={c.key} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <span style={{ width: 10, height: 10, background: c.color, display: 'inline-block' }} />
+                  {c.label}
+                </span>
+              ))}
+            </div>
+          )} />
           {CHART_ORDER.map(c => (
             <Area key={c.key} type="linear" dataKey={c.label} stackId="1"
               stroke={c.color} fill={c.color} fillOpacity={0.75} />
