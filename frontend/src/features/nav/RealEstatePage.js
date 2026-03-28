@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateEvent, createEvent, deleteEvent, fetchEvents } from '../events/eventsSlice';
+import { updateEvent, createEvent, deleteEvent } from '../events/eventsSlice';
 import { updateEntity } from '../entities/entitiesSlice';
-import { fetchTimeline } from '../timeline/timelineSlice';
 
 const fmt  = v => `$${Math.round(v).toLocaleString()}`;
 
@@ -54,27 +53,27 @@ function PropertyPanel({ entity, buyEvent, sellEvent, endYear, dispatch }) {
         <span />
         <span style={styles.label}>Buy Date</span>
         <span style={styles.val}>
-          <select value={buyEvent.month || 1} onChange={e => dispatch(updateEvent({ ...buyEvent, month: parseInt(e.target.value) })).then(() => dispatch(fetchTimeline()))} style={styles.select}>
+          <select value={buyEvent.month || 1} onChange={e => dispatch(updateEvent({ ...buyEvent, month: parseInt(e.target.value) }))} style={styles.select}>
             {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
           </select>
           /
-          <select value={buyEvent.year} onChange={e => dispatch(updateEvent({ ...buyEvent, year: parseInt(e.target.value) })).then(() => dispatch(fetchTimeline()))} style={styles.select}>
+          <select value={buyEvent.year} onChange={e => dispatch(updateEvent({ ...buyEvent, year: parseInt(e.target.value) }))} style={styles.select}>
             {Array.from({ length: 30 }, (_, i) => 2020 + i).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </span>
         <span style={styles.label}>Sell Date</span>
         <span style={styles.val}>
           {sellEvent ? <>
-            <select value={sellEvent.month || 1} onChange={e => dispatch(updateEvent({ ...sellEvent, month: parseInt(e.target.value) })).then(() => dispatch(fetchTimeline()))} style={styles.select}>
+            <select value={sellEvent.month || 1} onChange={e => dispatch(updateEvent({ ...sellEvent, month: parseInt(e.target.value) }))} style={styles.select}>
               {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
             </select>
             /
-            <select value={sellEvent.year} onChange={e => dispatch(updateEvent({ ...sellEvent, year: parseInt(e.target.value) })).then(() => dispatch(fetchTimeline()))} style={styles.select}>
+            <select value={sellEvent.year} onChange={e => dispatch(updateEvent({ ...sellEvent, year: parseInt(e.target.value) }))} style={styles.select}>
               {Array.from({ length: 30 }, (_, i) => 2020 + i).map(y => <option key={y} value={y}>{y}</option>)}
             </select>
             {' '}
-            <button onClick={() => dispatch(deleteEvent(sellEvent.id)).then(() => dispatch(fetchTimeline()))} style={styles.clearBtn}>x</button>
-          </> : <button onClick={() => dispatch(createEvent({ type: 'real_estate_sell', year: buyEvent.year + 1, month: 6, entity_id: entity.id })).then(() => dispatch(fetchTimeline()))} style={styles.select}>Set</button>}
+            <button onClick={() => dispatch(deleteEvent(sellEvent.id))} style={styles.clearBtn}>x</button>
+          </> : <button onClick={() => dispatch(createEvent({ type: 'real_estate_sell', year: buyEvent.year + 1, month: 6, entity_id: entity.id }))} style={styles.select}>Set</button>}
         </span>
         <span />
         <span style={styles.label}>Tax Rate</span>
