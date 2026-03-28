@@ -85,6 +85,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
 
   for (let year = startYear; year <= endOfGameYear + 2; year++) {
     saleProceeds = 0;
+    let reNetCost = 0;
     const yrs     = year - startYear;
     const erikAge = year - new Date(erikDOB).getFullYear();
     const debAge  = year - new Date(debDOB).getFullYear();
@@ -122,7 +123,9 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           monthsActive: monthsOwned,
         });
         const loanTotal = propLoans.reduce((s, l) => s + l.principal, 0);
-        saleProceeds -= (e.purchase_price - loanTotal);
+        const outlay = e.purchase_price - loanTotal;
+        saleProceeds -= outlay;
+        reNetCost += outlay;
       }
     }
 
@@ -138,6 +141,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
         const proceeds = (salePrice - totalPrincipal) * (1 - sellingCostsPct);
         saleProceeds += proceeds;
+        reNetCost -= proceeds;
       }
     }
 
@@ -146,7 +150,11 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     events.filter(e => e.type === 'vehicle_tradeup' && eventYear(e) === year).forEach(e => {
       vehicleTradeupCost += (e.purchase_price ?? 0) - (e.sale_price ?? 0);
     });
-    const capExpense = vehicleTradeupCost;
+    // capExpense includes RE net + vehicle tradeup (for draw/tax calculation)
+    // saleProceeds already has the immediate balance impact from RE
+    // Offset: add capExpense back to saleProceeds so draw doesn't double-reduce balance
+    const capExpense = Math.max(0, reNetCost) + vehicleTradeupCost;
+    saleProceeds += capExpense;
     // Legacy vehicle buy/sell cash flows
     events.filter(e => e.type === 'vehicle_sell' && eventYear(e) === year).forEach(e => {
       saleProceeds += (e.sale_price ?? 0);
