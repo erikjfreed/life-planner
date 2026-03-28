@@ -150,11 +150,9 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     events.filter(e => e.type === 'vehicle_tradeup' && eventYear(e) === year).forEach(e => {
       vehicleTradeupCost += (e.purchase_price ?? 0) - (e.sale_price ?? 0);
     });
-    // capExpense includes RE net + vehicle tradeup (for draw/tax calculation)
-    // saleProceeds already has the immediate balance impact from RE
-    // Offset: add capExpense back to saleProceeds so draw doesn't double-reduce balance
+    // capExpense: if RE net is a cost (buying > selling), need IRA draw to cover it
+    // If RE net is a surplus (selling > buying), it stays in saleProceeds as cash
     const capExpense = Math.max(0, reNetCost) + vehicleTradeupCost;
-    saleProceeds += capExpense;
     // Legacy vehicle buy/sell cash flows
     events.filter(e => e.type === 'vehicle_sell' && eventYear(e) === year).forEach(e => {
       saleProceeds += (e.sale_price ?? 0);

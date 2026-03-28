@@ -55,7 +55,7 @@ export default function ExpenseChart({ rows, params, sharedYMax }) {
               </div>
             );
           }} />
-          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} payload={CATEGORIES.map(c => ({ value: c.label, type: 'square', color: c.color }))} />
+          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} payload={[...CATEGORIES].reverse().map(c => ({ value: c.label, type: 'square', color: c.color }))} />
           {CATEGORIES.map(c => (
             <Area key={c.key} type="linear" dataKey={c.label} stackId="1"
               stroke={c.color} fill={c.color} fillOpacity={0.75} />
