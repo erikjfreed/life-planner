@@ -52,7 +52,7 @@ export default function WealthChart({ rows, params, events }) {
             return (
               <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 4, padding: '8px 12px', fontSize: 12 }}>
                 <div style={{ color: '#e2e8f0', fontWeight: 600, marginBottom: 2 }}>{Math.round(label)} (Erik {erikAge}, Deb {debAge})</div>
-                {payload.map(p => (
+                {[...payload].reverse().map(p => (
                   <div key={p.dataKey} style={{ color: p.color, display: 'flex', gap: 8, justifyContent: 'space-between' }}>
                     <span>{p.dataKey}</span>
                     <span>${(p.value/1000).toFixed(2)}M ({total > 0 ? Math.round(p.value / total * 100) : 0}%)</span>

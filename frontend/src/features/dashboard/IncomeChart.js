@@ -31,7 +31,7 @@ export default function IncomeChart({ rows, params, sharedYMax }) {
             return (
               <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 4, padding: '8px 12px', fontSize: 12 }}>
                 <div style={{ color: '#e2e8f0', fontWeight: 600, marginBottom: 2 }}>{label} (Erik {erikAge}, Deb {debAge})</div>
-                {payload.map(p => (
+                {[...payload].reverse().map(p => (
                   <div key={p.dataKey} style={{ color: p.color, display: 'flex', gap: 8, justifyContent: 'space-between' }}>
                     <span>{p.dataKey}</span>
                     <span>${p.value}K {total > 0 ? `(${Math.round(p.value / total * 100)}%)` : ''}</span>
@@ -44,9 +44,9 @@ export default function IncomeChart({ rows, params, sharedYMax }) {
             );
           }} />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} payload={[
-            { value: 'Cap Spend', type: 'square', color: '#dc2626' },
-            { value: 'ROI', type: 'square', color: '#16a34a' },
             { value: 'SS', type: 'square', color: '#2563eb' },
+            { value: 'ROI', type: 'square', color: '#16a34a' },
+            { value: 'Cap Spend', type: 'square', color: '#dc2626' },
           ]} />
           <Area type="linear" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
           <Area type="linear" dataKey="ROI"   stackId="1" stroke="#16a34a" fill="#16a34a" fillOpacity={0.6} />

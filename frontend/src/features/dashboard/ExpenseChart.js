@@ -2,8 +2,8 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Ca
 
 
 const CATEGORIES = [
-  { key: 'total_tax', label: 'Taxes',     color: '#dc2626' },
   { key: 'allowance', label: 'Allowance', color: '#3b82f6' },
+  { key: 'total_tax', label: 'Taxes',     color: '#dc2626' },
   { key: 'real_estate_costs',  label: 'Housing',  color: '#22c55e' },
   { key: 'loans',     label: 'Loans',     color: '#f97316' },
   { key: 'living',    label: 'General',   color: '#eab308' },
@@ -55,7 +55,7 @@ export default function ExpenseChart({ rows, params, sharedYMax }) {
               </div>
             );
           }} />
-          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} payload={[...CATEGORIES].reverse().map(c => ({ value: c.label, type: 'square', color: c.color }))} />
+          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} payload={CATEGORIES.map(c => ({ value: c.label, type: 'square', color: c.color }))} />
           {CATEGORIES.map(c => (
             <Area key={c.key} type="linear" dataKey={c.label} stackId="1"
               stroke={c.color} fill={c.color} fillOpacity={0.75} />
