@@ -85,7 +85,6 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
 
   for (let year = startYear; year <= endOfGameYear + 2; year++) {
     saleProceeds = 0;
-    let reNetCost = 0;
     const yrs     = year - startYear;
     const erikAge = year - new Date(erikDOB).getFullYear();
     const debAge  = year - new Date(debDOB).getFullYear();
@@ -123,7 +122,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           monthsActive: monthsOwned,
         });
         const loanTotal = propLoans.reduce((s, l) => s + l.principal, 0);
-        reNetCost += (e.purchase_price - loanTotal);
+        saleProceeds -= (e.purchase_price - loanTotal);
       }
     }
 
@@ -138,7 +137,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         const sellingCostsPct = sell.selling_costs_pct != null ? sell.selling_costs_pct : 0;
         const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
         const proceeds = (salePrice - totalPrincipal) * (1 - sellingCostsPct);
-        reNetCost -= proceeds;
+        saleProceeds += proceeds;
       }
     }
 
@@ -147,10 +146,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
     events.filter(e => e.type === 'vehicle_tradeup' && eventYear(e) === year).forEach(e => {
       vehicleTradeupCost += (e.purchase_price ?? 0) - (e.sale_price ?? 0);
     });
-    const netCapCost = reNetCost + vehicleTradeupCost;
-    const capExpense = Math.max(0, netCapCost);
-    // If net is negative (more sale proceeds than purchases), surplus goes to investments
-    if (netCapCost < 0) saleProceeds += Math.abs(netCapCost);
+    const capExpense = vehicleTradeupCost;
     // Legacy vehicle buy/sell cash flows
     events.filter(e => e.type === 'vehicle_sell' && eventYear(e) === year).forEach(e => {
       saleProceeds += (e.sale_price ?? 0);
