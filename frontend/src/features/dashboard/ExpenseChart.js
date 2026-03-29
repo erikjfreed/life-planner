@@ -1,9 +1,8 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 
-// Order: first renders at bottom, last on top
+// Order: first renders at bottom, last on top (cap expense rendered separately)
 const CHART_ORDER = [
-  { key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' },
   { key: 'allowance', label: 'Allowance', color: '#3b82f6' },
   { key: 'total_tax', label: 'Taxes',     color: '#dc2626' },
   { key: 'real_estate_costs',  label: 'Housing',  color: '#22c55e' },
@@ -15,22 +14,21 @@ const CHART_ORDER = [
   { key: 'vehicles',  label: 'Vehicles',  color: '#a3e635' },
 ];
 // Legend order: top-to-bottom = left-to-right
-const LEGEND_ORDER = [...CHART_ORDER].reverse();
+const LEGEND_ORDER = [...CHART_ORDER, { key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' }].reverse();
 
 export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
   const scale = monthly ? 12 : 1;
   // Pre-compute annual cap expense totals (one-time events, not a monthly rate)
   const annualCapExp = {};
   rows.forEach(r => { annualCapExp[r.year] = (annualCapExp[r.year] || 0) + (r.cap_expense || 0); });
+
   const data = rows.map(r => {
     const entry = { year: monthly ? r.year + (r.month - 1) / 12 : r.year };
     CHART_ORDER.forEach(c => {
-      if (c.key === 'cap_expense') {
-        entry[c.label] = Math.round(Math.max(0, annualCapExp[r.year]) / 1000);
-      } else {
-        entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) * scale / 1000);
-      }
+      entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) * scale / 1000);
     });
+    // Cap expense: annual value on every monthly point (flat within year)
+    entry['Cap Expense'] = Math.round(Math.max(0, annualCapExp[r.year]) / 1000);
     return entry;
   });
 
@@ -80,6 +78,8 @@ export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
               ))}
             </div>
           )} />
+          <Area key="cap_expense" type="stepAfter" dataKey="Cap Expense" stackId="1"
+            stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.75} />
           {CHART_ORDER.map(c => (
             <Area key={c.key} type="stepAfter" dataKey={c.label} stackId="1"
               stroke={c.color} fill={c.color} fillOpacity={0.75} />
