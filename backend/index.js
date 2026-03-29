@@ -4,10 +4,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const db = require('./database');
-const { computeTimeline } = require('./compute');
+const { computeTimeline, aggregateToAnnual } = require('./compute');
 const { buildTaxData } = require('./taxHelpers');
 const { computeTaxes } = require('./taxBrackets');
-const { computeMonthlyTimeline } = require('./computeMonthly');
 const DEFAULT_PARAMS = require('./defaultParams');
 
 const app = express();
@@ -51,13 +50,14 @@ app.post('/api/parameters', (req, res) => {
   res.json(loadParams());
 });
 
-// GET /api/timeline — compute from current parameters and events
+// GET /api/timeline — compute from current parameters and events (annual)
 app.get('/api/timeline', (req, res) => {
   const params = loadParams();
   const events = loadEvents();
   const entities = loadEntities();
   const loans = loadLoans();
-  const rows = computeTimeline(params, events, entities, loans);
+  const monthlyRows = computeTimeline(params, events, entities, loans);
+  const rows = aggregateToAnnual(monthlyRows);
   res.json(rows);
 });
 
@@ -67,9 +67,8 @@ app.get('/api/timeline-monthly', (req, res) => {
   const events = loadEvents();
   const entities = loadEntities();
   const loans = loadLoans();
-  const annualRows = computeTimeline(params, events, entities, loans);
-  const monthlyRows = computeMonthlyTimeline(annualRows, events, entities);
-  res.json(monthlyRows);
+  const rows = computeTimeline(params, events, entities, loans);
+  res.json(rows);
 });
 
 // GET /api/events — return all events ordered by year
@@ -275,7 +274,7 @@ app.get('/api/tax-data', (req, res) => {
   const events = loadEvents();
   const entities = loadEntities();
   const loans = loadLoans();
-  const timelineRows = computeTimeline(params, events, entities, loans);
+  const timelineRows = aggregateToAnnual(computeTimeline(params, events, entities, loans));
   res.json(buildTaxData(timelineRows, entities, events, loans, params));
 });
 
@@ -348,7 +347,7 @@ app.get('/api/tax-computed', (req, res) => {
   const events = loadEvents();
   const entities = loadEntities();
   const loans = loadLoans();
-  const timelineRows = computeTimeline(params, events, entities, loans);
+  const timelineRows = aggregateToAnnual(computeTimeline(params, events, entities, loans));
   const taxRows = buildTaxData(timelineRows, entities, events, loans, params);
 
   const MAX_ITERATIONS = 10;

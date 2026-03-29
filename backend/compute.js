@@ -1,404 +1,465 @@
 /**
- * Financial timeline computation engine.
- * Accepts params and events array. Events drive property state and death years.
+ * Financial timeline computation engine — MONTHLY granularity.
+ * Primary loop is monthly. Tax computed annually, applied monthly.
+ * Returns monthly rows. Use aggregateToAnnual() for yearly timeline.
  */
 const { eventYear, eventMonth } = require('./dateUtils');
-
 const { computeTaxes } = require('./taxBrackets');
 
 function computeTimeline(params, events = [], entities = [], loans = []) {
   const {
-    erikDOB,
-    debDOB,
-
-    generalInflation,
-    healthcareInflation,
-    allowanceDeflation,
-    investmentROI,
-    socialSecurityCoLA,
-
-
+    erikDOB, debDOB,
+    generalInflation, healthcareInflation, allowanceDeflation,
+    investmentROI, socialSecurityCoLA,
     allowancePerPersonPerMonth,
-
-    healthBase,
-    travelBase,
-    livingBase,
-
+    healthBase, travelBase, livingBase,
     investmentBalanceBase,
   } = params;
 
-  function amortize(annualRate, monthlyPayment, prevPrincipal) {
-    const r = annualRate / 12;
-    const factor = Math.pow(1 + r, 12);
-    const fv = -(prevPrincipal * factor + (-monthlyPayment) * (factor - 1) / r);
-    return -Math.min(0, fv);
-  }
-
   const startYear = 2026;
-
   const erikBirthYear = new Date(erikDOB).getFullYear();
   const debBirthYear  = new Date(debDOB).getFullYear();
+
+  // Death events
   const erikDeathEvent = events.find(e => e.type === 'spouse_death' && e.name === 'Erik');
   const debDeathEvent  = events.find(e => e.type === 'spouse_death' && e.name === 'Deb');
-  const erikDeathYear  = erikDeathEvent
-    ? (erikDeathEvent.age != null ? erikBirthYear + erikDeathEvent.age : eventYear(erikDeathEvent))
-    : 2060;
-  const debDeathYear   = debDeathEvent
-    ? (debDeathEvent.age  != null ? debBirthYear  + debDeathEvent.age  : eventYear(debDeathEvent))
-    : 2060;
+  const erikDeathYear  = erikDeathEvent ? (erikDeathEvent.age != null ? erikBirthYear + erikDeathEvent.age : eventYear(erikDeathEvent)) : 2060;
+  const erikDeathMonth = erikDeathEvent ? (eventMonth(erikDeathEvent) || 12) : 12;
+  const debDeathYear   = debDeathEvent ? (debDeathEvent.age != null ? debBirthYear + debDeathEvent.age : eventYear(debDeathEvent)) : 2060;
+  const debDeathMonth  = debDeathEvent ? (eventMonth(debDeathEvent) || 12) : 12;
   const endOfGameYear  = Math.max(erikDeathYear, debDeathYear);
 
-  const socialSecurityErikEvent   = events.find(e => e.type === 'social_security_start' && e.name === 'Erik');
-  const socialSecurityDebbieEvent = events.find(e => e.type === 'social_security_start' && e.name === 'Deb');
+  // SS events
+  const ssErikEvent   = events.find(e => e.type === 'social_security_start' && e.name === 'Erik');
+  const ssDebbieEvent = events.find(e => e.type === 'social_security_start' && e.name === 'Deb');
+  const ssErikStartYear = ssErikEvent ? eventYear(ssErikEvent) : 9999;
+  const ssErikStartMonth = ssErikEvent ? eventMonth(ssErikEvent) : 1;
+  const ssErikMonthlyBase = ssErikEvent?.monthly_payment ?? 0;
+  const ssDebStartYear = ssDebbieEvent ? eventYear(ssDebbieEvent) : 9999;
+  const ssDebStartMonth = ssDebbieEvent ? eventMonth(ssDebbieEvent) : 1;
+  const ssDebMonthlyBase = ssDebbieEvent?.monthly_payment ?? 0;
 
   const STATE_MAP = { 'Orcas': 'WA', 'Portland': 'WA' };
-
-  const rows = [];
+  const inf = (base, rate, t) => base * Math.pow(1 + rate, t);
   const allowanceNetRate = generalInflation - allowanceDeflation;
 
-  const inf = (base, rate, t) => base * Math.pow(1 + rate, t);
-
-  const initialBuys = events.filter(e => e.type === 'real_estate_buy' && eventYear(e) <= startYear);
-  const properties = initialBuys.map(e => {
+  // Initialize properties from initial buy events
+  const properties = events.filter(e => e.type === 'real_estate_buy' && eventYear(e) <= startYear).map(e => {
     const entity = entities.find(en => en.id === e.entity_id) ?? {};
     const services = entity.services_json ? JSON.parse(entity.services_json) : [];
     const expenseBase = services.reduce((s, i) => s + i.yearly, 0) + (entity.tax_yearly ?? 0) + (entity.insurance_yearly ?? 0);
     const propLoans = loans.filter(l => l.entity_id === e.entity_id).map(l => ({
-      principal: l.current_balance,
-      rate: l.rate,
-      payment: l.monthly_payment,
+      principal: l.current_balance, rate: l.rate, payment: l.monthly_payment,
     }));
-    return {
-      name: entity.name ?? e.name,
-      entityId: e.entity_id,
-      value: e.purchase_price,
-      appreciationRate: entity.appreciation_rate,
-      expenseBase,
-      yearBought: eventYear(e),
-      active: true,
-      loans: propLoans,
-    };
+    return { name: entity.name ?? e.name, entityId: e.entity_id, value: e.purchase_price,
+      appreciationRate: entity.appreciation_rate, expenseBase, yearBought: eventYear(e),
+      active: true, loans: propLoans };
   });
 
+  const rows = [];
   let investmentBalance = investmentBalanceBase;
-  let saleProceeds = 0;
 
   for (let year = startYear; year <= endOfGameYear + 2; year++) {
-    saleProceeds = 0;
-    let reNetCost = 0;
-    const yrs     = year - startYear;
-    const erikAge = year - new Date(erikDOB).getFullYear();
-    const debAge  = year - new Date(debDOB).getFullYear();
-    const alive   = year < endOfGameYear;
-    const t       = yrs;
+    const t = year - startYear;
+    const erikAge = year - erikBirthYear;
+    const debAge  = year - debBirthYear;
 
-    for (const prop of properties) {
-      prop.monthsActive = prop.active ? 12 : 0;
-    }
+    // --- ANNUAL: RE buy/sell, appreciation, tax computation ---
 
-    const preEventRealEstateValue = properties.filter(p => p.active).reduce((sum, p) => sum + p.value, 0);
-
+    // RE buys this year
     if (year > startYear) {
-      const newBuys = events.filter(e => e.type === 'real_estate_buy' && eventYear(e) === year);
-      for (const e of newBuys) {
+      for (const e of events.filter(ev => ev.type === 'real_estate_buy' && eventYear(ev) === year)) {
         const entity = entities.find(en => en.id === e.entity_id) ?? {};
         const services = entity.services_json ? JSON.parse(entity.services_json) : [];
         const expenseBase = services.reduce((s, i) => s + i.yearly, 0) + (entity.tax_yearly ?? 0) + (entity.insurance_yearly ?? 0);
         const propLoans = loans.filter(l => l.entity_id === e.entity_id).map(l => ({
-          principal: l.current_balance,
-          rate: l.rate,
-          payment: l.monthly_payment,
+          principal: l.current_balance, rate: l.rate, payment: l.monthly_payment,
         }));
-        const buyMonth = eventMonth(e) || 1;
-        const monthsOwned = 13 - buyMonth;
-        properties.push({
-          name: entity.name ?? e.name,
-          entityId: e.entity_id,
-          value: e.purchase_price,
-          appreciationRate: entity.appreciation_rate,
-          expenseBase,
-          yearBought: eventYear(e),
-          active: true,
-          loans: propLoans,
-          monthsActive: monthsOwned,
-        });
-        const loanTotal = propLoans.reduce((s, l) => s + l.principal, 0);
-        const outlay = e.purchase_price - loanTotal;
-        saleProceeds -= outlay;
-        reNetCost += outlay;
+        properties.push({ name: entity.name ?? e.name, entityId: e.entity_id, value: e.purchase_price,
+          appreciationRate: entity.appreciation_rate, expenseBase, yearBought: year,
+          buyMonth: eventMonth(e) || 1, active: true, loans: propLoans });
       }
     }
 
-    const sells = events.filter(e => e.type === 'real_estate_sell' && eventYear(e) === year);
-    for (const sell of sells) {
+    // RE sells this year (mark inactive, record sell month)
+    for (const sell of events.filter(ev => ev.type === 'real_estate_sell' && eventYear(ev) === year)) {
       const prop = properties.find(p => p.entityId === sell.entity_id && p.active);
       if (prop) {
         prop.active = false;
-        const sellMonth = eventMonth(sell) || 1;
-        prop.monthsActive = sellMonth - 1;
-        const salePrice = sell.sale_price != null ? sell.sale_price : prop.value;
-        const sellingCostsPct = sell.selling_costs_pct != null ? sell.selling_costs_pct : 0;
-        const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
-        const proceeds = (salePrice - totalPrincipal) * (1 - sellingCostsPct);
-        saleProceeds += proceeds;
-        reNetCost -= proceeds;
+        prop.sellMonth = eventMonth(sell) || 1;
+        prop.salePrice = sell.sale_price ?? prop.value;
+        prop.sellingCostsPct = sell.selling_costs_pct ?? 0;
       }
     }
 
-    // Capital expenses: vehicle tradeup + RE net cost
-    let vehicleTradeupCost = 0;
-    events.filter(e => e.type === 'vehicle_tradeup' && eventYear(e) === year).forEach(e => {
-      vehicleTradeupCost += (e.purchase_price ?? 0) - (e.sale_price ?? 0);
-    });
-    // capExpense: if RE net is a cost (buying > selling), need IRA draw to cover it
-    // If RE net is a surplus (selling > buying), it stays in saleProceeds as cash
-    const capExpense = Math.max(0, reNetCost) + vehicleTradeupCost;
-    // Legacy vehicle buy/sell cash flows
-    events.filter(e => e.type === 'vehicle_sell' && eventYear(e) === year).forEach(e => {
-      saleProceeds += (e.sale_price ?? 0);
-    });
-    events.filter(e => e.type === 'vehicle_buy' && eventYear(e) === year && !e.hidden).forEach(e => {
-      saleProceeds -= (e.purchase_price ?? 0);
-    });
-
+    // Appreciate and amortize (annually, at start of year for year > buyYear)
     for (const prop of properties) {
       if (!prop.active) continue;
       if (year > prop.yearBought) {
-        prop.value = prop.value * (1 + prop.appreciationRate);
+        prop.value *= (1 + prop.appreciationRate);
         for (const loan of prop.loans) {
           if (loan.principal > 0) {
-            loan.principal = amortize(loan.rate, loan.payment, loan.principal);
+            const r = loan.rate / 12;
+            const factor = Math.pow(1 + r, 12);
+            loan.principal = Math.max(0, -(prop.value * 0 + loan.principal * factor + (-loan.payment) * (factor - 1) / r));
+            // Simplified: just amortize
+            let bal = loan.principal;
+            // Re-derive from proper amortization
           }
         }
       }
     }
-
-    const orcasProp    = properties.find(p => p.name === 'Orcas'    && p.active);
-    const portlandProp = properties.find(p => p.name === 'Portland' && p.active);
-
-    const propPrincipal = (prop) => prop ? prop.loans.reduce((s, l) => s + l.principal, 0) : 0;
-
-    const orcasValue      = orcasProp    ? orcasProp.value         : 0;
-    const orcasPrincipal  = propPrincipal(orcasProp);
-    const orcasEquity     = orcasValue - orcasPrincipal;
-
-    const portlandValue     = portlandProp ? portlandProp.value      : 0;
-    const portlandPrincipal = propPrincipal(portlandProp);
-    const portlandEquity    = portlandValue - portlandPrincipal;
-
-    const realEstate = properties
-      .filter(p => p.active)
-      .reduce((sum, p) => sum + (p.value - propPrincipal(p)), 0);
-
-    const realEstateValue = properties
-      .filter(p => p.active)
-      .reduce((sum, p) => sum + p.value, 0);
-
-    // -- EXPENSES --
-    const activePlusPartial = properties.filter(p => p.active || (p.monthsActive ?? 0) > 0);
-    const loanPayments = alive
-      ? activePlusPartial.reduce((sum, p) => {
-          const months = p.monthsActive ?? 12;
-          return sum + p.loans.filter(l => l.principal > 0).reduce((s, l) => s + l.payment * months, 0);
-        }, 0)
-      : 0;
-
-    const erikAliveForExpenses = year < erikDeathYear || (year === erikDeathYear && (eventMonth(erikDeathEvent) ? eventMonth(erikDeathEvent) - 1 : 0) > 0);
-    const debAliveForExpenses = year < debDeathYear || (year === debDeathYear && (eventMonth(debDeathEvent) ? eventMonth(debDeathEvent) - 1 : 0) > 0);
-    const peopleAlive = (erikAliveForExpenses ? 1 : 0) + (debAliveForExpenses ? 1 : 0);
-    const health    = alive ? inf(healthBase, healthcareInflation, t) * (peopleAlive / 2) : 0;
-    const pets      = alive ? (() => {
-      let total = 0;
-      for (const entity of entities.filter(e => e.type === 'pet')) {
-        const birthYear = entity.appreciation_rate;
-        const lifespan = entity.term_years;
-        if (birthYear && lifespan && year >= Math.round(birthYear + lifespan)) continue;
-        const services = entity.services_json ? JSON.parse(entity.services_json) : [];
-        total += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, t);
-      }
-      return total;
-    })() : 0;
-    // Vehicle costs from active vehicle entities
-    const vehicles  = alive ? (() => {
-      let total = 0;
-      for (const entity of entities.filter(e => e.type === 'vehicle')) {
-        // Check if vehicle is active: bought (via buy event or tradeup) and not traded away
-        const bought = events.some(e => e.type === 'vehicle_buy' && e.entity_id === entity.id && eventYear(e) <= year);
-        const tradedIn = events.some(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id && eventYear(e) <= year);
-        const tradedAway = events.some(e => e.type === 'vehicle_tradeup' && (e.down_payment === entity.id) && eventYear(e) <= year);
-        const sold = events.some(e => e.type === 'vehicle_sell' && e.entity_id === entity.id && eventYear(e) <= year);
-        const isActive = (bought || tradedIn) && !tradedAway && !sold;
-        if (isActive) {
-          const services = entity.services_json ? JSON.parse(entity.services_json) : [];
-          const buyEvent = events.find(e => e.type === 'vehicle_buy' && e.entity_id === entity.id)
-            || events.find(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id);
-          const yearsSinceBuy = Math.max(0, year - (eventYear(buyEvent) || startYear));
-          total += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, yearsSinceBuy);
-        }
-      }
-      return total * (peopleAlive / 2);
-    })() : 0;
-    const travel    = alive ? inf(travelBase,    generalInflation,    t) * (peopleAlive / 2) : 0;
-    const living    = alive ? inf(livingBase,    generalInflation,    t) : 0;
-    const erikMonthsAlive = year < erikDeathYear ? 12
-      : year === erikDeathYear && eventMonth(erikDeathEvent) ? eventMonth(erikDeathEvent) - 1 : 0;
-    const debMonthsAlive = year < debDeathYear ? 12
-      : year === debDeathYear && eventMonth(debDeathEvent) ? eventMonth(debDeathEvent) - 1 : 0;
-    const allowancePerPerson = inf(allowancePerPersonPerMonth * 12, allowanceNetRate, t);
-    const allowance = allowancePerPerson * (erikMonthsAlive / 12) + allowancePerPerson * (debMonthsAlive / 12);
-
-    const realEstateCosts = alive
-      ? activePlusPartial.reduce((sum, p) => {
-          const months = p.monthsActive ?? 0;
-          if (months === 0) return sum;
-          const yearsSinceBought = Math.max(0, year - p.yearBought);
-          return sum + inf(p.expenseBase, generalInflation, yearsSinceBought) * (months / 12);
-        }, 0)
-      : 0;
-
-    const orcasExpProp = orcasProp || properties.find(p => p.name === 'Orcas' && !p.active && (p.monthsActive ?? 0) > 0);
-    const portlandExpProp = portlandProp || properties.find(p => p.name === 'Portland' && !p.active && (p.monthsActive ?? 0) > 0);
-    const orcas    = alive && orcasExpProp    ? inf(orcasExpProp.expenseBase, generalInflation, Math.max(0, year - orcasExpProp.yearBought)) * ((orcasExpProp.monthsActive ?? 0) / 12) : 0;
-    const portland = alive && portlandExpProp ? inf(portlandExpProp.expenseBase, generalInflation, Math.max(0, year - portlandExpProp.yearBought)) * ((portlandExpProp.monthsActive ?? 0) / 12) : 0;
-    const ltc      = 0;
-
-    const totalExpenses = loanPayments + health + pets + vehicles + travel + living + allowance + realEstateCosts + capExpense;
-
-    // -- SOCIAL SECURITY --
-    const erikAlive = year < erikDeathYear || (year === erikDeathYear && erikMonthsAlive > 0);
-    const debAlive  = year < debDeathYear  || (year === debDeathYear  && debMonthsAlive > 0);
-
-    const socialSecurityErikFull = socialSecurityErikEvent && year >= eventYear(socialSecurityErikEvent)
-      ? inf(socialSecurityErikEvent.monthly_payment * 12, socialSecurityCoLA, year - eventYear(socialSecurityErikEvent)) : 0;
-    const socialSecurityDebbieFull = socialSecurityDebbieEvent && year >= eventYear(socialSecurityDebbieEvent)
-      ? inf(socialSecurityDebbieEvent.monthly_payment * 12, socialSecurityCoLA, year - eventYear(socialSecurityDebbieEvent)) : 0;
-
-    const socialSecurityErik = erikAlive && socialSecurityErikFull > 0
-      ? (() => {
-          if (year === eventYear(socialSecurityErikEvent) && eventMonth(socialSecurityErikEvent)) return socialSecurityErikEvent.monthly_payment * (13 - eventMonth(socialSecurityErikEvent));
-          if (year === erikDeathYear) return socialSecurityErikFull * (erikMonthsAlive / 12);
-          return socialSecurityErikFull;
-        })() : 0;
-
-    const socialSecurityDebbie = debAlive && (socialSecurityDebbieFull > 0 || (!erikAlive && socialSecurityErikFull > 0))
-      ? (() => {
-          const ownBenefit = socialSecurityDebbieFull;
-          const survivorBenefit = !erikAlive ? socialSecurityErikFull : 0;
-          const effectiveFull = Math.max(ownBenefit, survivorBenefit);
-          if (year === eventYear(socialSecurityDebbieEvent) && eventMonth(socialSecurityDebbieEvent)) return socialSecurityDebbieEvent.monthly_payment * (13 - eventMonth(socialSecurityDebbieEvent));
-          if (year === erikDeathYear && eventMonth(erikDeathEvent)) {
-            const monthsBefore = eventMonth(erikDeathEvent) - 1;
-            const monthsAfter = 12 - monthsBefore;
-            return ownBenefit * (monthsBefore / 12) + Math.max(ownBenefit, socialSecurityErikFull) * (monthsAfter / 12);
-          }
-          if (year === debDeathYear) return effectiveFull * (debMonthsAlive / 12);
-          return effectiveFull;
-        })() : 0;
-    const socialSecuritySubtotal = socialSecurityErik + socialSecurityDebbie;
-
-    // -- Compute mortgage interest for this year --
-    let mortgageInterest = 0;
-    for (const prop of activePlusPartial) {
-      if ((prop.monthsActive ?? 0) === 0) continue;
+    // Proper amortization: walk monthly for each loan
+    for (const prop of properties) {
+      if (!prop.active && !(prop.sellMonth && year === prop.yearBought)) continue;
       for (const loan of prop.loans) {
-        if (loan.principal <= 0) continue;
-        // Walk 12 months to get interest (using pre-amortization principal for this year)
-        let bal = loan.principal;
-        const mr = loan.rate / 12;
-        for (let m = 0; m < (prop.monthsActive ?? 12); m++) {
-          mortgageInterest += bal * mr;
-          bal = Math.max(0, bal - (loan.payment - bal * mr));
+        if (loan.principal > 0 && year > prop.yearBought) {
+          const r = loan.rate / 12;
+          const factor = Math.pow(1 + r, 12);
+          const fv = -(loan.principal * factor + (-loan.payment) * (factor - 1) / r);
+          loan.principal = -Math.min(0, fv);
         }
       }
     }
 
-    // -- Property taxes for active RE entities --
-    let propertyTaxes = 0;
-    for (const prop of activePlusPartial) {
-      if ((prop.monthsActive ?? 0) === 0) continue;
-      const entity = entities.find(en => en.name === prop.name && en.type === 'real_estate');
-      if (entity && entity.tax_yearly) {
-        propertyTaxes += inf(entity.tax_yearly, generalInflation, Math.max(0, year - prop.yearBought)) * ((prop.monthsActive ?? 12) / 12);
+    // Compute annual totals for tax calculation
+    // We need to sum up what 12 months of expenses will be
+    let annualExpenses = 0;
+    let annualSS = 0;
+    let annualMortgageInterest = 0;
+    let annualPropertyTaxes = 0;
+    let annualCapExpense = 0;
+
+    // Pre-compute for the tax solver
+    for (let m = 1; m <= 12; m++) {
+      const erikAlive = year < erikDeathYear || (year === erikDeathYear && m < erikDeathMonth);
+      const debAlive = year < debDeathYear || (year === debDeathYear && m < debDeathMonth);
+      const peopleAlive = (erikAlive ? 1 : 0) + (debAlive ? 1 : 0);
+      const alive = peopleAlive > 0;
+
+      // Monthly expenses
+      const mHealth = alive ? inf(healthBase, healthcareInflation, t) / 12 * (peopleAlive / 2) : 0;
+      const mTravel = alive ? inf(travelBase, generalInflation, t) / 12 * (peopleAlive / 2) : 0;
+      const mLiving = alive ? inf(livingBase, generalInflation, t) / 12 : 0;
+      const mAllowance = alive ? inf(allowancePerPersonPerMonth, allowanceNetRate, t) * peopleAlive : 0;
+
+      // Pets
+      let mPets = 0;
+      if (alive) {
+        for (const entity of entities.filter(e => e.type === 'pet')) {
+          const birthYear = entity.appreciation_rate;
+          const lifespan = entity.term_years;
+          if (birthYear && lifespan && year >= Math.round(birthYear + lifespan)) continue;
+          const services = entity.services_json ? JSON.parse(entity.services_json) : [];
+          mPets += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, t) / 12;
+        }
+      }
+
+      // Vehicles
+      let mVehicles = 0;
+      if (alive) {
+        for (const entity of entities.filter(e => e.type === 'vehicle')) {
+          const bought = events.some(e => e.type === 'vehicle_buy' && e.entity_id === entity.id && (eventYear(e) < year || (eventYear(e) === year && (eventMonth(e) || 1) <= m)));
+          const tradedIn = events.some(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id && (eventYear(e) < year || (eventYear(e) === year && (eventMonth(e) || 1) <= m)));
+          const tradedAway = events.some(e => e.type === 'vehicle_tradeup' && e.down_payment === entity.id && (eventYear(e) < year || (eventYear(e) === year && (eventMonth(e) || 1) <= m)));
+          const sold = events.some(e => e.type === 'vehicle_sell' && e.entity_id === entity.id && (eventYear(e) < year || (eventYear(e) === year && (eventMonth(e) || 1) <= m)));
+          if ((bought || tradedIn) && !tradedAway && !sold) {
+            const services = entity.services_json ? JSON.parse(entity.services_json) : [];
+            const buyEvt = events.find(e => e.type === 'vehicle_buy' && e.entity_id === entity.id) || events.find(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id);
+            const yearsSinceBuy = Math.max(0, year - (eventYear(buyEvt) || startYear));
+            mVehicles += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, yearsSinceBuy) / 12 * (peopleAlive / 2);
+          }
+        }
+      }
+
+      // Loans
+      let mLoans = 0;
+      if (alive) {
+        for (const prop of properties) {
+          const propActive = prop.active || (prop.sellMonth && year === Math.max(prop.yearBought, year) && m < prop.sellMonth);
+          if (!propActive) continue;
+          for (const loan of prop.loans) {
+            if (loan.principal > 0) mLoans += loan.payment;
+          }
+        }
+      }
+
+      // RE costs
+      let mRECosts = 0;
+      if (alive) {
+        for (const prop of properties) {
+          const boughtThisYear = prop.yearBought === year;
+          const buyMonth = prop.buyMonth || 1;
+          const propActive = prop.active ? (boughtThisYear ? m >= buyMonth : true) : (prop.sellMonth ? m < prop.sellMonth : false);
+          if (propActive) {
+            const yearsSinceBought = Math.max(0, year - prop.yearBought);
+            mRECosts += inf(prop.expenseBase, generalInflation, yearsSinceBought) / 12;
+          }
+        }
+      }
+
+      // SS
+      let mSSErik = 0, mSSDeb = 0;
+      const erikSSMonthly = (year > ssErikStartYear || (year === ssErikStartYear && m >= ssErikStartMonth))
+        ? ssErikMonthlyBase * Math.pow(1 + socialSecurityCoLA, year - ssErikStartYear) : 0;
+      const debSSMonthly = (year > ssDebStartYear || (year === ssDebStartYear && m >= ssDebStartMonth))
+        ? ssDebMonthlyBase * Math.pow(1 + socialSecurityCoLA, year - ssDebStartYear) : 0;
+      if (erikAlive) mSSErik = erikSSMonthly;
+      if (debAlive) mSSDeb = debSSMonthly;
+      if (!erikAlive && debAlive) mSSDeb = Math.max(debSSMonthly, erikSSMonthly);
+
+      annualExpenses += mHealth + mTravel + mLiving + mAllowance + mPets + mVehicles + mLoans + mRECosts;
+      annualSS += mSSErik + mSSDeb;
+    }
+
+    // Vehicle tradeup cap expense
+    events.filter(e => e.type === 'vehicle_tradeup' && eventYear(e) === year).forEach(e => {
+      annualCapExpense += (e.purchase_price ?? 0) - (e.sale_price ?? 0);
+    });
+
+    // RE net cost for cap expense
+    let reNetCost = 0;
+    for (const prop of properties) {
+      if (prop.yearBought === year && year > startYear) {
+        const loanTotal = prop.loans.reduce((s, l) => s + l.principal, 0);
+        reNetCost += prop.value - loanTotal; // purchase outlay
+      }
+      if (prop.sellMonth && !prop.active) {
+        // Already sold this year
+        const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
+        const proceeds = ((prop.salePrice ?? 0) - totalPrincipal) * (1 - (prop.sellingCostsPct ?? 0));
+        reNetCost -= proceeds;
+      }
+    }
+    annualCapExpense += Math.max(0, reNetCost);
+    annualExpenses += annualCapExpense;
+
+    // Mortgage interest and property taxes for tax calc
+    for (const prop of properties) {
+      if (prop.active || prop.sellMonth) {
+        for (const loan of prop.loans) {
+          if (loan.principal > 0) {
+            let bal = loan.principal;
+            const mr = loan.rate / 12;
+            for (let m2 = 0; m2 < 12; m2++) {
+              annualMortgageInterest += bal * mr;
+              bal = Math.max(0, bal - (loan.payment - bal * mr));
+            }
+          }
+        }
+        const entity = entities.find(en => en.name === prop.name && en.type === 'real_estate');
+        if (entity?.tax_yearly) {
+          annualPropertyTaxes += inf(entity.tax_yearly, generalInflation, Math.max(0, year - prop.yearBought));
+        }
       }
     }
 
-    // -- Determine state and filing status --
+    // State and filing status
     const activeREStates = new Set();
     for (const prop of properties) {
       if (prop.active) activeREStates.add(STATE_MAP[prop.name] || 'CA');
     }
     const taxState = activeREStates.has('WA') ? 'WA' : activeREStates.size > 0 ? [...activeREStates][0] : (params.stateOfResidence || 'WA');
-    const bothAlive = erikAlive && debAlive;
-    const filingStatus = bothAlive ? (params.filingStatus || 'married_filing_jointly') : 'single';
+    const anyAlive = year <= endOfGameYear;
+    const bothAliveEndOfYear = (year < erikDeathYear) && (year < debDeathYear);
+    const filingStatus = bothAliveEndOfYear ? (params.filingStatus || 'married_filing_jointly') : 'single';
 
-    // -- TAX: iterative solver using bracket math --
-    // Equation: grossDraw + SS_gross = totalExpenses + totalTax
-    // So: grossDraw = totalExpenses + totalTax - SS_gross
-    // Where totalTax depends on grossDraw (circular)
-    let grossDraw = Math.max(0, totalExpenses - socialSecuritySubtotal);
+    // Tax solver (annual)
+    let grossDraw = Math.max(0, annualExpenses - annualSS);
     let taxResult = null;
     for (let iter = 0; iter < 10; iter++) {
       taxResult = computeTaxes({
         year, filing_status: filingStatus, state: taxState,
         erik_age: erikAge, deb_age: debAge,
-        gross_draw: grossDraw, ss_income: socialSecuritySubtotal,
-        mortgage_interest: mortgageInterest, property_taxes: propertyTaxes,
+        gross_draw: grossDraw, ss_income: annualSS,
+        mortgage_interest: annualMortgageInterest, property_taxes: annualPropertyTaxes,
         inflation_rate: generalInflation,
       });
-      const newGrossDraw = Math.max(0, totalExpenses + taxResult.total_tax - socialSecuritySubtotal);
+      const newGrossDraw = Math.max(0, annualExpenses + taxResult.total_tax - annualSS);
       if (Math.abs(newGrossDraw - grossDraw) < 1) { grossDraw = newGrossDraw; break; }
       grossDraw = newGrossDraw;
     }
-    // Final tax computation with solved draw
     taxResult = computeTaxes({
       year, filing_status: filingStatus, state: taxState,
       erik_age: erikAge, deb_age: debAge,
-      gross_draw: grossDraw, ss_income: socialSecuritySubtotal,
-      mortgage_interest: mortgageInterest, property_taxes: propertyTaxes,
+      gross_draw: grossDraw, ss_income: annualSS,
+      mortgage_interest: annualMortgageInterest, property_taxes: annualPropertyTaxes,
       inflation_rate: generalInflation,
     });
 
-    const socialSecurityTax = socialSecuritySubtotal * (taxResult.ss_fed_rate + taxResult.ss_state_rate);
-    const socialSecurityNet = socialSecuritySubtotal;
-    const drawTax = grossDraw * (taxResult.draw_fed_rate + taxResult.draw_state_rate);
-    const netDraw = grossDraw + drawTax;
+    const monthlyDraw = grossDraw / 12;
+    const monthlyTax = taxResult.total_tax / 12;
 
-    // -- INVESTMENT BALANCE --
-    if (t === 0) {
-      investmentBalance = investmentBalanceBase + saleProceeds;
-    } else {
-      const prev = rows[t - 1];
-      investmentBalance = Math.max(0, prev.investment_balance + prev.roi - prev.net_draw) + saleProceeds;
+    // --- MONTHLY LOOP: produce one row per month ---
+    for (let m = 1; m <= 12; m++) {
+      const erikAlive = year < erikDeathYear || (year === erikDeathYear && m < erikDeathMonth);
+      const debAlive = year < debDeathYear || (year === debDeathYear && m < debDeathMonth);
+      const peopleAlive = (erikAlive ? 1 : 0) + (debAlive ? 1 : 0);
+      const alive = peopleAlive > 0;
+
+      // Monthly expenses (computed fresh, not divided from annual)
+      const mHealth = alive ? inf(healthBase, healthcareInflation, t) / 12 * (peopleAlive / 2) : 0;
+      const mTravel = alive ? inf(travelBase, generalInflation, t) / 12 * (peopleAlive / 2) : 0;
+      const mLiving = alive ? inf(livingBase, generalInflation, t) / 12 : 0;
+      const mAllowance = alive ? inf(allowancePerPersonPerMonth, allowanceNetRate, t) * peopleAlive : 0;
+
+      let mPets = 0;
+      if (alive) {
+        for (const entity of entities.filter(e => e.type === 'pet')) {
+          const birthYear = entity.appreciation_rate;
+          const lifespan = entity.term_years;
+          if (birthYear && lifespan && year >= Math.round(birthYear + lifespan)) continue;
+          const services = entity.services_json ? JSON.parse(entity.services_json) : [];
+          mPets += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, t) / 12;
+        }
+      }
+
+      let mVehicles = 0;
+      if (alive) {
+        for (const entity of entities.filter(e => e.type === 'vehicle')) {
+          const bought = events.some(e => e.type === 'vehicle_buy' && e.entity_id === entity.id && (eventYear(e) < year || (eventYear(e) === year && (eventMonth(e) || 1) <= m)));
+          const tradedIn = events.some(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id && (eventYear(e) < year || (eventYear(e) === year && (eventMonth(e) || 1) <= m)));
+          const tradedAway = events.some(e => e.type === 'vehicle_tradeup' && e.down_payment === entity.id && (eventYear(e) < year || (eventYear(e) === year && (eventMonth(e) || 1) <= m)));
+          const sold = events.some(e => e.type === 'vehicle_sell' && e.entity_id === entity.id && (eventYear(e) < year || (eventYear(e) === year && (eventMonth(e) || 1) <= m)));
+          if ((bought || tradedIn) && !tradedAway && !sold) {
+            const services = entity.services_json ? JSON.parse(entity.services_json) : [];
+            const buyEvt = events.find(e => e.type === 'vehicle_buy' && e.entity_id === entity.id) || events.find(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id);
+            const yearsSinceBuy = Math.max(0, year - (eventYear(buyEvt) || startYear));
+            mVehicles += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, yearsSinceBuy) / 12 * (peopleAlive / 2);
+          }
+        }
+      }
+
+      let mLoans = 0;
+      let mRECosts = 0;
+      if (alive) {
+        for (const prop of properties) {
+          const boughtThisYear = prop.yearBought === year;
+          const buyMonth = prop.buyMonth || 1;
+          const propActive = prop.active
+            ? (boughtThisYear ? m >= buyMonth : true)
+            : (prop.sellMonth ? (year >= prop.yearBought && m < prop.sellMonth) : false);
+          if (propActive) {
+            for (const loan of prop.loans) {
+              if (loan.principal > 0) mLoans += loan.payment;
+            }
+            const yearsSinceBought = Math.max(0, year - prop.yearBought);
+            mRECosts += inf(prop.expenseBase, generalInflation, yearsSinceBought) / 12;
+          }
+        }
+      }
+
+      // Cap expense: spread evenly across the year (simplification)
+      const mCapExpense = annualCapExpense / 12;
+
+      const mTotalExpenses = mHealth + mTravel + mLiving + mAllowance + mPets + mVehicles + mLoans + mRECosts + mCapExpense;
+
+      // SS
+      let mSSErik = 0, mSSDeb = 0;
+      const erikSSMonthly = (year > ssErikStartYear || (year === ssErikStartYear && m >= ssErikStartMonth))
+        ? ssErikMonthlyBase * Math.pow(1 + socialSecurityCoLA, year - ssErikStartYear) : 0;
+      const debSSMonthly = (year > ssDebStartYear || (year === ssDebStartYear && m >= ssDebStartMonth))
+        ? ssDebMonthlyBase * Math.pow(1 + socialSecurityCoLA, year - ssDebStartYear) : 0;
+      if (erikAlive) mSSErik = erikSSMonthly;
+      if (debAlive) mSSDeb = debSSMonthly;
+      if (!erikAlive && debAlive) mSSDeb = Math.max(debSSMonthly, erikSSMonthly);
+
+      const mSSTotal = mSSErik + mSSDeb;
+
+      // Sale proceeds this month
+      let monthSaleProceeds = 0;
+      // RE sells in this exact month
+      for (const prop of properties) {
+        if (!prop.active && prop.sellMonth === m && prop.yearBought <= year) {
+          const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
+          const proceeds = ((prop.salePrice ?? 0) - totalPrincipal) * (1 - (prop.sellingCostsPct ?? 0));
+          monthSaleProceeds += proceeds;
+        }
+      }
+      // RE buys in this exact month
+      for (const prop of properties) {
+        if (prop.yearBought === year && (prop.buyMonth || 1) === m && year > startYear) {
+          const loanTotal = prop.loans.reduce((s, l) => s + l.principal, 0);
+          monthSaleProceeds -= (prop.value - loanTotal);
+        }
+      }
+      // Vehicle tradeup in this month
+      events.filter(e => e.type === 'vehicle_tradeup' && eventYear(e) === year && (eventMonth(e) || 1) === m).forEach(e => {
+        // Cash impact already in draw via capExpense
+      });
+
+      // Investment balance: monthly compound
+      const monthlyROI = investmentBalance * (investmentROI / 12);
+      investmentBalance = Math.max(0, investmentBalance + monthlyROI - monthlyDraw - monthlyTax + monthSaleProceeds);
+
+      const reValue = properties.filter(p => p.active).reduce((s, p) => s + p.value, 0);
+      const reEquity = properties.filter(p => p.active).reduce((s, p) => s + p.value - p.loans.reduce((s2, l) => s2 + l.principal, 0), 0);
+
+      rows.push({
+        year, month: m, yrs: t, erik_age: erikAge, deb_age: debAge,
+        health: Math.round(mHealth), pets: Math.round(mPets), vehicles: Math.round(mVehicles),
+        travel: Math.round(mTravel), living: Math.round(mLiving), allowance: Math.round(mAllowance),
+        loans: Math.round(mLoans), real_estate_costs: Math.round(mRECosts),
+        cap_expense: Math.round(mCapExpense),
+        total_expenses: Math.round(mTotalExpenses),
+        social_security_erik: Math.round(mSSErik), social_security_debbie: Math.round(mSSDeb),
+        social_security_subtotal: Math.round(mSSTotal),
+        social_security_tax: Math.round(taxResult.total_tax * (annualSS > 0 ? (taxResult.ss_fed_rate + taxResult.ss_state_rate) * annualSS / taxResult.total_tax : 0) / 12),
+        social_security_net: Math.round(mSSTotal),
+        gross_draw: Math.round(monthlyDraw), draw_tax: Math.round(taxResult.draw_tax || 0) / 12,
+        net_draw: Math.round(monthlyDraw + monthlyTax),
+        total_tax: Math.round(monthlyTax),
+        draw_fed_rate: taxResult.draw_fed_rate, draw_state_rate: taxResult.draw_state_rate,
+        ss_fed_rate: taxResult.ss_fed_rate, ss_state_rate: taxResult.ss_state_rate,
+        fed_tax: Math.round(taxResult.fed_tax / 12), state_tax: Math.round(taxResult.state_tax / 12),
+        investment_balance: Math.round(investmentBalance),
+        roi: Math.round(monthlyROI),
+        capital_spend: Math.round(Math.max(0, monthlyDraw - monthlyROI)),
+        real_estate: Math.round(reEquity), real_estate_value: Math.round(reValue),
+        invest_plus_re: Math.round(investmentBalance + reEquity),
+        draw_rate: (investmentBalance + reEquity) > 0 ? (monthlyDraw + monthlyTax) * 12 / (investmentBalance + reEquity) : 0,
+        tax_state: taxState, filing_status: filingStatus,
+        mortgage_interest: Math.round(annualMortgageInterest), property_taxes_actual: Math.round(annualPropertyTaxes),
+      });
     }
-
-    const roi          = investmentBalance * investmentROI;
-    const investPlusRealEstate = investmentBalance + realEstate;
-    const effectiveNetDraw = investmentBalance === 0 ? 0 : netDraw;
-    const drawRate     = investPlusRealEstate > 0 ? effectiveNetDraw / investPlusRealEstate : 0;
-    const capitalSpend = Math.max(0, grossDraw - roi);
-
-    rows.push({
-      year, yrs, erik_age: erikAge, deb_age: debAge,
-      loans: loanPayments, health, pets, vehicles, travel, living, allowance, cap_expense: capExpense, orcas, portland, ltc,
-      total_expenses: totalExpenses,
-      social_security_erik: socialSecurityErik, social_security_debbie: socialSecurityDebbie,
-      social_security_subtotal: socialSecuritySubtotal, social_security_tax: socialSecurityTax, social_security_net: socialSecurityNet,
-      gross_draw: grossDraw, draw_tax: drawTax, net_draw: effectiveNetDraw,
-      draw_fed_rate: taxResult.draw_fed_rate, draw_state_rate: taxResult.draw_state_rate,
-      ss_fed_rate: taxResult.ss_fed_rate, ss_state_rate: taxResult.ss_state_rate,
-      fed_tax: taxResult.fed_tax, state_tax: taxResult.state_tax, total_tax: taxResult.total_tax,
-      mortgage_interest: Math.round(mortgageInterest), property_taxes_actual: Math.round(propertyTaxes),
-      tax_state: taxState, filing_status: filingStatus,
-      draw_rate: drawRate, capital_spend: capitalSpend,
-      investment_balance: investmentBalance, roi, invest_plus_re: investPlusRealEstate,
-      real_estate: realEstate, real_estate_value: realEstateValue, real_estate_costs: realEstateCosts,
-      pre_event_real_estate_value: preEventRealEstateValue, ltc_monthly: 0, ltc_entrance: 0,
-      orcas_value: orcasValue, orcas_principal: orcasPrincipal, orcas_equity: orcasEquity,
-      portland_value: portlandValue, portland_principal: portlandPrincipal, portland_equity: portlandEquity,
-    });
   }
 
   return rows;
 }
 
-module.exports = { computeTimeline };
+/**
+ * Aggregate monthly rows to annual for timeline table.
+ */
+function aggregateToAnnual(monthlyRows) {
+  const years = {};
+  for (const r of monthlyRows) {
+    if (!years[r.year]) years[r.year] = [];
+    years[r.year].push(r);
+  }
+  return Object.entries(years).map(([year, months]) => {
+    const last = months[months.length - 1];
+    const sum = (key) => months.reduce((s, m) => s + (m[key] || 0), 0);
+    return {
+      year: parseInt(year), yrs: last.yrs, erik_age: last.erik_age, deb_age: last.deb_age,
+      health: sum('health'), pets: sum('pets'), vehicles: sum('vehicles'),
+      travel: sum('travel'), living: sum('living'), allowance: sum('allowance'),
+      loans: sum('loans'), real_estate_costs: sum('real_estate_costs'),
+      cap_expense: sum('cap_expense'), total_expenses: sum('total_expenses'),
+      social_security_erik: sum('social_security_erik'), social_security_debbie: sum('social_security_debbie'),
+      social_security_subtotal: sum('social_security_subtotal'),
+      social_security_tax: sum('social_security_tax'), social_security_net: sum('social_security_net'),
+      gross_draw: sum('gross_draw'), draw_tax: sum('draw_tax'), net_draw: sum('net_draw'),
+      total_tax: sum('total_tax'), roi: sum('roi'), capital_spend: sum('capital_spend'),
+      draw_fed_rate: last.draw_fed_rate, draw_state_rate: last.draw_state_rate,
+      ss_fed_rate: last.ss_fed_rate, ss_state_rate: last.ss_state_rate,
+      fed_tax: sum('fed_tax'), state_tax: sum('state_tax'),
+      investment_balance: last.investment_balance,
+      real_estate: last.real_estate, real_estate_value: last.real_estate_value,
+      invest_plus_re: last.invest_plus_re, draw_rate: last.draw_rate,
+      tax_state: last.tax_state, filing_status: last.filing_status,
+      mortgage_interest: last.mortgage_interest, property_taxes_actual: last.property_taxes_actual,
+    };
+  });
+}
+
+module.exports = { computeTimeline, aggregateToAnnual };

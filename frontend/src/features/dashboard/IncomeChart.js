@@ -49,9 +49,9 @@ export default function IncomeChart({ rows, params, sharedYMax, monthly }) {
             { value: 'ROI', type: 'square', color: '#16a34a' },
             { value: 'SS', type: 'square', color: '#2563eb' },
           ]} />
-          <Area type="linear" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
-          <Area type="linear" dataKey="ROI"   stackId="1" stroke="#16a34a" fill="#16a34a" fillOpacity={0.6} />
-          <Area type="linear" dataKey="Cap Spend" stackId="1" stroke="#dc2626" fill="#dc2626" fillOpacity={0.7} />
+          <Area type="stepAfter" dataKey="SS"        stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} />
+          <Area type="stepAfter" dataKey="ROI"   stackId="1" stroke="#16a34a" fill="#16a34a" fillOpacity={0.6} />
+          <Area type="stepAfter" dataKey="Cap Spend" stackId="1" stroke="#dc2626" fill="#dc2626" fillOpacity={0.7} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
