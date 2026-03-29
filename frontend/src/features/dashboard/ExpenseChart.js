@@ -19,9 +19,18 @@ const LEGEND_ORDER = [...CHART_ORDER].reverse();
 
 export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
   const scale = monthly ? 12 : 1;
+  // Pre-compute annual cap expense totals (one-time events, not a monthly rate)
+  const annualCapExp = {};
+  rows.forEach(r => { annualCapExp[r.year] = (annualCapExp[r.year] || 0) + (r.cap_expense || 0); });
   const data = rows.map(r => {
     const entry = { year: monthly ? r.year + (r.month - 1) / 12 : r.year };
-    CHART_ORDER.forEach(c => { entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) * scale / 1000); });
+    CHART_ORDER.forEach(c => {
+      if (c.key === 'cap_expense') {
+        entry[c.label] = Math.round(annualCapExp[r.year] / 1000);
+      } else {
+        entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) * scale / 1000);
+      }
+    });
     return entry;
   });
 
