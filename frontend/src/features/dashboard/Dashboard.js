@@ -26,6 +26,9 @@ export default function Dashboard() {
     }
   }, [status, rows]);
 
+  const chartRows = monthlyRows.length > 0 ? monthlyRows : rows;
+  const isMonthly = monthlyRows.length > 0;
+
   // Use fractional years matching the chart x-axis domain (monthly data)
   const firstRow = chartRows.length > 0 ? chartRows[0] : null;
   const lastRow = chartRows.length > 0 ? chartRows[chartRows.length - 1] : null;
@@ -37,9 +40,6 @@ export default function Dashboard() {
     ...rows.map(r => ((r.social_security_subtotal || 0) + (r.gross_draw || 0)) / 1000),
     ...rows.map(r => ((r.total_tax || 0) + (r.allowance || 0) + (r.real_estate_costs || 0) + (r.loans || 0) + (r.travel || 0) + (r.living || 0) + (r.health || 0) + (r.pets || 0) + (r.vehicles || 0) + (r.cap_expense || 0)) / 1000)
   ) / 100) * 100 : 500;
-
-  const chartRows = monthlyRows.length > 0 ? monthlyRows : rows;
-  const isMonthly = monthlyRows.length > 0;
 
   const deathEvents   = events.filter(e => e.type === 'spouse_death');
   const erikBirthYear = params?.erikDOB ? new Date(params.erikDOB).getFullYear() : null;
