@@ -5,17 +5,17 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Ca
 const CHART_ORDER = [
   { key: 'allowance', label: 'Allowance', color: '#3b82f6' },
   { key: 'real_estate_costs',  label: 'Housing',  color: '#22c55e' },
-  { key: 'living',    label: 'General',   color: '#eab308' },
+  { key: 'living',    label: 'General',   color: '#f59e0b' },
   { key: 'travel',    label: 'Travel',    color: '#8b5cf6' },
-  { key: 'health',    label: 'Health',    color: '#06b6d4' },
-  { key: 'pets',      label: 'Pets',      color: '#ec4899' },
-  { key: 'vehicles',  label: 'Vehicles',  color: '#a3e635' },
+  { key: 'health',    label: 'Health',    color: '#14b8a6' },
+  { key: 'pets',      label: 'Pets',      color: '#e879f9' },
+  { key: 'vehicles',  label: 'Vehicles',  color: '#84cc16' },
 ];
 // Legend order: top-to-bottom = left-to-right (cap expense on top, taxes below it)
 const LEGEND_ORDER = [
   { key: 'loans', label: 'Loans', color: '#f97316' },
-  { key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' },
-  { key: 'total_tax', label: 'Taxes', color: '#dc2626' },
+  { key: 'cap_expense', label: 'Cap Expense', color: '#a855f7' },
+  { key: 'total_tax', label: 'Taxes', color: '#ef4444' },
   ...CHART_ORDER,
 ];
 
@@ -87,9 +87,9 @@ export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
               stroke={c.color} fill={c.color} fillOpacity={0.75} />
           ))}
           <Area key="total_tax" type="stepAfter" dataKey="Taxes" stackId="1"
-            stroke="#dc2626" fill="#dc2626" fillOpacity={0.75} />
+            stroke="#ef4444" fill="#ef4444" fillOpacity={0.75} />
           <Area key="cap_expense" type="stepAfter" dataKey="Cap Expense" stackId="1"
-            stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.75} />
+            stroke="#a855f7" fill="#a855f7" fillOpacity={0.75} />
           <Area key="loans" type="stepAfter" dataKey="Loans" stackId="1"
             stroke="#f97316" fill="#f97316" fillOpacity={0.75} />
         </AreaChart>
