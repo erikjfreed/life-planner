@@ -16,6 +16,19 @@ function computeMonthlyTimeline(annualRows, events, entities) {
   const debDeathYear = debDeathEvent ? eventYear(debDeathEvent) : 9999;
   const debDeathMonth = debDeathEvent ? eventMonth(debDeathEvent) : 12;
 
+  // SS event data for computing true monthly rates
+  const ssErikEvent = events.find(e => e.type === 'social_security_start' && e.name === 'Erik');
+  const ssDebEvent = events.find(e => e.type === 'social_security_start' && e.name === 'Deb');
+  const ssErikStartYear = ssErikEvent ? eventYear(ssErikEvent) : 9999;
+  const ssErikStartMonth = ssErikEvent ? eventMonth(ssErikEvent) : 1;
+  const ssErikMonthlyBase = ssErikEvent?.monthly_payment ?? 0;
+  const ssDebStartYear = ssDebEvent ? eventYear(ssDebEvent) : 9999;
+  const ssDebStartMonth = ssDebEvent ? eventMonth(ssDebEvent) : 1;
+  const ssDebMonthlyBase = ssDebEvent?.monthly_payment ?? 0;
+
+  // Get COLA rate from annual rows (use first row's params)
+  const ssCoLA = annualRows.length > 0 && annualRows[0].social_security_erik > 0 ? 0.025 : 0.025; // fallback
+
   for (let yi = 0; yi < annualRows.length; yi++) {
     const r = annualRows[yi];
     const prevRow = yi > 0 ? annualRows[yi - 1] : null;
@@ -68,36 +81,23 @@ function computeMonthlyTimeline(annualRows, events, entities) {
       const debAlive = r.year < debDeathYear || (r.year === debDeathYear && m < debDeathMonth);
       const peopleAlive = (erikAlive ? 1 : 0) + (debAlive ? 1 : 0);
 
-      // SS for this month — only while alive and after start date
+      // SS for this month — compute true monthly rate from event data + COLA
       let ssErik = 0;
       let ssDebbie = 0;
-      if (erikAlive) {
-        const ssErikEvent = events.find(e => e.type === 'social_security_start' && e.name === 'Erik');
-        const startMonth = ssErikEvent ? eventMonth(ssErikEvent) : 1;
-        const startYear = ssErikEvent ? eventYear(ssErikEvent) : 0;
-        if (r.year > startYear || (r.year === startYear && m >= startMonth)) {
-          // Use the COLA-adjusted monthly rate from annual computation
-          const ssErikMonthly = r.social_security_erik > 0
-            ? r.social_security_erik / (r.year === startYear ? (13 - startMonth) : 12)
-            : 0;
-          ssErik = ssErikMonthly;
-        }
+      const yearsFromErikStart = r.year - ssErikStartYear;
+      const yearsFromDebStart = r.year - ssDebStartYear;
+      const erikSSMonthly = yearsFromErikStart >= 0 ? ssErikMonthlyBase * Math.pow(1.025, yearsFromErikStart) : 0;
+      const debSSMonthly = yearsFromDebStart >= 0 ? ssDebMonthlyBase * Math.pow(1.025, yearsFromDebStart) : 0;
+
+      if (erikAlive && (r.year > ssErikStartYear || (r.year === ssErikStartYear && m >= ssErikStartMonth))) {
+        ssErik = Math.round(erikSSMonthly);
       }
-      if (debAlive) {
-        const ssDebEvent = events.find(e => e.type === 'social_security_start' && e.name === 'Deb');
-        const startMonth = ssDebEvent ? eventMonth(ssDebEvent) : 1;
-        const startYear = ssDebEvent ? eventYear(ssDebEvent) : 0;
-        if (r.year > startYear || (r.year === startYear && m >= startMonth)) {
-          const ssDebMonthly = r.social_security_debbie > 0
-            ? r.social_security_debbie / (r.year === startYear ? (13 - startMonth) : 12)
-            : 0;
-          ssDebbie = ssDebMonthly;
-        }
+      if (debAlive && (r.year > ssDebStartYear || (r.year === ssDebStartYear && m >= ssDebStartMonth))) {
+        ssDebbie = Math.round(debSSMonthly);
       }
       // Survivor benefit: after Erik dies, Deb gets max(own, Erik's)
-      if (!erikAlive && debAlive && r.social_security_debbie > 0) {
-        // The annual computation already handles survivor benefits
-        // Just use the annual per-month value which includes it
+      if (!erikAlive && debAlive) {
+        ssDebbie = Math.round(Math.max(debSSMonthly, erikSSMonthly));
       }
 
       // Event labels for this month
