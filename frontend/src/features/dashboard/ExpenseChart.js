@@ -1,8 +1,9 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 
-// Order: top-to-bottom on chart (last renders on top)
+// Order: first renders at bottom, last on top
 const CHART_ORDER = [
+  { key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' },
   { key: 'allowance', label: 'Allowance', color: '#3b82f6' },
   { key: 'total_tax', label: 'Taxes',     color: '#dc2626' },
   { key: 'real_estate_costs',  label: 'Housing',  color: '#22c55e' },
@@ -12,7 +13,6 @@ const CHART_ORDER = [
   { key: 'health',    label: 'Health',    color: '#06b6d4' },
   { key: 'pets',      label: 'Pets',      color: '#ec4899' },
   { key: 'vehicles',  label: 'Vehicles',  color: '#a3e635' },
-  { key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' },
 ];
 // Legend order: top-to-bottom = left-to-right
 const LEGEND_ORDER = [...CHART_ORDER].reverse();
@@ -50,12 +50,14 @@ export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
           <CartesianGrid vertical={false} stroke="#334155" strokeWidth={1} />
           <Tooltip wrapperStyle={{ marginTop: -100 }} content={({ active, payload, label }) => {
             if (!active || !payload?.length) return null;
-            const erikAge = label - new Date(params?.erikDOB).getFullYear();
-            const debAge = label - new Date(params?.debDOB).getFullYear();
+            const yr = Math.floor(label);
+            const mo = Math.round((label - yr) * 12) + 1;
+            const erikAge = yr - new Date(params?.erikDOB).getFullYear();
+            const debAge = yr - new Date(params?.debDOB).getFullYear();
             const total = payload.reduce((s, p) => s + (p.value || 0), 0);
             return (
               <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 4, padding: '8px 12px', fontSize: 12 }}>
-                <div style={{ color: '#e2e8f0', fontWeight: 600, marginBottom: 2 }}>{label} (Erik {erikAge}, Deb {debAge})</div>
+                <div style={{ color: '#e2e8f0', fontWeight: 600, marginBottom: 2 }}>{mo}/{yr} (Erik {erikAge}, Deb {debAge})</div>
                 {[...payload].reverse().map(p => (
                   <div key={p.dataKey} style={{ color: p.color, display: 'flex', gap: 6, justifyContent: 'space-between' }}>
                     <span>{p.dataKey}</span>

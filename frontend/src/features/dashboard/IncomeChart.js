@@ -26,12 +26,14 @@ export default function IncomeChart({ rows, params, sharedYMax, monthly }) {
           <CartesianGrid vertical={false} stroke="#334155" strokeWidth={1} />
           <Tooltip content={({ active, payload, label }) => {
             if (!active || !payload?.length) return null;
-            const erikAge = label - new Date(params?.erikDOB).getFullYear();
-            const debAge = label - new Date(params?.debDOB).getFullYear();
+            const yr = Math.floor(label);
+            const mo = Math.round((label - yr) * 12) + 1;
+            const erikAge = yr - new Date(params?.erikDOB).getFullYear();
+            const debAge = yr - new Date(params?.debDOB).getFullYear();
             const total = payload.reduce((s, p) => s + (p.value || 0), 0);
             return (
               <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 4, padding: '8px 12px', fontSize: 12 }}>
-                <div style={{ color: '#e2e8f0', fontWeight: 600, marginBottom: 2 }}>{label} (Erik {erikAge}, Deb {debAge})</div>
+                <div style={{ color: '#e2e8f0', fontWeight: 600, marginBottom: 2 }}>{mo}/{yr} (Erik {erikAge}, Deb {debAge})</div>
                 {[...payload].reverse().map(p => (
                   <div key={p.dataKey} style={{ color: p.color, display: 'flex', gap: 8, justifyContent: 'space-between' }}>
                     <span>{p.dataKey}</span>
