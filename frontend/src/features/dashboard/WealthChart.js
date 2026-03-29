@@ -1,9 +1,9 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 
-export default function WealthChart({ rows, params, events }) {
+export default function WealthChart({ rows, params, monthly }) {
   const data = rows.map(r => ({
-    year: r.year,
+    year: monthly ? r.year + (r.month - 1) / 12 : r.year,
     'Real Estate': Math.round((r.real_estate_value || 0) / 1000),
     'Investments': Math.round(r.investment_balance / 1000),
   }));
