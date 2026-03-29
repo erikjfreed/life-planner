@@ -7,6 +7,7 @@ const db = require('./database');
 const { computeTimeline } = require('./compute');
 const { buildTaxData } = require('./taxHelpers');
 const { computeTaxes } = require('./taxBrackets');
+const { computeMonthlyTimeline } = require('./computeMonthly');
 const DEFAULT_PARAMS = require('./defaultParams');
 
 const app = express();
@@ -58,6 +59,17 @@ app.get('/api/timeline', (req, res) => {
   const loans = loadLoans();
   const rows = computeTimeline(params, events, entities, loans);
   res.json(rows);
+});
+
+// GET /api/timeline-monthly — monthly granularity for charts
+app.get('/api/timeline-monthly', (req, res) => {
+  const params = loadParams();
+  const events = loadEvents();
+  const entities = loadEntities();
+  const loans = loadLoans();
+  const annualRows = computeTimeline(params, events, entities, loans);
+  const monthlyRows = computeMonthlyTimeline(annualRows, events, entities);
+  res.json(monthlyRows);
 });
 
 // GET /api/events — return all events ordered by year

@@ -1,34 +1,12 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 
-export default function WealthChart({ rows, params, events }) {
-  const reEvents = (events ?? []).filter(e => e.type === 'real_estate_buy' || e.type === 'real_estate_sell');
-  const data = [];
-  for (const r of rows) {
-    // Check if this year has RE events
-    const yearEvents = reEvents.filter(e => e.year === r.year);
-    if (yearEvents.length > 0 && r.pre_event_real_estate_value !== r.real_estate_value) {
-      const earliestMonth = Math.min(...yearEvents.map(e => e.month || 1));
-      // Pre-event point
-      data.push({
-        year: r.year + (earliestMonth - 1) / 12 - 0.01,
-        'Real Estate': Math.round(r.pre_event_real_estate_value / 1000),
-        'Investments': Math.round(r.investment_balance / 1000),
-      });
-      // Post-event point
-      data.push({
-        year: r.year + (earliestMonth - 1) / 12,
-        'Real Estate': Math.round(r.real_estate_value / 1000),
-        'Investments': Math.round(r.investment_balance / 1000),
-      });
-    } else {
-      data.push({
-        year: r.year,
-        'Real Estate': Math.round(r.real_estate_value / 1000),
-        'Investments': Math.round(r.investment_balance / 1000),
-      });
-    }
-  }
+export default function WealthChart({ rows, params, events, monthly }) {
+  const data = rows.map(r => ({
+    year: monthly ? r.year + (r.month - 1) / 12 : r.year,
+    'Real Estate': Math.round((r.real_estate_value || 0) / 1000),
+    'Investments': Math.round(r.investment_balance / 1000),
+  }));
 
   const minYear = data.length > 0 ? data[0].year : 2026;
   const maxYear = data.length > 0 ? data[data.length - 1].year : 2060;

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTimeline } from '../timeline/timelineSlice';
 import { fetchParameters } from '../parameters/parametersSlice';
@@ -15,9 +15,16 @@ export default function Dashboard() {
   const params = useSelector(s => s.parameters.present.values);
   const events = useSelector(s => s.events.items);
 
+  const [monthlyRows, setMonthlyRows] = useState([]);
+
   useEffect(() => { dispatch(fetchParameters()); }, [dispatch]);
   useEffect(() => { dispatch(fetchEvents()); }, [dispatch]);
   useEffect(() => { if (status === 'idle') dispatch(fetchTimeline()); }, [status, dispatch]);
+  useEffect(() => {
+    if (status === 'succeeded') {
+      fetch('/lifeplanner/api/timeline-monthly').then(r => r.json()).then(setMonthlyRows).catch(() => {});
+    }
+  }, [status, rows]);
 
   const minYear = rows.length > 0 ? rows[0].year : 2026;
   const maxYear = rows.length > 0 ? rows[rows.length - 1].year : 2060;
@@ -45,9 +52,9 @@ export default function Dashboard() {
           {status === 'succeeded' && (
             <>
               <div style={styles.eventStrip} />
-              <div style={styles.chartSlot}><WealthChart rows={rows} params={params} events={events} /></div>
-              <div style={styles.chartSlot}><IncomeChart rows={rows} params={params} sharedYMax={sharedYMax} /></div>
-              <div style={styles.chartSlot}><ExpenseChart rows={rows} params={params} sharedYMax={sharedYMax} /></div>
+              <div style={styles.chartSlot}><WealthChart rows={monthlyRows.length > 0 ? monthlyRows : rows} params={params} events={events} monthly={monthlyRows.length > 0} /></div>
+              <div style={styles.chartSlot}><IncomeChart rows={monthlyRows.length > 0 ? monthlyRows : rows} params={params} sharedYMax={sharedYMax} monthly={monthlyRows.length > 0} /></div>
+              <div style={styles.chartSlot}><ExpenseChart rows={monthlyRows.length > 0 ? monthlyRows : rows} params={params} sharedYMax={sharedYMax} monthly={monthlyRows.length > 0} /></div>
               <ChartEventLinesOverlay
                 deathEvents={deathEvents}
 
