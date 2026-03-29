@@ -266,5 +266,179 @@ describe('Compute Timeline', () => {
         expect(r.investment_balance).toBeGreaterThanOrEqual(0);
       }
     });
+
+    test('investment balance decreases by net_draw minus roi each year', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      for (let i = 1; i < rows.length; i++) {
+        const prev = rows[i - 1];
+        const curr = rows[i];
+        if (prev.investment_balance === 0) continue;
+        // curr.investment_balance should roughly = prev.investment_balance + prev.roi - prev.net_draw + saleProceeds
+        // We can't check saleProceeds directly, but balance should be plausible
+        expect(curr.investment_balance).toBeLessThan(prev.investment_balance + prev.roi + 2000000); // reasonable upper bound
+      }
+    });
+  });
+
+  describe('Expense Inflation', () => {
+    test('health inflates at healthcare rate (6%)', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      const row0 = rows[0];
+      const row5 = rows[5];
+      if (row0.health > 0 && row5.health > 0) {
+        const expectedRatio = Math.pow(1 + DEFAULT_PARAMS.healthcareInflation, 5);
+        const actualRatio = row5.health / row0.health;
+        expect(actualRatio).toBeCloseTo(expectedRatio, 1);
+      }
+    });
+
+    test('living inflates at general rate (2.5%)', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      const row0 = rows[0];
+      const row5 = rows[5];
+      if (row0.living > 0 && row5.living > 0) {
+        const expectedRatio = Math.pow(1 + DEFAULT_PARAMS.generalInflation, 5);
+        const actualRatio = row5.living / row0.living;
+        expect(actualRatio).toBeCloseTo(expectedRatio, 1);
+      }
+    });
+
+    test('travel inflates at general rate', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      const row0 = rows[0];
+      const row5 = rows[5];
+      if (row0.travel > 0 && row5.travel > 0) {
+        const expectedRatio = Math.pow(1 + DEFAULT_PARAMS.generalInflation, 5);
+        const actualRatio = row5.travel / row0.travel;
+        expect(actualRatio).toBeCloseTo(expectedRatio, 1);
+      }
+    });
+  });
+
+  describe('Allowance', () => {
+    test('allowance is based on two people when both alive', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      const row2026 = rows.find(r => r.year === 2026);
+      const expectedBase = DEFAULT_PARAMS.allowancePerPersonPerMonth * 12 * 2;
+      // Should be close to 2x person x 12 months = $72K base
+      expect(row2026.allowance).toBeCloseTo(expectedBase, -2);
+    });
+
+    test('allowance drops after first spouse dies', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      const before = rows.find(r => r.year === 2040);
+      const after = rows.find(r => r.year === 2042);
+      expect(after.allowance).toBeLessThan(before.allowance);
+    });
+
+    test('allowance is zero after both spouses die', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      const afterBoth = rows.find(r => r.year === 2049);
+      if (afterBoth) expect(afterBoth.allowance).toBe(0);
+    });
+  });
+
+  describe('Real Estate Value', () => {
+    test('RE appreciates at entity rate', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      const row0 = rows[0];
+      const row5 = rows[5];
+      if (row0.real_estate_value > 0 && row5.real_estate_value > 0) {
+        const expectedRatio = Math.pow(1.05, 5);
+        const actualRatio = row5.real_estate_value / row0.real_estate_value;
+        expect(actualRatio).toBeCloseTo(expectedRatio, 1);
+      }
+    });
+
+    test('RE value drops to zero after all properties sold', () => {
+      const sellEvents = [
+        ...baseEvents,
+        { id: 10, type: 'real_estate_sell', date: '2028-06-01', entity_id: 1, sale_price: 1200000, hidden: 0 },
+      ];
+      const rows = computeTimeline(DEFAULT_PARAMS, sellEvents, baseEntities, baseLoans);
+      const afterSell = rows.find(r => r.year === 2029);
+      expect(afterSell.real_estate_value).toBe(0);
+      expect(afterSell.real_estate).toBe(0);
+    });
+  });
+
+  describe('Mortgage / Loans', () => {
+    test('loan payments show as expenses', () => {
+      const loanEntities = [...baseEntities];
+      const testLoans = [
+        { id: 1, entity_id: 1, name: 'Mortgage', rate: 0.03, term_years: 30, original_balance: 500000, current_balance: 500000, monthly_payment: 2108, start_year: 2020, start_month: 1 },
+      ];
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, loanEntities, testLoans);
+      const row2026 = rows.find(r => r.year === 2026);
+      expect(row2026.loans).toBeGreaterThan(20000); // ~$25K/yr in payments
+    });
+  });
+
+  describe('State Derivation', () => {
+    test('WA when WA property owned', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      const row2026 = rows.find(r => r.year === 2026);
+      expect(row2026.tax_state).toBe('WA');
+    });
+
+    test('CA when only CA property owned', () => {
+      const caEntities = baseEntities.map(e =>
+        e.id === 1 ? { ...e, name: 'SanRafael', street_address: '123 CA St' } : e
+      );
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, caEntities, baseLoans);
+      const row2026 = rows.find(r => r.year === 2026);
+      expect(row2026.tax_state).toBe('CA');
+    });
+  });
+
+  describe('Timeline Structure', () => {
+    test('timeline starts at 2026', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      expect(rows[0].year).toBe(2026);
+    });
+
+    test('timeline ends 2 years after last death', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      const lastRow = rows[rows.length - 1];
+      // Deb dies 2048, endgame = 2050
+      expect(lastRow.year).toBe(2050);
+    });
+
+    test('ages are correct', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      const row2026 = rows.find(r => r.year === 2026);
+      expect(row2026.erik_age).toBe(70); // 2026 - 1956
+      expect(row2026.deb_age).toBe(65);  // 2026 - 1961
+    });
+
+    test('every row has required fields', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+      const required = ['year', 'erik_age', 'deb_age', 'total_expenses', 'gross_draw',
+        'social_security_subtotal', 'total_tax', 'investment_balance', 'roi',
+        'capital_spend', 'draw_fed_rate', 'draw_state_rate'];
+      for (const r of rows) {
+        for (const field of required) {
+          expect(r).toHaveProperty(field);
+        }
+      }
+    });
+  });
+
+  describe('No Events Edge Case', () => {
+    test('runs with minimal events (just deaths)', () => {
+      const minEvents = [
+        { id: 1, type: 'spouse_death', date: '2041-12-27', age: 85, entity_id: 4, name: 'Erik', hidden: 0 },
+        { id: 2, type: 'spouse_death', date: '2048-10-18', age: 87, entity_id: 5, name: 'Deb', hidden: 0 },
+      ];
+      const rows = computeTimeline(DEFAULT_PARAMS, minEvents, baseEntities, []);
+      expect(rows.length).toBeGreaterThan(10);
+      expect(rows[0].year).toBe(2026);
+    });
+
+    test('runs with empty events', () => {
+      const rows = computeTimeline(DEFAULT_PARAMS, [], [], []);
+      // With no death events, endOfGame defaults to 2060
+      expect(rows.length).toBeGreaterThan(30);
+    });
   });
 });

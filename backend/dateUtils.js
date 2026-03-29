@@ -18,14 +18,14 @@ function formatDate(year, month, day) {
  * Get year from event date field.
  */
 function eventYear(e) {
-  return parseDate(e.date).year;
+  return e ? parseDate(e.date).year : null;
 }
 
 /**
  * Get month from event date field.
  */
 function eventMonth(e) {
-  return parseDate(e.date).month;
+  return e ? parseDate(e.date).month : null;
 }
 
 module.exports = { parseDate, formatDate, eventYear, eventMonth };

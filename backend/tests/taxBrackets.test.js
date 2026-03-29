@@ -173,6 +173,116 @@ describe('Tax Brackets', () => {
     });
   });
 
+  describe('Senior Bonus Deduction', () => {
+    test('senior bonus applies for age 65+ in 2025-2028', () => {
+      const with65 = computeTaxes({
+        year: 2026, filing_status: 'married_filing_jointly', state: 'WA',
+        erik_age: 70, deb_age: 65,
+        gross_draw: 100000, ss_income: 0,
+        mortgage_interest: 0, property_taxes: 0,
+      });
+      const without65 = computeTaxes({
+        year: 2026, filing_status: 'married_filing_jointly', state: 'WA',
+        erik_age: 50, deb_age: 45,
+        gross_draw: 100000, ss_income: 0,
+        mortgage_interest: 0, property_taxes: 0,
+      });
+      // With 65+ age, deduction should be larger
+      expect(with65.deduction).toBeGreaterThan(without65.deduction);
+    });
+
+    test('senior bonus phases out at high income', () => {
+      const lowIncome = computeTaxes({
+        year: 2026, filing_status: 'married_filing_jointly', state: 'WA',
+        erik_age: 70, deb_age: 65,
+        gross_draw: 100000, ss_income: 0,
+        mortgage_interest: 0, property_taxes: 0,
+      });
+      const highIncome = computeTaxes({
+        year: 2026, filing_status: 'married_filing_jointly', state: 'WA',
+        erik_age: 70, deb_age: 65,
+        gross_draw: 500000, ss_income: 0,
+        mortgage_interest: 0, property_taxes: 0,
+      });
+      // High income should not get senior bonus (AGI > $150K MFJ threshold)
+      expect(highIncome.deduction).toBeLessThanOrEqual(lowIncome.deduction);
+    });
+  });
+
+  describe('SS Taxation Formula', () => {
+    test('50% tier: partial SS taxable between $32K-$44K combined income MFJ', () => {
+      const result = computeTaxes({
+        year: 2026, filing_status: 'married_filing_jointly', state: 'WA',
+        erik_age: 70, deb_age: 65,
+        gross_draw: 20000, ss_income: 30000,
+        mortgage_interest: 0, property_taxes: 0,
+      });
+      // Combined income = 20000 + 15000 = 35000 (between 32K-44K)
+      expect(result.taxable_ss).toBeGreaterThan(0);
+      expect(result.taxable_ss).toBeLessThan(30000 * 0.85);
+    });
+
+    test('85% tier: most SS taxable at high combined income', () => {
+      const result = computeTaxes({
+        year: 2026, filing_status: 'married_filing_jointly', state: 'WA',
+        erik_age: 70, deb_age: 65,
+        gross_draw: 300000, ss_income: 60000,
+        mortgage_interest: 0, property_taxes: 0,
+      });
+      // Combined income well above $44K
+      expect(result.taxable_ss).toBeCloseTo(60000 * 0.85, -2);
+    });
+
+    test('single filer thresholds are lower', () => {
+      const mfj = computeTaxes({
+        year: 2026, filing_status: 'married_filing_jointly', state: 'WA',
+        erik_age: 70, deb_age: 65,
+        gross_draw: 20000, ss_income: 20000,
+        mortgage_interest: 0, property_taxes: 0,
+      });
+      const single = computeTaxes({
+        year: 2026, filing_status: 'single', state: 'WA',
+        erik_age: 70, deb_age: 0,
+        gross_draw: 20000, ss_income: 20000,
+        mortgage_interest: 0, property_taxes: 0,
+      });
+      // Same income, single has lower threshold so more SS taxable
+      expect(single.taxable_ss).toBeGreaterThanOrEqual(mfj.taxable_ss);
+    });
+  });
+
+  describe('Zero Income', () => {
+    test('no tax on zero income', () => {
+      const result = computeTaxes({
+        year: 2026, filing_status: 'married_filing_jointly', state: 'WA',
+        erik_age: 70, deb_age: 65,
+        gross_draw: 0, ss_income: 0,
+        mortgage_interest: 0, property_taxes: 0,
+      });
+      expect(result.fed_tax).toBe(0);
+      expect(result.state_tax).toBe(0);
+      expect(result.total_tax).toBe(0);
+    });
+  });
+
+  describe('CA Brackets', () => {
+    test('CA tax increases with income', () => {
+      const low = computeTaxes({
+        year: 2026, filing_status: 'married_filing_jointly', state: 'CA',
+        erik_age: 70, deb_age: 65,
+        gross_draw: 100000, ss_income: 0,
+        mortgage_interest: 0, property_taxes: 0,
+      });
+      const high = computeTaxes({
+        year: 2026, filing_status: 'married_filing_jointly', state: 'CA',
+        erik_age: 70, deb_age: 65,
+        gross_draw: 400000, ss_income: 0,
+        mortgage_interest: 0, property_taxes: 0,
+      });
+      expect(high.draw_state_rate).toBeGreaterThan(low.draw_state_rate);
+    });
+  });
+
   describe('Total Tax', () => {
     test('total_tax = fed_tax + state_tax', () => {
       const result = computeTaxes({
