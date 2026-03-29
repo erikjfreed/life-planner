@@ -17,7 +17,7 @@ const LEGEND_ORDER = [
   { key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' },
   { key: 'total_tax', label: 'Taxes', color: '#dc2626' },
   ...CHART_ORDER,
-].reverse();
+];
 
 export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
   const scale = monthly ? 12 : 1;
