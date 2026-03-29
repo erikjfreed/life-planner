@@ -84,14 +84,14 @@ export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
           )} />
           {CHART_ORDER.map(c => (
             <Area key={c.key} type="stepAfter" dataKey={c.label} stackId="1"
-              stroke={c.color} fill={c.color} fillOpacity={0.75} />
+              stroke="none" fill={c.color} fillOpacity={0.75} />
           ))}
           <Area key="total_tax" type="stepAfter" dataKey="Taxes" stackId="1"
-            stroke="#ef4444" fill="#ef4444" fillOpacity={0.75} />
+            stroke="none" fill="#ef4444" fillOpacity={0.75} />
           <Area key="cap_expense" type="stepAfter" dataKey="Cap Expense" stackId="1"
-            stroke="#a855f7" fill="#a855f7" fillOpacity={0.75} />
+            stroke="none" fill="#a855f7" fillOpacity={0.75} />
           <Area key="loans" type="stepAfter" dataKey="Loans" stackId="1"
-            stroke="#f97316" fill="#f97316" fillOpacity={0.75} />
+            stroke="none" fill="#f97316" fillOpacity={0.75} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
