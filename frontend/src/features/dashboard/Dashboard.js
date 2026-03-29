@@ -26,8 +26,11 @@ export default function Dashboard() {
     }
   }, [status, rows]);
 
-  const minYear = rows.length > 0 ? rows[0].year : 2026;
-  const maxYear = rows.length > 0 ? rows[rows.length - 1].year : 2060;
+  // Use fractional years matching the chart x-axis domain (monthly data)
+  const firstRow = chartRows.length > 0 ? chartRows[0] : null;
+  const lastRow = chartRows.length > 0 ? chartRows[chartRows.length - 1] : null;
+  const minYear = firstRow ? (isMonthly ? firstRow.year + (firstRow.month - 1) / 12 : firstRow.year) : 2026;
+  const maxYear = lastRow ? (isMonthly ? lastRow.year + (lastRow.month - 1) / 12 : lastRow.year) : 2060;
 
   // Shared Y-axis max for income and expense charts ($K) — use annual rows
   const sharedYMax = rows.length > 0 ? Math.ceil(Math.max(
