@@ -178,7 +178,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       let mLoans = 0;
       if (alive) {
         for (const prop of properties) {
-          const propActive = prop.active || (prop.sellMonth && year === Math.max(prop.yearBought, year) && m < prop.sellMonth);
+          const propActive = prop.active || (prop.sellYear === year && prop.sellMonth && m < prop.sellMonth);
           if (!propActive) continue;
           for (const loan of prop.loans) {
             if (loan.principal > 0) mLoans += loan.payment;
@@ -192,7 +192,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         for (const prop of properties) {
           const boughtThisYear = prop.yearBought === year;
           const buyMonth = prop.buyMonth || 1;
-          const propActive = prop.active ? (boughtThisYear ? m >= buyMonth : true) : (prop.sellMonth ? m < prop.sellMonth : false);
+          const propActive = prop.active ? (boughtThisYear ? m >= buyMonth : true) : (prop.sellYear === year && prop.sellMonth ? m < prop.sellMonth : false);
           if (propActive) {
             const yearsSinceBought = Math.max(0, year - prop.yearBought);
             mRECosts += inf(prop.expenseBase, generalInflation, yearsSinceBought) / 12;
@@ -340,7 +340,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           const buyMonth = prop.buyMonth || 1;
           const propActive = prop.active
             ? (boughtThisYear ? m >= buyMonth : true)
-            : (prop.sellMonth ? (year >= prop.yearBought && m < prop.sellMonth) : false);
+            : (prop.sellYear === year && prop.sellMonth ? m < prop.sellMonth : false);
           if (propActive) {
             for (const loan of prop.loans) {
               if (loan.principal > 0) mLoans += loan.payment;

@@ -37,7 +37,7 @@ export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 4, right: 20, left: 10, bottom: 0 }}>
           <XAxis dataKey="year" type="number" domain={[minYear, maxYear]} ticks={Array.from({length: maxYear - minYear + 1}, (_, i) => minYear + i)} tick={{ fontSize: 9, fill: '#94a3b8' }} angle={-45} textAnchor="end" height={30} interval={0} />
-          <YAxis width={58} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={v => `$${v}K`} ticks={Array.from({ length: Math.floor(yMax / 100) + 1 }, (_, i) => i * 100)} domain={[0, yMax]} interval={0} />
+          <YAxis width={52} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={v => `$${v}K`} ticks={Array.from({ length: Math.floor(yMax / 100) + 1 }, (_, i) => i * 100)} domain={[0, yMax]} interval={0} />
           <CartesianGrid vertical={false} stroke="#334155" strokeWidth={1} />
           <Tooltip wrapperStyle={{ marginTop: -100 }} content={({ active, payload, label }) => {
             if (!active || !payload?.length) return null;
