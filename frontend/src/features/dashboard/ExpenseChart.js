@@ -26,7 +26,7 @@ export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
     const entry = { year: monthly ? r.year + (r.month - 1) / 12 : r.year };
     CHART_ORDER.forEach(c => {
       if (c.key === 'cap_expense') {
-        entry[c.label] = Math.round(annualCapExp[r.year] / 1000);
+        entry[c.label] = Math.round(Math.max(0, annualCapExp[r.year]) / 1000);
       } else {
         entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) * scale / 1000);
       }

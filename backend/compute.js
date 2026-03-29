@@ -433,7 +433,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         health: Math.round(mHealth), pets: Math.round(mPets), vehicles: Math.round(mVehicles),
         travel: Math.round(mTravel), living: Math.round(mLiving), allowance: Math.round(mAllowance),
         loans: Math.round(mLoans), real_estate_costs: Math.round(mRECosts),
-        cap_expense: Math.round(Math.max(0, mCapExpense)),
+        cap_expense: Math.round(mCapExpense),
         total_expenses: Math.round(mTotalExpenses),
         social_security_erik: Math.round(mSSErik), social_security_debbie: Math.round(mSSDeb),
         social_security_subtotal: Math.round(mSSTotal),
