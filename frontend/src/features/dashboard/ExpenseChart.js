@@ -70,7 +70,7 @@ export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
             </div>
           )} />
           {CHART_ORDER.map(c => (
-            <Area key={c.key} type="stepAfter" dataKey={c.label} stackId="1"
+            <Area key={c.key} type="linear" dataKey={c.label} stackId="1"
               stroke={c.color} fill={c.color} fillOpacity={0.75} />
           ))}
         </AreaChart>
