@@ -4,7 +4,6 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Ca
 // Order: first renders at bottom, last on top (cap expense rendered separately)
 const CHART_ORDER = [
   { key: 'allowance', label: 'Allowance', color: '#3b82f6' },
-  { key: 'total_tax', label: 'Taxes',     color: '#dc2626' },
   { key: 'real_estate_costs',  label: 'Housing',  color: '#22c55e' },
   { key: 'loans',     label: 'Loans',     color: '#f97316' },
   { key: 'living',    label: 'General',   color: '#eab308' },
@@ -13,8 +12,12 @@ const CHART_ORDER = [
   { key: 'pets',      label: 'Pets',      color: '#ec4899' },
   { key: 'vehicles',  label: 'Vehicles',  color: '#a3e635' },
 ];
-// Legend order: top-to-bottom = left-to-right (cap expense on top)
-const LEGEND_ORDER = [{ key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' }, ...CHART_ORDER].reverse();
+// Legend order: top-to-bottom = left-to-right (cap expense on top, taxes below it)
+const LEGEND_ORDER = [
+  { key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' },
+  { key: 'total_tax', label: 'Taxes', color: '#dc2626' },
+  ...CHART_ORDER,
+].reverse();
 
 export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
   const scale = monthly ? 12 : 1;
@@ -27,14 +30,14 @@ export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
     CHART_ORDER.forEach(c => {
       entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) * scale / 1000);
     });
-    // Cap expense: annual value on every monthly point (flat within year)
+    entry['Taxes'] = Math.round(r.total_tax * scale / 1000);
     entry['Cap Expense'] = Math.round(Math.max(0, annualCapExp[r.year]) / 1000);
     return entry;
   });
 
   const minYear = data.length > 0 ? data[0].year : 2026;
   const maxYear = data.length > 0 ? data[data.length - 1].year : 2060;
-  const maxVal = Math.max(...data.map(r => CHART_ORDER.reduce((s, c) => s + (r[c.label] || 0), 0) + (r['Cap Expense'] || 0)));
+  const maxVal = Math.max(...data.map(r => CHART_ORDER.reduce((s, c) => s + (r[c.label] || 0), 0) + (r['Taxes'] || 0) + (r['Cap Expense'] || 0)));
   const yMax = sharedYMax || Math.ceil(maxVal / 100) * 100;
   const yTicks = Array.from({ length: yMax / 100 + 1 }, (_, i) => i * 100);
 
@@ -82,6 +85,8 @@ export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
             <Area key={c.key} type="stepAfter" dataKey={c.label} stackId="1"
               stroke={c.color} fill={c.color} fillOpacity={0.75} />
           ))}
+          <Area key="total_tax" type="stepAfter" dataKey="Taxes" stackId="1"
+            stroke="#dc2626" fill="#dc2626" fillOpacity={0.75} />
           <Area key="cap_expense" type="stepAfter" dataKey="Cap Expense" stackId="1"
             stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.75} />
         </AreaChart>
