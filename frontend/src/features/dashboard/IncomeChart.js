@@ -2,16 +2,17 @@ import { AreaChart, Area, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContain
 
 
 export default function IncomeChart({ rows, params, sharedYMax, monthly }) {
-  const scale = monthly ? 12 : 1;
-  // Annual aggregate for cap spend (like cap expense on expense chart)
-  const annualCapSpend = {};
+  // All components annualized: sum monthly values per year
+  const annualSS = {}, annualROI = {}, annualCapSpend = {};
   rows.forEach(r => {
+    annualSS[r.year] = (annualSS[r.year] || 0) + r.social_security_subtotal;
+    annualROI[r.year] = (annualROI[r.year] || 0) + Math.min(r.gross_draw, r.roi);
     annualCapSpend[r.year] = (annualCapSpend[r.year] || 0) + Math.max(0, r.gross_draw - r.roi);
   });
   const data = rows.map(r => ({
     year: monthly ? r.year + (r.month - 1) / 12 : r.year,
-    'SS': Math.round(r.social_security_subtotal * scale / 1000),
-    'ROI': Math.round(Math.min(r.gross_draw, r.roi) * scale / 1000),
+    'SS': Math.round(annualSS[r.year] / 1000),
+    'ROI': Math.round(annualROI[r.year] / 1000),
     'Cap Spend': Math.round(annualCapSpend[r.year] / 1000),
   }));
 
