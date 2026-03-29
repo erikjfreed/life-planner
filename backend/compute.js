@@ -289,8 +289,15 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       inflation_rate: generalInflation,
     });
 
-    const monthlyDraw = grossDraw / 12;
-    const monthlyTax = taxResult.total_tax / 12;
+    // Count alive months to distribute draw/tax only to alive months
+    let aliveMonthCount = 0;
+    for (let mc = 1; mc <= 12; mc++) {
+      const eA = year < erikDeathYear || (year === erikDeathYear && mc < erikDeathMonth);
+      const dA = year < debDeathYear || (year === debDeathYear && mc < debDeathMonth);
+      if (eA || dA) aliveMonthCount++;
+    }
+    const monthlyDraw = aliveMonthCount > 0 ? grossDraw / aliveMonthCount : 0;
+    const monthlyTax = aliveMonthCount > 0 ? taxResult.total_tax / aliveMonthCount : 0;
 
     // --- MONTHLY LOOP: produce one row per month ---
     for (let m = 1; m <= 12; m++) {
@@ -351,8 +358,8 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         }
       }
 
-      // Cap expense: spread evenly across the year (simplification)
-      const mCapExpense = annualCapExpense / 12;
+      // Cap expense: spread across alive months (annual net cost / alive months)
+      const mCapExpense = alive && aliveMonthCount > 0 ? annualCapExpense / aliveMonthCount : 0;
 
       const mTotalExpenses = mHealth + mTravel + mLiving + mAllowance + mPets + mVehicles + mLoans + mRECosts + mCapExpense;
 
@@ -368,9 +375,8 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
 
       const mSSTotal = mSSErik + mSSDeb;
 
-      // Sale proceeds this month
+      // Sale proceeds this month (investment balance impact)
       let monthSaleProceeds = 0;
-      // RE sells in this exact month
       for (const prop of properties) {
         if (!prop.active && prop.sellYear === year && prop.sellMonth === m) {
           const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
@@ -378,24 +384,32 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           monthSaleProceeds += proceeds;
         }
       }
-      // RE buys in this exact month
       for (const prop of properties) {
         if (prop.yearBought === year && (prop.buyMonth || 1) === m && year > startYear) {
           const loanTotal = prop.loans.reduce((s, l) => s + l.principal, 0);
           monthSaleProceeds -= (prop.value - loanTotal);
         }
       }
-      // Vehicle tradeup in this month
-      events.filter(e => e.type === 'vehicle_tradeup' && eventYear(e) === year && (eventMonth(e) || 1) === m).forEach(e => {
-        // Cash impact already in draw via capExpense
-      });
+
+      // Draw and tax only apply in alive months
+      const effectiveDraw = alive ? monthlyDraw : 0;
+      const effectiveTax = alive ? monthlyTax : 0;
 
       // Investment balance: monthly compound
       const monthlyROI = investmentBalance * (investmentROI / 12);
-      investmentBalance = Math.max(0, investmentBalance + monthlyROI - monthlyDraw - monthlyTax + monthSaleProceeds);
+      investmentBalance = Math.max(0, investmentBalance + monthlyROI - effectiveDraw - effectiveTax + monthSaleProceeds);
 
-      const reValue = properties.filter(p => p.active).reduce((s, p) => s + p.value, 0);
-      const reEquity = properties.filter(p => p.active).reduce((s, p) => s + p.value - p.loans.reduce((s2, l) => s2 + l.principal, 0), 0);
+      // RE value: respect buy/sell months, not just active flag
+      const isPropertyVisible = (p) => {
+        if (p.active) {
+          if (p.yearBought === year && p.buyMonth && m < p.buyMonth) return false;
+          return year >= p.yearBought;
+        }
+        // Sold property: visible until sell month in sell year
+        return p.sellYear === year && p.sellMonth && m < p.sellMonth;
+      };
+      const reValue = properties.filter(isPropertyVisible).reduce((s, p) => s + p.value, 0);
+      const reEquity = properties.filter(isPropertyVisible).reduce((s, p) => s + p.value - p.loans.reduce((s2, l) => s2 + l.principal, 0), 0);
 
       rows.push({
         year, month: m, yrs: t, erik_age: erikAge, deb_age: debAge,
@@ -406,20 +420,21 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         total_expenses: Math.round(mTotalExpenses),
         social_security_erik: Math.round(mSSErik), social_security_debbie: Math.round(mSSDeb),
         social_security_subtotal: Math.round(mSSTotal),
-        social_security_tax: Math.round(taxResult.total_tax * (annualSS > 0 ? (taxResult.ss_fed_rate + taxResult.ss_state_rate) * annualSS / taxResult.total_tax : 0) / 12),
+        social_security_tax: Math.round(taxResult.total_tax * (annualSS > 0 ? (taxResult.ss_fed_rate + taxResult.ss_state_rate) * annualSS / taxResult.total_tax : 0) / aliveMonthCount),
         social_security_net: Math.round(mSSTotal),
-        gross_draw: Math.round(monthlyDraw), draw_tax: Math.round(taxResult.draw_tax || 0) / 12,
-        net_draw: Math.round(monthlyDraw + monthlyTax),
-        total_tax: Math.round(monthlyTax),
+        gross_draw: Math.round(effectiveDraw), draw_tax: Math.round(taxResult.draw_tax || 0) / aliveMonthCount,
+        net_draw: Math.round(effectiveDraw + effectiveTax),
+        total_tax: Math.round(effectiveTax),
         draw_fed_rate: taxResult.draw_fed_rate, draw_state_rate: taxResult.draw_state_rate,
         ss_fed_rate: taxResult.ss_fed_rate, ss_state_rate: taxResult.ss_state_rate,
-        fed_tax: Math.round(taxResult.fed_tax / 12), state_tax: Math.round(taxResult.state_tax / 12),
+        fed_tax: alive ? Math.round(taxResult.fed_tax / aliveMonthCount) : 0,
+        state_tax: alive ? Math.round(taxResult.state_tax / aliveMonthCount) : 0,
         investment_balance: Math.round(investmentBalance),
         roi: Math.round(monthlyROI),
-        capital_spend: Math.round(Math.max(0, monthlyDraw - monthlyROI)),
+        capital_spend: Math.round(Math.max(0, effectiveDraw - monthlyROI)),
         real_estate: Math.round(reEquity), real_estate_value: Math.round(reValue),
         invest_plus_re: Math.round(investmentBalance + reEquity),
-        draw_rate: (investmentBalance + reEquity) > 0 ? (monthlyDraw + monthlyTax) * 12 / (investmentBalance + reEquity) : 0,
+        draw_rate: (investmentBalance + reEquity) > 0 ? (effectiveDraw + effectiveTax) * 12 / (investmentBalance + reEquity) : 0,
         tax_state: taxState, filing_status: filingStatus,
         mortgage_interest: Math.round(annualMortgageInterest), property_taxes_actual: Math.round(annualPropertyTaxes),
       });
