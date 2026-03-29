@@ -289,14 +289,14 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       inflation_rate: generalInflation,
     });
 
-    // Count alive months to distribute draw/tax only to alive months
+    // Count alive months to distribute tax only to alive months
     let aliveMonthCount = 0;
     for (let mc = 1; mc <= 12; mc++) {
       const eA = year < erikDeathYear || (year === erikDeathYear && mc < erikDeathMonth);
       const dA = year < debDeathYear || (year === debDeathYear && mc < debDeathMonth);
       if (eA || dA) aliveMonthCount++;
     }
-    const monthlyDraw = aliveMonthCount > 0 ? grossDraw / aliveMonthCount : 0;
+    // Tax spread evenly across alive months; draw computed per-month below
     const monthlyTax = aliveMonthCount > 0 ? taxResult.total_tax / aliveMonthCount : 0;
 
     // --- MONTHLY LOOP: produce one row per month ---
@@ -391,8 +391,10 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         }
       }
 
-      // Draw and tax only apply in alive months
-      const effectiveDraw = alive ? monthlyDraw : 0;
+      // Draw computed per-month: expenses + tax_share - SS
+      // This makes draw respond to mid-year SS changes and expense shifts
+      // Annual total is preserved: sum(draw_m) = grossDraw
+      const effectiveDraw = alive ? Math.max(0, mTotalExpenses + monthlyTax - mSSTotal) : 0;
       const effectiveTax = alive ? monthlyTax : 0;
 
       // Investment balance: monthly compound
