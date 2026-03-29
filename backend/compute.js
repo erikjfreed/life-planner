@@ -138,12 +138,12 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       const debAlive = year < debDeathYear || (year === debDeathYear && m < debDeathMonth);
       const peopleAlive = (erikAlive ? 1 : 0) + (debAlive ? 1 : 0);
       const alive = peopleAlive > 0;
-
-      // Monthly expenses
+      const tFrac = t + (m - 1) / 12;  // fractional years for monthly inflation
+      // Health: annual premium (steps once a year). Others: monthly inflation.
       const mHealth = alive ? inf(healthBase, healthcareInflation, t) / 12 * (peopleAlive / 2) : 0;
-      const mTravel = alive ? inf(travelBase, generalInflation, t) / 12 * (peopleAlive / 2) : 0;
-      const mLiving = alive ? inf(livingBase, generalInflation, t) / 12 : 0;
-      const mAllowance = alive ? inf(allowancePerPersonPerMonth, allowanceNetRate, t) * peopleAlive : 0;
+      const mTravel = alive ? inf(travelBase, generalInflation, tFrac) / 12 * (peopleAlive / 2) : 0;
+      const mLiving = alive ? inf(livingBase, generalInflation, tFrac) / 12 : 0;
+      const mAllowance = alive ? inf(allowancePerPersonPerMonth, allowanceNetRate, tFrac) * peopleAlive : 0;
 
       // Pets
       let mPets = 0;
@@ -153,7 +153,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           const lifespan = entity.term_years;
           if (birthYear && lifespan && year >= Math.round(birthYear + lifespan)) continue;
           const services = entity.services_json ? JSON.parse(entity.services_json) : [];
-          mPets += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, t) / 12;
+          mPets += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, tFrac) / 12;
         }
       }
 
@@ -168,8 +168,8 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           if ((bought || tradedIn) && !tradedAway && !sold) {
             const services = entity.services_json ? JSON.parse(entity.services_json) : [];
             const buyEvt = events.find(e => e.type === 'vehicle_buy' && e.entity_id === entity.id) || events.find(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id);
-            const yearsSinceBuy = Math.max(0, year - (eventYear(buyEvt) || startYear));
-            mVehicles += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, yearsSinceBuy) / 12 * (peopleAlive / 2);
+            const tSinceBuy = Math.max(0, t + (m - 1) / 12 - Math.max(0, (eventYear(buyEvt) || startYear) - startYear));
+            mVehicles += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, tSinceBuy) / 12 * (peopleAlive / 2);
           }
         }
       }
@@ -194,8 +194,8 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           const buyMonth = prop.buyMonth || 1;
           const propActive = prop.active ? (boughtThisYear ? m >= buyMonth : true) : (prop.sellYear === year && prop.sellMonth ? m < prop.sellMonth : false);
           if (propActive) {
-            const yearsSinceBought = Math.max(0, year - prop.yearBought);
-            mRECosts += inf(prop.expenseBase, generalInflation, yearsSinceBought) / 12;
+            const tSinceBought = Math.max(0, t + (m - 1) / 12 - Math.max(0, prop.yearBought - startYear));
+            mRECosts += inf(prop.expenseBase, generalInflation, tSinceBought) / 12;
           }
         }
       }
@@ -305,12 +305,13 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       const debAlive = year < debDeathYear || (year === debDeathYear && m < debDeathMonth);
       const peopleAlive = (erikAlive ? 1 : 0) + (debAlive ? 1 : 0);
       const alive = peopleAlive > 0;
+      const tFrac = t + (m - 1) / 12;  // fractional years for monthly inflation
 
-      // Monthly expenses (computed fresh, not divided from annual)
+      // Health: annual premium (steps once a year). Others: monthly inflation.
       const mHealth = alive ? inf(healthBase, healthcareInflation, t) / 12 * (peopleAlive / 2) : 0;
-      const mTravel = alive ? inf(travelBase, generalInflation, t) / 12 * (peopleAlive / 2) : 0;
-      const mLiving = alive ? inf(livingBase, generalInflation, t) / 12 : 0;
-      const mAllowance = alive ? inf(allowancePerPersonPerMonth, allowanceNetRate, t) * peopleAlive : 0;
+      const mTravel = alive ? inf(travelBase, generalInflation, tFrac) / 12 * (peopleAlive / 2) : 0;
+      const mLiving = alive ? inf(livingBase, generalInflation, tFrac) / 12 : 0;
+      const mAllowance = alive ? inf(allowancePerPersonPerMonth, allowanceNetRate, tFrac) * peopleAlive : 0;
 
       let mPets = 0;
       if (alive) {
@@ -319,7 +320,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           const lifespan = entity.term_years;
           if (birthYear && lifespan && year >= Math.round(birthYear + lifespan)) continue;
           const services = entity.services_json ? JSON.parse(entity.services_json) : [];
-          mPets += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, t) / 12;
+          mPets += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, tFrac) / 12;
         }
       }
 
@@ -333,8 +334,8 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
           if ((bought || tradedIn) && !tradedAway && !sold) {
             const services = entity.services_json ? JSON.parse(entity.services_json) : [];
             const buyEvt = events.find(e => e.type === 'vehicle_buy' && e.entity_id === entity.id) || events.find(e => e.type === 'vehicle_tradeup' && e.entity_id === entity.id);
-            const yearsSinceBuy = Math.max(0, year - (eventYear(buyEvt) || startYear));
-            mVehicles += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, yearsSinceBuy) / 12 * (peopleAlive / 2);
+            const tSinceBuy = tFrac - Math.max(0, (eventYear(buyEvt) || startYear) - startYear);
+            mVehicles += inf(services.reduce((s, i) => s + i.yearly, 0), generalInflation, Math.max(0, tSinceBuy)) / 12 * (peopleAlive / 2);
           }
         }
       }
@@ -352,16 +353,31 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
             for (const loan of prop.loans) {
               if (loan.principal > 0) mLoans += loan.payment;
             }
+            // RE costs: annual billing (property tax, insurance, HOA)
             const yearsSinceBought = Math.max(0, year - prop.yearBought);
             mRECosts += inf(prop.expenseBase, generalInflation, yearsSinceBought) / 12;
           }
         }
       }
 
-      // Cap expense: spread across alive months (annual net cost / alive months)
-      const mCapExpense = alive && aliveMonthCount > 0 ? annualCapExpense / aliveMonthCount : 0;
+      // Cap expense: computed in the month the event occurs
+      let mCapExpense = 0;
+      events.filter(e => e.type === 'vehicle_tradeup' && eventYear(e) === year && (eventMonth(e) || 1) === m).forEach(e => {
+        mCapExpense += (e.purchase_price ?? 0) - (e.sale_price ?? 0);
+      });
+      for (const prop of properties) {
+        if (prop.yearBought === year && (prop.buyMonth || 1) === m && year > startYear) {
+          const loanTotal = prop.loans.reduce((s, l) => s + l.principal, 0);
+          mCapExpense += prop.value - loanTotal;
+        }
+        if (prop.sellYear === year && prop.sellMonth === m && !prop.active) {
+          const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
+          const proceeds = ((prop.salePrice ?? 0) - totalPrincipal) * (1 - (prop.sellingCostsPct ?? 0));
+          mCapExpense -= proceeds;
+        }
+      }
 
-      const mTotalExpenses = mHealth + mTravel + mLiving + mAllowance + mPets + mVehicles + mLoans + mRECosts + mCapExpense;
+      const mTotalExpenses = mHealth + mTravel + mLiving + mAllowance + mPets + mVehicles + mLoans + mRECosts;
 
       // SS
       let mSSErik = 0, mSSDeb = 0;
@@ -391,15 +407,14 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         }
       }
 
-      // Draw computed per-month: expenses + tax_share - SS
-      // This makes draw respond to mid-year SS changes and expense shifts
-      // Annual total is preserved: sum(draw_m) = grossDraw
+      // Draw = operating expenses + tax share - SS (total investment outflow for this month)
+      // Draw already includes the tax component — no separate tax deduction needed
       const effectiveDraw = alive ? Math.max(0, mTotalExpenses + monthlyTax - mSSTotal) : 0;
       const effectiveTax = alive ? monthlyTax : 0;
 
-      // Investment balance: monthly compound
+      // Investment balance: draw is the total outflow (includes tax), saleProceeds handles capital flows
       const monthlyROI = investmentBalance * (investmentROI / 12);
-      investmentBalance = Math.max(0, investmentBalance + monthlyROI - effectiveDraw - effectiveTax + monthSaleProceeds);
+      investmentBalance = Math.max(0, investmentBalance + monthlyROI - effectiveDraw + monthSaleProceeds);
 
       // RE value: respect buy/sell months, not just active flag
       const isPropertyVisible = (p) => {
@@ -425,7 +440,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         social_security_tax: Math.round(taxResult.total_tax * (annualSS > 0 ? (taxResult.ss_fed_rate + taxResult.ss_state_rate) * annualSS / taxResult.total_tax : 0) / aliveMonthCount),
         social_security_net: Math.round(mSSTotal),
         gross_draw: Math.round(effectiveDraw), draw_tax: Math.round(taxResult.draw_tax || 0) / aliveMonthCount,
-        net_draw: Math.round(effectiveDraw + effectiveTax),
+        net_draw: Math.round(effectiveDraw),  // draw IS the total outflow (includes tax)
         total_tax: Math.round(effectiveTax),
         draw_fed_rate: taxResult.draw_fed_rate, draw_state_rate: taxResult.draw_state_rate,
         ss_fed_rate: taxResult.ss_fed_rate, ss_state_rate: taxResult.ss_state_rate,
@@ -436,7 +451,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         capital_spend: Math.round(Math.max(0, effectiveDraw - monthlyROI)),
         real_estate: Math.round(reEquity), real_estate_value: Math.round(reValue),
         invest_plus_re: Math.round(investmentBalance + reEquity),
-        draw_rate: (investmentBalance + reEquity) > 0 ? (effectiveDraw + effectiveTax) * 12 / (investmentBalance + reEquity) : 0,
+        draw_rate: (investmentBalance + reEquity) > 0 ? effectiveDraw * 12 / (investmentBalance + reEquity) : 0,
         tax_state: taxState, filing_status: filingStatus,
         mortgage_interest: Math.round(annualMortgageInterest), property_taxes_actual: Math.round(annualPropertyTaxes),
       });
