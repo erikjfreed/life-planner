@@ -1,4 +1,5 @@
 const { computeTimeline } = require('../compute');
+const { computeMonthlyTimeline } = require('../computeMonthly');
 const DEFAULT_PARAMS = require('../defaultParams');
 
 // Minimal entities for testing
@@ -440,5 +441,62 @@ describe('Compute Timeline', () => {
       // With no death events, endOfGame defaults to 2060
       expect(rows.length).toBeGreaterThan(30);
     });
+  });
+});
+
+describe('Monthly Timeline', () => {
+  test('produces 12 rows per year', () => {
+    const annual = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+    const monthly = computeMonthlyTimeline(annual, baseEvents, baseEntities);
+    expect(monthly.length).toBe(annual.length * 12);
+  });
+
+  test('SS Erik is zero before start month and nonzero after', () => {
+    const annual = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+    const monthly = computeMonthlyTimeline(annual, baseEvents, baseEntities);
+    const nov2026 = monthly.find(r => r.year === 2026 && r.month === 11);
+    const dec2026 = monthly.find(r => r.year === 2026 && r.month === 12);
+    expect(nov2026.social_security_erik).toBe(0);
+    expect(dec2026.social_security_erik).toBeGreaterThan(0);
+  });
+
+  test('SS Erik stops in death month', () => {
+    const annual = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+    const monthly = computeMonthlyTimeline(annual, baseEvents, baseEntities);
+    const nov2041 = monthly.find(r => r.year === 2041 && r.month === 11);
+    const dec2041 = monthly.find(r => r.year === 2041 && r.month === 12);
+    expect(nov2041.social_security_erik).toBeGreaterThan(0);
+    expect(dec2041.social_security_erik).toBe(0);
+  });
+
+  test('health drops in death month', () => {
+    const annual = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+    const monthly = computeMonthlyTimeline(annual, baseEvents, baseEntities);
+    const nov2041 = monthly.find(r => r.year === 2041 && r.month === 11);
+    const dec2041 = monthly.find(r => r.year === 2041 && r.month === 12);
+    expect(dec2041.health).toBeLessThan(nov2041.health);
+  });
+
+  test('expenses are zero after both die', () => {
+    const annual = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+    const monthly = computeMonthlyTimeline(annual, baseEvents, baseEntities);
+    const afterBoth = monthly.find(r => r.year === 2049 && r.month === 1);
+    if (afterBoth) {
+      expect(afterBoth.health).toBe(0);
+      expect(afterBoth.travel).toBe(0);
+      expect(afterBoth.living).toBe(0);
+    }
+  });
+
+  test('every monthly row has required fields', () => {
+    const annual = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+    const monthly = computeMonthlyTimeline(annual, baseEvents, baseEntities);
+    const required = ['year', 'month', 'investment_balance', 'social_security_erik',
+      'social_security_debbie', 'gross_draw', 'total_tax', 'health', 'travel'];
+    for (const r of monthly.slice(0, 24)) {
+      for (const field of required) {
+        expect(r).toHaveProperty(field);
+      }
+    }
   });
 });

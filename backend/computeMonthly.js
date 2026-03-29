@@ -8,6 +8,14 @@ const { eventYear, eventMonth } = require('./dateUtils');
 function computeMonthlyTimeline(annualRows, events, entities) {
   const monthly = [];
 
+  // Find death events
+  const erikDeathEvent = events.find(e => e.type === 'spouse_death' && e.name === 'Erik');
+  const debDeathEvent = events.find(e => e.type === 'spouse_death' && e.name === 'Deb');
+  const erikDeathYear = erikDeathEvent ? eventYear(erikDeathEvent) : 9999;
+  const erikDeathMonth = erikDeathEvent ? eventMonth(erikDeathEvent) : 12;
+  const debDeathYear = debDeathEvent ? eventYear(debDeathEvent) : 9999;
+  const debDeathMonth = debDeathEvent ? eventMonth(debDeathEvent) : 12;
+
   for (let yi = 0; yi < annualRows.length; yi++) {
     const r = annualRows[yi];
     const prevRow = yi > 0 ? annualRows[yi - 1] : null;
@@ -55,25 +63,41 @@ function computeMonthlyTimeline(annualRows, events, entities) {
       const roiThisMonth = monthlyBalance * monthlyROI;
       monthlyBalance = Math.max(0, monthlyBalance + roiThisMonth - monthlyDraw - monthlyTax + monthSaleProceeds);
 
-      // SS for this month
+      // Is each spouse alive this month?
+      const erikAlive = r.year < erikDeathYear || (r.year === erikDeathYear && m < erikDeathMonth);
+      const debAlive = r.year < debDeathYear || (r.year === debDeathYear && m < debDeathMonth);
+      const peopleAlive = (erikAlive ? 1 : 0) + (debAlive ? 1 : 0);
+
+      // SS for this month — only while alive and after start date
       let ssErik = 0;
       let ssDebbie = 0;
-      if (r.social_security_erik > 0) {
-        // Check if SS started this year — prorate
+      if (erikAlive) {
         const ssErikEvent = events.find(e => e.type === 'social_security_start' && e.name === 'Erik');
         const startMonth = ssErikEvent ? eventMonth(ssErikEvent) : 1;
         const startYear = ssErikEvent ? eventYear(ssErikEvent) : 0;
         if (r.year > startYear || (r.year === startYear && m >= startMonth)) {
-          ssErik = r.social_security_erik / (r.year === startYear ? (13 - startMonth) : 12);
+          // Use the COLA-adjusted monthly rate from annual computation
+          const ssErikMonthly = r.social_security_erik > 0
+            ? r.social_security_erik / (r.year === startYear ? (13 - startMonth) : 12)
+            : 0;
+          ssErik = ssErikMonthly;
         }
       }
-      if (r.social_security_debbie > 0) {
+      if (debAlive) {
         const ssDebEvent = events.find(e => e.type === 'social_security_start' && e.name === 'Deb');
         const startMonth = ssDebEvent ? eventMonth(ssDebEvent) : 1;
         const startYear = ssDebEvent ? eventYear(ssDebEvent) : 0;
         if (r.year > startYear || (r.year === startYear && m >= startMonth)) {
-          ssDebbie = r.social_security_debbie / (r.year === startYear ? (13 - startMonth) : 12);
+          const ssDebMonthly = r.social_security_debbie > 0
+            ? r.social_security_debbie / (r.year === startYear ? (13 - startMonth) : 12)
+            : 0;
+          ssDebbie = ssDebMonthly;
         }
+      }
+      // Survivor benefit: after Erik dies, Deb gets max(own, Erik's)
+      if (!erikAlive && debAlive && r.social_security_debbie > 0) {
+        // The annual computation already handles survivor benefits
+        // Just use the annual per-month value which includes it
       }
 
       // Event labels for this month
@@ -89,24 +113,39 @@ function computeMonthlyTimeline(annualRows, events, entities) {
           }).join(', ')
         : null;
 
+      // Scale expenses that depend on people alive
+      // The annual values are already prorated, but for monthly we need per-month accuracy
+      const alive = peopleAlive > 0;
+      const annualPeopleAlive = (r.year < erikDeathYear ? 1 : 0) + (r.year < debDeathYear ? 1 : 0) || 1;
+      const monthScale = alive ? (peopleAlive / annualPeopleAlive) : 0;
+
+      const mHealth = alive ? Math.round(r.health / 12 * monthScale) : 0;
+      const mTravel = alive ? Math.round(r.travel / 12 * monthScale) : 0;
+      const mVehicles = alive ? Math.round(r.vehicles / 12 * monthScale) : 0;
+      const mLiving = alive ? Math.round(r.living / 12) : 0;
+      const mAllowance = alive ? Math.round(r.allowance / 12 * (peopleAlive / 2)) : 0;
+      const mPets = alive ? Math.round(r.pets / 12) : 0;
+      const mLoans = alive ? Math.round(r.loans / 12) : 0;
+      const mRECosts = alive ? Math.round(r.real_estate_costs / 12) : 0;
+      const mCapExp = Math.round(r.cap_expense / 12);
+      const mTotalExp = mHealth + mTravel + mVehicles + mLiving + mAllowance + mPets + mLoans + mRECosts + mCapExp;
+
       monthly.push({
         year: r.year,
         month: m,
         date: `${r.year}-${String(m).padStart(2, '0')}`,
         erik_age: r.erik_age,
         deb_age: r.deb_age,
-        // Monthly expenses (1/12 of annual)
-        expenses: Math.round(monthlyExpenses),
-        health: Math.round(r.health / 12),
-        pets: Math.round(r.pets / 12),
-        vehicles: Math.round(r.vehicles / 12),
-        travel: Math.round(r.travel / 12),
-        living: Math.round(r.living / 12),
-        allowance: Math.round(r.allowance / 12),
-        loans: Math.round(r.loans / 12),
-        real_estate_costs: Math.round(r.real_estate_costs / 12),
-        cap_expense: Math.round(r.cap_expense / 12),
-        total_expenses: Math.round(monthlyExpenses),
+        health: mHealth,
+        pets: mPets,
+        vehicles: mVehicles,
+        travel: mTravel,
+        living: mLiving,
+        allowance: mAllowance,
+        loans: mLoans,
+        real_estate_costs: mRECosts,
+        cap_expense: mCapExp,
+        total_expenses: mTotalExp,
         // Monthly income
         social_security_erik: Math.round(ssErik),
         social_security_debbie: Math.round(ssDebbie),
