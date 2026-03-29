@@ -1,13 +1,13 @@
 import { AreaChart, Area, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 
-export default function IncomeChart({ rows, params, sharedYMax, monthly }) {
-  const scale = monthly ? 12 : 1; // Annualize monthly values for Y-axis
+export default function IncomeChart({ rows, params, sharedYMax }) {
+  
   const data = rows.map(r => ({
-    year: monthly ? r.year + (r.month - 1) / 12 : r.year,
-    'SS': Math.round(r.social_security_subtotal * scale / 1000),
-    'ROI': Math.round(Math.min(r.gross_draw, r.roi) * scale / 1000),
-    'Cap Spend': Math.round(Math.max(0, r.gross_draw - r.roi) * scale / 1000),
+    year: r.year,
+    'SS': Math.round(r.social_security_subtotal / 1000),
+    'ROI': Math.round(Math.min(r.gross_draw, r.roi) / 1000),
+    'Cap Spend': Math.round(Math.max(0, r.gross_draw - r.roi) / 1000),
   }));
 
   const minYear = data.length > 0 ? data[0].year : 2026;

@@ -17,11 +17,11 @@ const CHART_ORDER = [
 // Legend order: top-to-bottom = left-to-right
 const LEGEND_ORDER = [...CHART_ORDER].reverse();
 
-export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
-  const scale = monthly ? 12 : 1;
+export default function ExpenseChart({ rows, params, sharedYMax }) {
+  
   const data = rows.map(r => {
-    const entry = { year: monthly ? r.year + (r.month - 1) / 12 : r.year };
-    CHART_ORDER.forEach(c => { entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) * scale / 1000); });
+    const entry = { year: r.year };
+    CHART_ORDER.forEach(c => { entry[c.label] = Math.round((c.compute ? c.compute(r) : r[c.key]) / 1000); });
     return entry;
   });
 
