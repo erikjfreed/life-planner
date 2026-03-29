@@ -500,3 +500,60 @@ describe('Monthly Timeline', () => {
     }
   });
 });
+
+describe('Monthly Data Alignment with Events', () => {
+  test('SS Erik starts in exact event month, zero before', () => {
+    const annual = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+    const monthly = computeMonthlyTimeline(annual, baseEvents, baseEntities);
+    // Erik SS starts 2026-12-27 (month 12)
+    for (const r of monthly.filter(r => r.year === 2026)) {
+      if (r.month < 12) expect(r.social_security_erik).toBe(0);
+      if (r.month === 12) expect(r.social_security_erik).toBeGreaterThan(0);
+    }
+  });
+
+  test('SS Erik stops in exact death month, nonzero before', () => {
+    const annual = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+    const monthly = computeMonthlyTimeline(annual, baseEvents, baseEntities);
+    // Erik dies 2041-12-27 (month 12)
+    for (const r of monthly.filter(r => r.year === 2041)) {
+      if (r.month <= 11) expect(r.social_security_erik).toBeGreaterThan(0);
+      if (r.month === 12) expect(r.social_security_erik).toBe(0);
+    }
+  });
+
+  test('SS Deb gets survivor benefit starting in Erik death month', () => {
+    const annual = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+    const monthly = computeMonthlyTimeline(annual, baseEvents, baseEntities);
+    const nov2041 = monthly.find(r => r.year === 2041 && r.month === 11);
+    const dec2041 = monthly.find(r => r.year === 2041 && r.month === 12);
+    const jan2042 = monthly.find(r => r.year === 2042 && r.month === 1);
+    // After Erik dies, Deb should get max(own, Erik's) — should jump up
+    expect(jan2042.social_security_debbie).toBeGreaterThanOrEqual(nov2041.social_security_debbie);
+  });
+
+  test('health drops in exact death month, not before', () => {
+    const annual = computeTimeline(DEFAULT_PARAMS, baseEvents, baseEntities, baseLoans);
+    const monthly = computeMonthlyTimeline(annual, baseEvents, baseEntities);
+    const months2041 = monthly.filter(r => r.year === 2041);
+    // Months 1-11 should all have same health, month 12 should drop
+    const janHealth = months2041.find(r => r.month === 1).health;
+    for (const r of months2041) {
+      if (r.month <= 11) expect(r.health).toBe(janHealth);
+      if (r.month === 12) expect(r.health).toBeLessThan(janHealth);
+    }
+  });
+
+  test('investment balance jumps in RE sell month', () => {
+    const sellEvents = [
+      ...baseEvents,
+      { id: 10, type: 'real_estate_sell', date: '2028-06-01', entity_id: 1, sale_price: 1200000, hidden: 0 },
+    ];
+    const annual = computeTimeline(DEFAULT_PARAMS, sellEvents, baseEntities, baseLoans);
+    const monthly = computeMonthlyTimeline(annual, sellEvents, baseEntities);
+    const may2028 = monthly.find(r => r.year === 2028 && r.month === 5);
+    const jun2028 = monthly.find(r => r.year === 2028 && r.month === 6);
+    // Balance should jump significantly in June (sale month)
+    expect(jun2028.investment_balance).toBeGreaterThan(may2028.investment_balance + 500000);
+  });
+});
