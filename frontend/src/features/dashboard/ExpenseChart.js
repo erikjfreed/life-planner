@@ -13,8 +13,8 @@ const CHART_ORDER = [
   { key: 'pets',      label: 'Pets',      color: '#ec4899' },
   { key: 'vehicles',  label: 'Vehicles',  color: '#a3e635' },
 ];
-// Legend order: top-to-bottom = left-to-right
-const LEGEND_ORDER = [...CHART_ORDER, { key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' }].reverse();
+// Legend order: top-to-bottom = left-to-right (cap expense on top)
+const LEGEND_ORDER = [{ key: 'cap_expense', label: 'Cap Expense', color: '#f43f5e' }, ...CHART_ORDER].reverse();
 
 export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
   const scale = monthly ? 12 : 1;
@@ -34,7 +34,7 @@ export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
 
   const minYear = data.length > 0 ? data[0].year : 2026;
   const maxYear = data.length > 0 ? data[data.length - 1].year : 2060;
-  const maxVal = Math.max(...data.map(r => CHART_ORDER.reduce((s, c) => s + (r[c.label] || 0), 0)));
+  const maxVal = Math.max(...data.map(r => CHART_ORDER.reduce((s, c) => s + (r[c.label] || 0), 0) + (r['Cap Expense'] || 0)));
   const yMax = sharedYMax || Math.ceil(maxVal / 100) * 100;
   const yTicks = Array.from({ length: yMax / 100 + 1 }, (_, i) => i * 100);
 
@@ -78,12 +78,12 @@ export default function ExpenseChart({ rows, params, sharedYMax, monthly }) {
               ))}
             </div>
           )} />
-          <Area key="cap_expense" type="stepAfter" dataKey="Cap Expense" stackId="1"
-            stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.75} />
           {CHART_ORDER.map(c => (
             <Area key={c.key} type="stepAfter" dataKey={c.label} stackId="1"
               stroke={c.color} fill={c.color} fillOpacity={0.75} />
           ))}
+          <Area key="cap_expense" type="stepAfter" dataKey="Cap Expense" stackId="1"
+            stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.75} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
