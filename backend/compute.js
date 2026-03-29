@@ -439,7 +439,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         social_security_subtotal: Math.round(mSSTotal),
         social_security_tax: Math.round(taxResult.total_tax * (annualSS > 0 ? (taxResult.ss_fed_rate + taxResult.ss_state_rate) * annualSS / taxResult.total_tax : 0) / aliveMonthCount),
         social_security_net: Math.round(mSSTotal),
-        gross_draw: Math.round(effectiveDraw), draw_tax: Math.round(taxResult.draw_tax || 0) / aliveMonthCount,
+        gross_draw: Math.round(effectiveDraw), draw_tax: Math.round(effectiveDraw * (taxResult.draw_fed_rate + taxResult.draw_state_rate)),
         net_draw: Math.round(effectiveDraw),  // draw IS the total outflow (includes tax)
         total_tax: Math.round(effectiveTax),
         draw_fed_rate: taxResult.draw_fed_rate, draw_state_rate: taxResult.draw_state_rate,
