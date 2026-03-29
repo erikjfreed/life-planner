@@ -86,7 +86,9 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       const prop = properties.find(p => p.entityId === sell.entity_id && p.active);
       if (prop) {
         prop.active = false;
+        prop.sellYear = eventYear(sell);
         prop.sellMonth = eventMonth(sell) || 1;
+        prop.sellDate = sell.date;
         prop.salePrice = sell.sale_price ?? prop.value;
         prop.sellingCostsPct = sell.selling_costs_pct ?? 0;
       }
@@ -224,8 +226,8 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
         const loanTotal = prop.loans.reduce((s, l) => s + l.principal, 0);
         reNetCost += prop.value - loanTotal; // purchase outlay
       }
-      if (prop.sellMonth && !prop.active) {
-        // Already sold this year
+      if (prop.sellYear === year && !prop.active) {
+        // Sold this year
         const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
         const proceeds = ((prop.salePrice ?? 0) - totalPrincipal) * (1 - (prop.sellingCostsPct ?? 0));
         reNetCost -= proceeds;
@@ -370,7 +372,7 @@ function computeTimeline(params, events = [], entities = [], loans = []) {
       let monthSaleProceeds = 0;
       // RE sells in this exact month
       for (const prop of properties) {
-        if (!prop.active && prop.sellMonth === m && prop.yearBought <= year) {
+        if (!prop.active && prop.sellYear === year && prop.sellMonth === m) {
           const totalPrincipal = prop.loans.reduce((s, l) => s + l.principal, 0);
           const proceeds = ((prop.salePrice ?? 0) - totalPrincipal) * (1 - (prop.sellingCostsPct ?? 0));
           monthSaleProceeds += proceeds;
